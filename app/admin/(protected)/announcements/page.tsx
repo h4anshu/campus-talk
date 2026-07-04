@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { useCreateAdminPost } from '@/hooks/useAdminPosts';
 import { fetchJson } from '@/lib/api-client';
-import type { DetectedEmbed } from '@/lib/embed';
+import { extractEmbedsFromHtml } from '@/lib/embed';
 
 interface PendingMedia {
   type: 'image' | 'youtube' | 'drive';
@@ -41,8 +41,19 @@ export default function ComposeAnnouncementPage() {
       { title, body, space: 'announcements', priority, pinned, tags: [] },
       {
         onSuccess: async (post) => {
+          const bodyEmbeds = extractEmbedsFromHtml(body);
+          const mediaToSave: PendingMedia[] = [
+            ...pendingMedia.filter((m) => m.type === 'image'),
+            ...bodyEmbeds.map((embed) => ({
+              type: embed.type,
+              url: embed.url,
+              providerId: embed.providerId,
+              thumbnailUrl: embed.thumbnailUrl,
+            })),
+          ];
+
           const results = await Promise.allSettled(
-            pendingMedia.map((media) =>
+            mediaToSave.map((media) =>
               fetchJson('/api/media', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -126,12 +137,6 @@ export default function ComposeAnnouncementPage() {
           placeholder="Write the announcement..."
           onImageUploaded={(url, publicId) =>
             setPendingMedia((prev) => [...prev, { type: 'image', url, providerId: publicId }])
-          }
-          onEmbedDetected={(embed: DetectedEmbed) =>
-            setPendingMedia((prev) => [
-              ...prev,
-              { type: embed.type, url: embed.url, providerId: embed.providerId, thumbnailUrl: embed.thumbnailUrl },
-            ])
           }
         />
       </div>

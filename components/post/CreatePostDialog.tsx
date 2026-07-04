@@ -7,11 +7,12 @@ import { Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import RichTextEditor from '@/components/editor/RichTextEditor';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
 import { useCreatePost } from '@/hooks/useCreatePost';
 import { TOPICS, type TopicKey } from '@/lib/constants';
 import { fetchJson } from '@/lib/api-client';
-import type { DetectedEmbed } from '@/lib/embed';
+import { extractEmbedsFromHtml } from '@/lib/embed';
 
 interface PendingMedia {
   type: 'image' | 'youtube' | 'drive';
@@ -32,6 +33,7 @@ type DraftState = 'idle' | 'saving' | 'saved';
 
 export default function CreatePostDialog() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { open, closeDialog } = useCreatePostStore();
   const { mutate: createPost, isPending } = useCreatePost();
   const [destination, setDestination] = useState<(typeof DESTINATIONS)[number]['key']>('discussion');
@@ -82,15 +84,31 @@ export default function CreatePostDialog() {
 
     createPost(payload, {
       onSuccess: async (post) => {
-        // Images and embed cards are already visible in `post.body` (inserted
-        // into the editor at upload/paste time), so this is recording each
-        // one as a proper Media row too — needed for ResourceCard/PostCard's
-        // thumbnail rendering, which reads `post.media`, not the body HTML.
-        // Previously these failures were silently swallowed (`.catch(() =>
-        // {})`), which is exactly how a post could end up with an embed
-        // visible in its body but no Media row at all — surfaced now instead.
+        // Images are recorded via pendingMedia as they're uploaded (their
+        // Cloudinary public_id isn't recoverable from the <img src> alone).
+        // YouTube/Drive embeds, on the other hand, are derived straight from
+        // the final submitted body HTML rather than a paste-time callback —
+        // Tiptap's Link extension autolinks a URL the moment it's typed, not
+        // just pasted, so a paste-only detector missed anything the user
+        // typed, retyped, or edited in, leaving a plain link with no Media
+        // row behind it. Scanning the actual body catches it regardless of
+        // how the link got there. Previously these failures were silently
+        // swallowed (`.catch(() => {})`), which is exactly how a post could
+        // end up with an embed visible in its body but no Media row at all —
+        // surfaced now instead.
+        const bodyEmbeds = extractEmbedsFromHtml(body);
+        const mediaToSave: PendingMedia[] = [
+          ...pendingMedia.filter((m) => m.type === 'image'),
+          ...bodyEmbeds.map((embed) => ({
+            type: embed.type,
+            url: embed.url,
+            providerId: embed.providerId,
+            thumbnailUrl: embed.thumbnailUrl,
+          })),
+        ];
+
         const results = await Promise.allSettled(
-          pendingMedia.map((media) =>
+          mediaToSave.map((media) =>
             fetchJson('/api/media', {
               method: 'POST',
               body: JSON.stringify({
@@ -108,6 +126,12 @@ export default function CreatePostDialog() {
           console.error('Failed to save media for post', post.id, failures);
           toast.error(`Post created, but ${failures.length} attachment(s) failed to save`);
         }
+
+        // Invalidate AFTER media rows exist in the DB — previously this
+        // ran inside useCreatePost.onSuccess (before media was saved),
+        // causing the refetched feed to cache a response with media: [].
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+        queryClient.invalidateQueries({ queryKey: ['post', post.id] });
 
         closeDialog();
         reset();
@@ -197,12 +221,6 @@ export default function CreatePostDialog() {
                 }}
                 onImageUploaded={(url, publicId) =>
                   setPendingMedia((prev) => [...prev, { type: 'image', url, providerId: publicId }])
-                }
-                onEmbedDetected={(embed: DetectedEmbed) =>
-                  setPendingMedia((prev) => [
-                    ...prev,
-                    { type: embed.type, url: embed.url, providerId: embed.providerId, thumbnailUrl: embed.thumbnailUrl },
-                  ])
                 }
                 placeholder={`Write your ${DESTINATIONS.find((d) => d.key === destination)?.label.toLowerCase()} post...`}
               />

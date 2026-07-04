@@ -51,3 +51,24 @@ export function detectEmbed(text: string): DetectedEmbed | null {
 
   return null;
 }
+
+/**
+ * Scans a post body's rendered HTML for every `href` and runs each one
+ * through `detectEmbed`. This is the source of truth for which Media rows
+ * get created on submit — deliberately content-derived rather than tied to
+ * *how* the link ended up in the body (pasted, typed, dictated, edited in
+ * later, dragged in). Tiptap's Link extension autolinks a URL the moment
+ * it's typed, not just when it's pasted, so a paste-event-only detector
+ * would miss anything the user typed, retyped, or corrected — silently
+ * leaving a plain link with no Media row behind it.
+ */
+export function extractEmbedsFromHtml(html: string): DetectedEmbed[] {
+  const found = new Map<string, DetectedEmbed>();
+  const hrefRegex = /href="([^"]*)"/gi;
+  let match: RegExpExecArray | null;
+  while ((match = hrefRegex.exec(html))) {
+    const embed = detectEmbed(match[1]);
+    if (embed) found.set(embed.url, embed);
+  }
+  return Array.from(found.values());
+}
