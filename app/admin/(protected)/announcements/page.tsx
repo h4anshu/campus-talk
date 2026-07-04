@@ -40,18 +40,25 @@ export default function ComposeAnnouncementPage() {
     createPost(
       { title, body, space: 'announcements', priority, pinned, tags: [] },
       {
-        onSuccess: (post) => {
-          for (const media of pendingMedia) {
-            fetchJson('/api/media', {
-              method: 'POST',
-              body: JSON.stringify({
-                postId: post.id,
-                url: media.url,
-                providerId: media.providerId,
-                thumbnailUrl: media.thumbnailUrl,
-                type: media.type,
-              }),
-            }).catch(() => {});
+        onSuccess: async (post) => {
+          const results = await Promise.allSettled(
+            pendingMedia.map((media) =>
+              fetchJson('/api/media', {
+                method: 'POST',
+                body: JSON.stringify({
+                  postId: post.id,
+                  url: media.url,
+                  providerId: media.providerId,
+                  thumbnailUrl: media.thumbnailUrl,
+                  type: media.type,
+                }),
+              })
+            )
+          );
+          const failures = results.filter((r) => r.status === 'rejected');
+          if (failures.length > 0) {
+            console.error('Failed to save media for announcement', post.id, failures);
+            toast.error(`Published, but ${failures.length} attachment(s) failed to save`);
           }
 
           setTitle('');

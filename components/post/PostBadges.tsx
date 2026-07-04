@@ -24,6 +24,16 @@ export default function PostBadges({ post }: PostBadgesProps) {
           Pinned
         </span>
       )}
+      {/* Only ever reachable in practice by the post's own author — the
+          public feed only ever returns APPROVED posts, and the profile page
+          only fetches PENDING posts for the viewer's own account. Gating on
+          viewerIsAuthor too so the badge itself can never leak if that ever
+          changes. */}
+      {post.status === 'PENDING' && post.viewerIsAuthor && (
+        <span className="rounded-full border-[0.5px] border-[var(--warning-border)] bg-[var(--warning-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--warning)]">
+          Pending approval
+        </span>
+      )}
       {post.hot && (
         <span className="rounded-full border-[0.5px] border-[var(--warning-border)] bg-[var(--warning-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--warning)]">
           Hot

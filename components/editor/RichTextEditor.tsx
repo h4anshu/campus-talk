@@ -9,7 +9,8 @@ import Image from '@tiptap/extension-image';
 import { Bold, Italic, Code, List, Link2, ImagePlus, Video, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchJson } from '@/lib/api-client';
-import { detectEmbed, buildEmbedCardHtml, type DetectedEmbed } from '@/lib/embed';
+import { detectEmbed, type DetectedEmbed } from '@/lib/embed';
+import { EmbedCard, type EmbedCardAttrs } from '@/components/editor/embedCardNode';
 
 interface RichTextEditorProps {
   onChange: (html: string) => void;
@@ -73,6 +74,7 @@ export default function RichTextEditor({
       Placeholder.configure({ placeholder }),
       Link.configure({ openOnClick: false, autolink: true }),
       Image,
+      EmbedCard,
     ],
     editorProps: {
       attributes: {
@@ -89,8 +91,7 @@ export default function RichTextEditor({
         if (!embed) return false;
 
         event.preventDefault();
-        editor?.chain().focus().insertContent(buildEmbedCardHtml(embed)).run();
-        onEmbedDetected?.(embed);
+        insertEmbed(embed);
         return true;
       },
     },
@@ -105,6 +106,17 @@ export default function RichTextEditor({
     editor.chain().focus().setLink({ href: url }).run();
   };
 
+  const insertEmbed = (embed: DetectedEmbed) => {
+    const attrs: EmbedCardAttrs = {
+      embedType: embed.type,
+      videoId: embed.providerId ?? null,
+      url: embed.url,
+      thumbnailUrl: embed.thumbnailUrl ?? null,
+    };
+    editor.chain().focus().insertEmbedCard(attrs).run();
+    onEmbedDetected?.(embed);
+  };
+
   const promptForEmbed = () => {
     const url = window.prompt('Paste a YouTube or Google Drive link');
     if (!url) return;
@@ -113,8 +125,7 @@ export default function RichTextEditor({
       toast.error("That doesn't look like a YouTube or Google Drive link");
       return;
     }
-    editor.chain().focus().insertContent(buildEmbedCardHtml(embed)).run();
-    onEmbedDetected?.(embed);
+    insertEmbed(embed);
   };
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {

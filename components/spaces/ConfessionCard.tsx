@@ -64,6 +64,7 @@ export default function ConfessionCard({ post }: ConfessionCardProps) {
           commentCount={post.commentCount}
           viewCount={post.viewCount}
           isSaved={post.isSaved}
+          viewerIsAuthor={post.viewerIsAuthor}
         />
       </div>
     </motion.div>

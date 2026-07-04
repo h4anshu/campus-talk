@@ -65,6 +65,7 @@ export default function CollaborationCard({ post }: CollaborationCardProps) {
           commentCount={post.commentCount}
           viewCount={post.viewCount}
           isSaved={post.isSaved}
+          viewerIsAuthor={post.viewerIsAuthor}
         />
       </div>
     </motion.div>

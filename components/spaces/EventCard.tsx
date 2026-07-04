@@ -122,6 +122,7 @@ export default function EventCard({ post }: EventCardProps) {
           commentCount={post.commentCount}
           viewCount={post.viewCount}
           isSaved={post.isSaved}
+          viewerIsAuthor={post.viewerIsAuthor}
         />
       </div>
     </motion.div>

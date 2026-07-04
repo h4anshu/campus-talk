@@ -77,6 +77,7 @@ export default function AnnouncementCard({ post }: AnnouncementCardProps) {
           commentCount={post.commentCount}
           viewCount={post.viewCount}
           isSaved={post.isSaved}
+          viewerIsAuthor={post.viewerIsAuthor}
         />
       </div>
     </motion.div>

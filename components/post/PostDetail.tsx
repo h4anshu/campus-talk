@@ -84,6 +84,7 @@ export default function PostDetail({ post }: PostDetailProps) {
             commentCount={post.commentCount}
             viewCount={post.viewCount}
             isSaved={post.isSaved}
+            viewerIsAuthor={post.viewerIsAuthor}
           />
         </div>
       </div>

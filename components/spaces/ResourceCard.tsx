@@ -130,6 +130,7 @@ export default function ResourceCard({ post }: ResourceCardProps) {
           commentCount={post.commentCount}
           viewCount={post.viewCount}
           isSaved={post.isSaved}
+          viewerIsAuthor={post.viewerIsAuthor}
         />
       </div>
     </motion.div>

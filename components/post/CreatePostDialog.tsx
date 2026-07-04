@@ -81,22 +81,32 @@ export default function CreatePostDialog() {
           };
 
     createPost(payload, {
-      onSuccess: (post) => {
+      onSuccess: async (post) => {
         // Images and embed cards are already visible in `post.body` (inserted
-        // into the editor at upload/paste time), so this is just recording
-        // each one as a proper Media row too — best-effort, doesn't block
-        // navigating to the post.
-        for (const media of pendingMedia) {
-          fetchJson('/api/media', {
-            method: 'POST',
-            body: JSON.stringify({
-              postId: post.id,
-              url: media.url,
-              providerId: media.providerId,
-              thumbnailUrl: media.thumbnailUrl,
-              type: media.type,
-            }),
-          }).catch(() => {});
+        // into the editor at upload/paste time), so this is recording each
+        // one as a proper Media row too — needed for ResourceCard/PostCard's
+        // thumbnail rendering, which reads `post.media`, not the body HTML.
+        // Previously these failures were silently swallowed (`.catch(() =>
+        // {})`), which is exactly how a post could end up with an embed
+        // visible in its body but no Media row at all — surfaced now instead.
+        const results = await Promise.allSettled(
+          pendingMedia.map((media) =>
+            fetchJson('/api/media', {
+              method: 'POST',
+              body: JSON.stringify({
+                postId: post.id,
+                url: media.url,
+                providerId: media.providerId,
+                thumbnailUrl: media.thumbnailUrl,
+                type: media.type,
+              }),
+            })
+          )
+        );
+        const failures = results.filter((r) => r.status === 'rejected');
+        if (failures.length > 0) {
+          console.error('Failed to save media for post', post.id, failures);
+          toast.error(`Post created, but ${failures.length} attachment(s) failed to save`);
         }
 
         closeDialog();
@@ -119,18 +129,22 @@ export default function CreatePostDialog() {
     >
       <DialogContent
         showCloseButton
-        className="max-w-[640px] gap-0 border-[0.5px] border-[var(--border-med)] bg-[var(--bg-elevated)] p-0"
+        className="flex max-h-[85vh] w-full max-w-[640px] flex-col gap-0 overflow-hidden border-[0.5px] border-[var(--border-med)] bg-[var(--bg-elevated)] p-0"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.18 }}
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <DialogTitle className="border-b-[0.5px] border-[var(--border)] px-5 py-4 text-[16px] font-medium text-[var(--text-primary)]">
+          <DialogTitle className="shrink-0 border-b-[0.5px] border-[var(--border)] px-5 py-4 text-[16px] font-medium text-[var(--text-primary)]">
             Create a post
           </DialogTitle>
 
-          <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+          {/* This is the ONLY part that scrolls — DialogContent is capped at
+              85vh above, so no matter how tall the embed/description gets,
+              the dialog itself never grows past the viewport. */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
             <div className="flex flex-wrap gap-1.5">
               {DESTINATIONS.map((d) => (
                 <button
@@ -195,7 +209,7 @@ export default function CreatePostDialog() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t-[0.5px] border-[var(--border)] px-5 py-3">
+          <div className="flex shrink-0 items-center justify-between border-t-[0.5px] border-[var(--border)] px-5 py-3">
             <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
               {draftState === 'saving' && (
                 <>

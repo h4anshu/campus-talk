@@ -81,6 +81,7 @@ export default function LostFoundCard({ post }: LostFoundCardProps) {
           commentCount={post.commentCount}
           viewCount={post.viewCount}
           isSaved={post.isSaved}
+          viewerIsAuthor={post.viewerIsAuthor}
         />
       </div>
 

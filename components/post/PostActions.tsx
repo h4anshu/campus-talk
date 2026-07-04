@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { MessageCircle, Eye, Share2, Bookmark, MoreHorizontal, Flag, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { MessageCircle, Eye, Share2, Bookmark, MoreHorizontal, Flag, EyeOff, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -10,19 +11,47 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSavePost } from '@/hooks/useSavePost';
+import { useDeletePost } from '@/hooks/useDeletePost';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 interface PostActionsProps {
   postId: string;
   commentCount: number;
   viewCount: number;
   isSaved?: boolean;
+  /** Shows the Delete option — only the post's own author (or an admin) may see it. */
+  viewerIsAuthor?: boolean;
 }
 
-export default function PostActions({ postId, commentCount, viewCount, isSaved = false }: PostActionsProps) {
+export default function PostActions({
+  postId,
+  commentCount,
+  viewCount,
+  isSaved = false,
+  viewerIsAuthor = false,
+}: PostActionsProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { mutate: toggleSaved } = useSavePost(postId);
+  const { mutate: deletePost, isPending: deleting } = useDeletePost(postId);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+
+  const handleDelete = () => {
+    deletePost(undefined, {
+      onSuccess: () => {
+        setConfirmOpen(false);
+        toast('Post deleted');
+        if (pathname === `/post/${postId}`) {
+          router.push('/home');
+        }
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : 'Failed to delete post');
+      },
+    });
+  };
 
   return (
     <div className="mt-2.5 flex items-center gap-4 text-[var(--text-muted)]">
@@ -83,8 +112,31 @@ export default function PostActions({ postId, commentCount, viewCount, isSaved =
           <DropdownMenuItem className="gap-2 text-[12px]" onClick={() => toast('Post hidden')}>
             <EyeOff className="h-3.5 w-3.5" /> Hide post
           </DropdownMenuItem>
+          {viewerIsAuthor && (
+            <DropdownMenuItem
+              className="gap-2 text-[12px] text-[var(--danger)] focus:text-[var(--danger)]"
+              onClick={(e) => {
+                stop(e);
+                setConfirmOpen(true);
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete post
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {viewerIsAuthor && (
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Delete this post?"
+          description="This can't be undone. The post, its comments, and its votes will all be permanently removed."
+          confirmLabel="Delete"
+          isPending={deleting}
+          onConfirm={handleDelete}
+        />
+      )}
     </div>
   );
 }

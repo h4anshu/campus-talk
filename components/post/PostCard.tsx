@@ -11,6 +11,7 @@ import PostActions from '@/components/post/PostActions';
 import ReactionButtons from '@/components/post/ReactionButtons';
 import CollabSlotBar from '@/components/post/CollabSlotBar';
 import TagPill from '@/components/shared/TagPill';
+import MediaPreview from '@/components/shared/MediaPreview';
 
 interface PostCardProps {
   post: MockPost;
@@ -54,6 +55,8 @@ export default function PostCard({ post }: PostCardProps) {
           {stripHtmlTags(post.body)}
         </p>
 
+        <MediaPreview media={post.media} />
+
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {post.tags.map((tag) => (
@@ -73,6 +76,7 @@ export default function PostCard({ post }: PostCardProps) {
           commentCount={post.commentCount}
           viewCount={post.viewCount}
           isSaved={post.isSaved}
+          viewerIsAuthor={post.viewerIsAuthor}
         />
       </div>
     </motion.div>

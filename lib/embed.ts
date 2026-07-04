@@ -40,17 +40,3 @@ export function detectEmbed(text: string): DetectedEmbed | null {
 
   return null;
 }
-
-/**
- * Static HTML for the embed card — inserted directly into the Tiptap
- * document as a real, visible card (not a plain auto-linked hyperlink).
- * Deliberately just a <div>+<img>/<a>, no JS/iframe: it has to survive
- * sanitize-html and render identically wherever the sanitized body is shown
- * (composer, card previews, full post page) with no extra client logic.
- */
-export function buildEmbedCardHtml(embed: DetectedEmbed): string {
-  if (embed.type === 'youtube') {
-    return `<div class="cv-embed cv-embed-youtube" data-video-id="${embed.providerId}" data-url="${embed.url}"><img src="${embed.thumbnailUrl}" alt="YouTube video thumbnail" /></div>`;
-  }
-  return `<div class="cv-embed cv-embed-drive" data-url="${embed.url}"><a href="${embed.url}" target="_blank" rel="noopener noreferrer">Open in Google Drive</a></div>`;
-}
