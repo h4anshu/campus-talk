@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { GraduationCap, LogOut } from 'lucide-react';
 import { auth, signOut } from '@/auth';
 import { PLATFORM_NAME } from '@/lib/constants';
@@ -5,6 +6,16 @@ import AdminNav from '@/components/admin/AdminNav';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+
+  // Middleware only checks for a session cookie (Edge-safe, no DB access).
+  // The real auth + role check happens here, on the Node.js runtime.
+  if (!session?.user) {
+    redirect('/landing');
+  }
+
+  if (session.user.role !== 'ADMIN') {
+    redirect('/home');
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-page)]">

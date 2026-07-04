@@ -1,18 +1,29 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import type { NextRequest } from 'next/server';
 
-export default auth((req) => {
-  const { pathname, origin } = req.nextUrl;
-  const isLoggedIn = !!req.auth;
+const protectedRoutes = ['/home', '/discussions', '/spaces',
+  '/post', '/profile', '/saved', '/admin'];
 
-  if (!isLoggedIn) {
-    return NextResponse.redirect(new URL('/landing', origin));
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  const isProtected = protectedRoutes.some(route =>
+    pathname.startsWith(route)
+  );
+
+  if (!isProtected) return NextResponse.next();
+
+  // Check for NextAuth session cookie
+  const sessionCookie =
+    request.cookies.get('authjs.session-token') ??
+    request.cookies.get('__Secure-authjs.session-token');
+
+  if (!sessionCookie) {
+    return NextResponse.redirect(new URL('/landing', request.url));
   }
 
-  if (pathname.startsWith('/admin') && req.auth?.user?.role !== 'ADMIN') {
-    return NextResponse.redirect(new URL('/home', origin));
-  }
-});
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
@@ -23,5 +34,5 @@ export const config = {
     '/profile/:path*',
     '/saved/:path*',
     '/admin/:path*',
-  ],
+  ]
 };
