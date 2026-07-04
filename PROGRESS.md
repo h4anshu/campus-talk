@@ -4,6 +4,30 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — Two live-testing bugs found after Backend Phase 2
+
+**Status:** Complete (code fixed, built, deployed; live click-through handed to the user — same OAuth caveat as Phase 2)
+
+Two bugs reported from real usage on the deployed Vercel URL. Both root causes confirmed by reading the code directly and by a **read-only** query against the live Neon database (no writes, no fabricated sessions) before touching anything.
+
+**Bug 1 — Profile page didn't show the logged-in user's own posts.**
+Root cause: `app/(main)/profile/[username]/page.tsx` was never touched in Backend Phase 2 — it was out of that phase's explicit scope — and still read entirely from `MOCK_POSTS`/`MOCK_COMMENTS_POST_1`, matched by `slugify(author.name) === params.username`. Real posts created via the Phase 2 API live in Postgres and were never in that mock array, so they could never appear regardless of whose profile you viewed. Checked the `User` model directly: there is **no `username` column** — Google OAuth via the Prisma adapter only ever populates `id`/`name`/`email`/`image` on first sign-in, so `params.username` was always a slugified-display-name guess, never a real identifier. Fixed per the suggested minimal approach: for the viewer's own profile (`isOwnProfile`, still computed the same way — the slug still matches to *decide whose* profile you're on), posts and answers are now fetched straight from Postgres by `session.user.id` (`prisma.post.findMany({ where: { authorId: ... } })` / same for `comment`), serialized with `serializePost`/a small local mapper. Viewing *other* real users' profiles by slug still has no real lookup path and is unchanged/still mock-based — building that needs an actual username system, which is a bigger, separate piece of work than this bug report asked for. Also fixed `ProfileTabs`' Answers tab, which linked every single answer to the hardcoded `/post/post-1` regardless of which post it actually belonged to — now carries a real `postId` through.
+
+**Bug 2 — Comment thread "doesn't open."** This one was not what the bug report guessed. Checked the click path end-to-end: `PostCard`'s comment button → `PostActions` → `router.push('/post/[id]')` → `post/[id]/page.tsx` → `usePost()` → `AnswerList`/`CommentThread` — all correct, and grepped the entire repo for `MOCK_COMMENTS`: the only remaining references are in `lib/mock/comments.ts` itself and the profile page's now-intentional non-own-profile fallback (see Bug 1) — nothing leftover in the comment components. The actual root cause: **there was no top-level comment/answer composer anywhere in the app.** `CommentComposer` was only ever rendered nested inside an existing comment's "Reply" toggle (`{replying && <CommentComposer .../>}` in `CommentItem`/`AnswerCard`). On any post with zero comments — which, per a direct read-only query against the live database, is *every* real post that exists right now — there was simply no button or box to create the first one. The empty state (`"No comments yet — be the first to reply"`) was static text with nothing clickable. So "opening" a comment thread on a real post always landed on a dead end, which reads exactly like "it doesn't open." Fixed by adding a persistent composer to `post/[id]/page.tsx`, wired to `useCreateComment`, above the existing `AnswerList`/`CommentThread`. Made `CommentComposer`'s `onCancel` optional (and added a `submitLabel` prop) so it can be used standalone, without a reply-toggle to cancel back to.
+
+**Also deduplicated while touching this code:** the Prisma `POST_INCLUDE` object had been copy-pasted identically across `app/api/posts/route.ts` and `app/api/posts/[id]/route.ts` in Phase 2 — moved it into `lib/serializers.ts` (which already owned `PostForSerialization`) and exported `netVoteScore` alongside it, since the profile page's new real-data path needed both. Both API routes now import the shared constant instead of carrying their own copy.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds
+- Pushed to `main`; Vercel redeployed, confirmed `● Ready` via `vercel inspect`
+- Unauthenticated smoke check against the live alias (`https://campus-talk-gamma.vercel.app`): `/api/posts` → 401 (not 500), `/profile/[slug]` and `/post/[id]` → 307 redirect to `/landing` (not 500) — confirms the new code paths don't crash the server, though this can't confirm the actual authenticated behavior
+- Read-only query against the live database confirmed the diagnosis directly: exactly one real post exists, with zero comments — consistent with "no way to create the first comment" being the real bug, not a broken read/navigation path
+
+**Not verified — same constraint as Backend Phase 2:** actually clicking through as a logged-in user (own profile shows own posts; posting and viewing a comment) on the live URL. Auth is Google OAuth only, gated to real college email domains, and fabricating a database session to get a valid cookie was already correctly blocked as a credential-materialization risk in the prior phase — that constraint hasn't changed. The user is testing this round directly.
+
+---
+
 ## Backend Phase 2 — Real Post/Comment API, Replacing Mock Data
 
 **Status:** Complete (backend + build verified; live click-through handed to the user — see caveat)
