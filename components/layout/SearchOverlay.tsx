@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { Search, FileText, User as UserIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { TOPICS } from '@/lib/constants';
-import { MOCK_POSTS, MOCK_USER } from '@/lib/mock';
+import { MOCK_POSTS } from '@/lib/mock';
 import { ICON_MAP } from '@/lib/icon-map';
-import { slugify } from '@/lib/utils';
+import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
 
 interface SearchOverlayProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface SearchOverlayProps {
 
 export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [query, setQuery] = useState('');
 
   const { posts, people, topics } = useMemo(() => {
@@ -27,11 +29,13 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
       .slice(0, 5);
 
     const authorNames = new Map<string, { name: string; initials: string; avatarColor: string }>();
-    authorNames.set(MOCK_USER.name, {
-      name: MOCK_USER.name,
-      initials: MOCK_USER.initials,
-      avatarColor: MOCK_USER.avatarColor,
-    });
+    if (session?.user?.name) {
+      authorNames.set(session.user.name, {
+        name: session.user.name,
+        initials: getInitials(session.user.name),
+        avatarColor: getAvatarColor(session.user.id),
+      });
+    }
     for (const p of MOCK_POSTS) {
       if (p.author.name === 'Anonymous' || p.author.name === 'Admin Office') continue;
       if (!authorNames.has(p.author.name)) {
@@ -49,7 +53,7 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
     const matchedTopics = TOPICS.filter((t) => !q || t.label.toLowerCase().includes(q)).slice(0, 6);
 
     return { posts: matchedPosts, people: matchedPeople, topics: matchedTopics };
-  }, [query]);
+  }, [query, session]);
 
   const hasResults = posts.length > 0 || people.length > 0 || topics.length > 0;
 

@@ -1,27 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Mail } from 'lucide-react';
-import { COLLEGE_EMAIL_DOMAIN, PLATFORM_NAME } from '@/lib/constants';
-import { Input } from '@/components/ui/input';
-
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Enter your college email')
-    .email('Enter a valid email address')
-    .refine((v) => v.toLowerCase().endsWith(COLLEGE_EMAIL_DOMAIN), {
-      message: `Only ${COLLEGE_EMAIL_DOMAIN} emails are allowed`,
-    }),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
+import { GraduationCap } from 'lucide-react';
+import { PLATFORM_NAME } from '@/lib/constants';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -46,90 +31,58 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
+function LoginCard() {
+  const searchParams = useSearchParams();
+  const showDomainError = searchParams.get('error') === 'domain';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.35 }}
+      className="relative z-10 w-full max-w-[400px] rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)] p-8"
+    >
+      <div className="flex flex-col items-center text-center">
+        <div className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] bg-[var(--accent-fill)]">
+          <GraduationCap className="h-5 w-5 text-white" />
+        </div>
+        <h1 className="mt-4 text-[20px] font-medium text-[var(--text-primary)]">
+          Welcome to {PLATFORM_NAME}
+        </h1>
+        <p className="mt-1.5 text-[13px] text-[var(--text-secondary)]">
+          Sign in with your BBD college account
+        </p>
+      </div>
+
+      {showDomainError && (
+        <p className="mt-5 rounded border-[0.5px] border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2.5 text-center text-[12px] text-[var(--danger)]">
+          Only BBD college emails are allowed to join.
+        </p>
+      )}
+
+      <button
+        onClick={() => signIn('google', { callbackUrl: '/home' })}
+        className="mt-6 flex w-full items-center justify-center gap-2.5 rounded border-[0.5px] border-[var(--border-med)] bg-transparent py-2.5 text-[13px] text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-panel)]"
+      >
+        <GoogleIcon className="h-4 w-4" />
+        Continue with Google
+      </button>
+
+      <p className="mt-5 text-center text-[11px] text-[var(--text-muted)]">
+        Verified BBD students only · No outsiders
+      </p>
+    </motion.div>
+  );
+}
+
 export default function LoginPage() {
-  const router = useRouter();
-  const [sent, setSent] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
-
-  const onSubmit = () => {
-    setSent(true);
-    router.push('/home');
-  };
-
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--bg-page)] px-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-20%,rgba(29,78,216,0.12)_0%,transparent_60%)]" />
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.35 }}
-        className="relative z-10 w-full max-w-[400px] rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)] p-8"
-      >
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] bg-[var(--accent-fill)]">
-            <GraduationCap className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="mt-4 text-[20px] font-medium text-[var(--text-primary)]">
-            Welcome to {PLATFORM_NAME}
-          </h1>
-          <p className="mt-1.5 text-[13px] text-[var(--text-secondary)]">
-            Sign in with your SITM College account
-          </p>
-        </div>
-
-        <button
-          onClick={() => router.push('/home')}
-          className="mt-6 flex w-full items-center justify-center gap-2.5 rounded border-[0.5px] border-[var(--border-med)] bg-transparent py-2.5 text-[13px] text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-panel)]"
-        >
-          <GoogleIcon className="h-4 w-4" />
-          Continue with Google
-        </button>
-
-        <div className="my-5 flex items-center gap-3">
-          <div className="h-px flex-1 bg-[var(--border)]" />
-          <span className="text-[11px] text-[var(--text-muted)]">OR</span>
-          <div className="h-px flex-1 bg-[var(--border)]" />
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <label htmlFor="email" className="mb-1.5 block text-[12px] text-[var(--text-secondary)]">
-            College email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            placeholder={`you${COLLEGE_EMAIL_DOMAIN}`}
-            className="border-[var(--border-med)] bg-[var(--bg-panel)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus-visible:border-[var(--accent)] focus-visible:ring-0"
-            {...register('email')}
-          />
-          {errors.email && (
-            <p className="mt-1.5 text-[11px] text-[var(--danger)]">{errors.email.message}</p>
-          )}
-          {sent && !errors.email && (
-            <p className="mt-1.5 text-[11px] text-[var(--success)]">
-              Magic link sent — redirecting...
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded bg-[var(--accent-fill)] py-2.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
-          >
-            <Mail className="h-4 w-4" />
-            Send magic link
-          </button>
-        </form>
-
-        <p className="mt-5 text-center text-[11px] text-[var(--text-muted)]">
-          Verified students only · No outsiders
-        </p>
-      </motion.div>
+      <Suspense fallback={null}>
+        <LoginCard />
+      </Suspense>
 
       <Link
         href="/landing"

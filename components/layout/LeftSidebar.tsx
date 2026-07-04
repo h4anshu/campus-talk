@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LifeBuoy, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 import { SPACES, TOPICS } from '@/lib/constants';
 import { ICON_MAP } from '@/lib/icon-map';
-import { MOCK_USER } from '@/lib/mock';
-import { slugify } from '@/lib/utils';
+import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 
@@ -53,7 +53,9 @@ function NavItem({
 export default function LeftSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const profileHref = `/profile/${slugify(MOCK_USER.name)}`;
+  const { data: session } = useSession();
+  const user = session?.user;
+  const profileHref = `/profile/${slugify(user?.name ?? '')}`;
 
   return (
     <aside className="sticky top-[88px] hidden h-[calc(100vh-88px)] w-[200px] shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 lg:flex">
@@ -61,14 +63,14 @@ export default function LeftSidebar() {
         href={profileHref}
         className="flex items-center gap-2.5 rounded px-1.5 py-2 transition-colors hover:bg-[var(--bg-panel)]"
       >
-        <Avatar initials={MOCK_USER.initials} color={MOCK_USER.avatarColor} size={36} />
+        <Avatar initials={getInitials(user?.name)} color={getAvatarColor(user?.id)} size={36} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-medium text-[var(--text-primary)]">
-            {MOCK_USER.name}
+            {user?.name}
           </div>
           <div className="mt-0.5 flex items-center gap-1.5">
-            <YearBadge year={MOCK_USER.year} />
-            <span className="text-[11px] text-[var(--text-muted)]">{MOCK_USER.dept}</span>
+            <YearBadge year={user?.year} />
+            <span className="text-[11px] text-[var(--text-muted)]">{user?.dept}</span>
           </div>
         </div>
       </Link>

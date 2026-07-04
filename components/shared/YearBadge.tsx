@@ -1,4 +1,4 @@
-export default function YearBadge({ year }: { year: number }) {
+export default function YearBadge({ year }: { year: number | null | undefined }) {
   if (!year) return null;
 
   const suffix = year === 1 ? 'st' : year === 2 ? 'nd' : year === 3 ? 'rd' : 'th';

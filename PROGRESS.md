@@ -4,6 +4,46 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Backend Phase 1 — Real Database, Google OAuth, College Domain Gating
+
+**Status:** Complete (except the live Google OAuth round-trip — see caveat below)
+
+Replaced every piece of Phase 1-6 mock auth with a real Postgres-backed (Neon) schema, NextAuth v5 + Google OAuth, college-domain gating, and middleware-based route protection. `MOCK_USER` no longer exists anywhere in the codebase.
+
+**Schema (`prisma/schema.prisma`):** added `College` (id/name/domainPattern/isActive/createdAt) with nullable `collegeId`/`college` relations on `User`, `Post`, `Comment`, exactly as asked. Also had to add pieces the task didn't spell out but that are structurally required for `PrismaAdapter` to work at all: the standard Auth.js `Account`/`Session`/`VerificationToken` models and `User.emailVerified`, plus made `User.year`/`User.dept` nullable (the adapter creates new users with only `id`/`name`/`email`/`image` — they can't stay `NOT NULL` with no default). Migrated with `prisma migrate dev --name init` directly against the live Neon database and confirmed all 12 tables (plus the implicit join table) exist.
+
+**Prisma 7 + Neon specifics:** Prisma 7 requires an explicit driver adapter now (`new PrismaClient()` with no args throws) — installed `@prisma/adapter-neon` + `@neondatabase/serverless` (HTTP-based, Edge-runtime-friendly, matches the Neon+Vercel stack) and used it in `lib/prisma.ts` and `auth.ts`. Also fixed `prisma.config.ts`, which only loaded `.env` via bare `dotenv/config` — the real `DATABASE_URL` lives in `.env.local`, which Next.js loads automatically but the Prisma CLI does not; added explicit `.env` → `.env.local` (override) loading so `prisma migrate`/`db seed` hit the real database instead of Phase 1's placeholder localhost URL. Prisma 7 also moved seed config out of `package.json` into `prisma.config.ts`'s `migrations.seed` — added both (package.json per the task, prisma.config.ts because that's what actually works).
+
+**Seed (`prisma/seed.ts`):** upserts BBDU/BBDNITM/BBDEC + the `BBD Group` fallback pattern, idempotent by college name. Ran via `prisma db seed`, confirmed all 4 rows in the database.
+
+**Auth (`auth.ts`, NextAuth v5, not v4):** the task's `getServerSession(authOptions)` phrasing is the v4 API — we have `next-auth@5.0.0-beta.31` installed (chosen deliberately in Phase 1), so implemented with v5's actual surface: `auth.ts` exports `{ handlers, auth, signIn, signOut }`, `app/api/auth/[...nextauth]/route.ts` re-exports `handlers`, server components call `auth()` instead of `getServerSession`. `PrismaAdapter` + `GoogleProvider` + `session: { strategy: 'database' }` so `collegeId`/`role`/`year`/`dept` are readable straight off the DB-backed `user` in the `session` callback. Domain matching (`findMatchingCollege`) runs in both `signIn` (allow/deny — returns `'/login?error=domain'` as a redirect string, not a bare `false`, so the URL actually carries `?error=domain` as specified) and `events.createUser` (persists `collegeId` — can't be done in `signIn` itself since the user row doesn't exist yet for a first-time sign-in).
+
+**Middleware (`middleware.ts`):** protects `/home`, `/discussions/:path*`, `/spaces/:path*`, `/post/:path*`, `/profile/:path*`, `/saved/:path*` (redirect → `/landing`) and additionally checks `role === 'ADMIN'` on `/admin/:path*` (redirect → `/home`), exactly as specified.
+
+**Admin panel conflict resolved:** the Phase 6 correction built a separate hardcoded-password gate for `/admin` (`useAdminSessionStore`, `app/admin/login/page.tsx`) specifically because there was no real auth yet — its own comment said "replaced with real hashed auth in the backend phase." Now that middleware does real role-based gating, that mock gate would have actively conflicted (a real ADMIN would pass middleware, then immediately hit a password wall unrelated to their account). Deleted it entirely: `lib/mock/admin.ts`, `store/useAdminSessionStore.ts`, `app/admin/login/page.tsx`. `app/admin/layout.tsx` is now a server component that just reads `auth()` for display and uses a `signOut` server action for logout — middleware alone gates access.
+
+**Login page:** rewritten to a single "Continue with Google" button (`signIn('google', { callbackUrl: '/home' })`), no email/password fields at all. Shows "Only BBD college emails are allowed to join." when the URL has `?error=domain`.
+
+**Replaced `MOCK_USER` everywhere** (10 files: `Navbar`, `LeftSidebar`, `MobileBottomNav`, `SearchOverlay`, `CreatePostBar`, `CommentComposer`, `CommentItem`, `AnswerCard`, `TicketThread`, the profile page) — server components use `await auth()`, client components use `useSession()`. Since real users don't have `initials`/`avatarColor` (those were mock-only convenience fields), added `getInitials()`/`getAvatarColor()` to `lib/utils.ts` — the latter deterministically hashes the user's id onto the existing blue/gray avatar palette so it stays within the Blueprint theme's color rules. Deleted `lib/mock/user.ts` once nothing referenced it.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds, all 16 routes generate correctly
+- Unauthenticated requests to every protected route (`/home`, `/discussions/coding`, `/spaces/resources`, `/post/post-1`, `/profile/anshu`, `/saved`, `/admin`, `/admin/approvals`) redirect to `/landing`, confirmed under both `next dev` and a real `next build` + `next start`
+- `?error=domain` on `/login` renders "Only BBD college emails are allowed to join."
+- Domain-matching logic tested directly against the seeded DB: `bbdu.ac.in`/`bbdnitm.ac.in`/`bbdec.ac.in` all match their college, an arbitrary `bbdxyz123.ac.in` correctly falls through to the `BBD Group` fallback, `gmail.com` is correctly blocked
+- Zero browser console errors across login, landing, and the redirect flow
+
+**Bug found and fixed during QA (this one mattered):** first `next build` + `next start` pass showed `/home` returning **200 instead of redirecting** in production mode, with `[auth][error] UntrustedHost` in the server log — NextAuth v5 rejects the request's `Host` header by default outside Vercel's own auto-detection, and the middleware was failing *open* instead of closed when `auth()` threw internally. Added `trustHost: true` to the NextAuth config; re-tested and every protected route now correctly redirects under a real production build. Without this fix, the entire auth wall — including `/admin` — would have silently done nothing once deployed.
+
+**Known caveat, not fixed (flagging rather than guessing):** `next build` warns that `auth.ts` (loaded by `middleware.ts`, which runs on Next's Edge Runtime) pulls in `@prisma/debug` (`process.stdout`) and `jose`'s `CompressionStream`/`DecompressionStream` — Node.js APIs not guaranteed to exist in Vercel's actual Edge Runtime. The build doesn't hard-fail and local `next start` testing showed no issue, but I have no way to test real Vercel Edge deployment from here. If this causes a runtime error after deploying, the fix is Auth.js's documented "split config" pattern (a separate edge-safe config without the Prisma adapter for middleware, full config for API routes/server components) — did not preemptively restructure the auth architecture for a problem I haven't confirmed actually occurs.
+
+**Also flagging (not changed, since it's exactly what was specified):** the seed's regex patterns aren't anchored, and `new RegExp(pattern, 'i').test(domain)` does unanchored substring matching — verified directly that `student@somebbd.ac.in` and `student@notbbdu.ac.in` also pass, since "bbd...ac.in" appears as a substring. This is a direct consequence of the literal patterns and matching method specified, implemented exactly as given — mentioning it in case tighter anchoring (`^...$`) is wanted later.
+
+**Cannot fully test yet:** the live Google OAuth round-trip. `.env.local` (despite the task description) does not actually contain `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`NEXTAUTH_SECRET`/`NEXTAUTH_URL` — only the Neon/Vercel Postgres vars were present. Added placeholders with setup instructions to `.env` and `.env.example`, and generated a real random `NEXTAUTH_SECRET`. **To actually test "BBD email login → reaches /home" and "Gmail → blocked," real Google Cloud Console OAuth credentials need to be added to `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` in `.env`** (authorized redirect URI: `http://localhost:3000/api/auth/callback/google`). Everything downstream of that (domain matching, session shape, middleware, UI) is verified working.
+
+---
+
 ## Correction — Real Admin Login (replacing the Phase 6 role toggle)
 
 **Status:** Complete

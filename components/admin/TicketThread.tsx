@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ArrowLeft, Send } from 'lucide-react';
 import type { MockTicket, MockTicketMessage } from '@/lib/mock/tickets';
-import { MOCK_USER } from '@/lib/mock';
+import { getInitials, getAvatarColor } from '@/lib/utils';
 import Avatar from '@/components/shared/Avatar';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -25,6 +26,7 @@ interface TicketThreadProps {
 }
 
 export default function TicketThread({ ticket, onBack }: TicketThreadProps) {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState(ticket.messages);
   const [reply, setReply] = useState('');
 
@@ -84,7 +86,7 @@ export default function TicketThread({ ticket, onBack }: TicketThreadProps) {
       </div>
 
       <div className="mt-4 flex gap-2 border-t-[0.5px] border-[var(--border)] pt-4">
-        <Avatar initials={MOCK_USER.initials} color={MOCK_USER.avatarColor} size={24} />
+        <Avatar initials={getInitials(session?.user?.name)} color={getAvatarColor(session?.user?.id)} size={24} />
         <div className="flex-1">
           <textarea
             value={reply}

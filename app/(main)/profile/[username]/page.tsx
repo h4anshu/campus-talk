@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { MOCK_POSTS, MOCK_USER } from '@/lib/mock';
+import { auth } from '@/auth';
+import { MOCK_POSTS } from '@/lib/mock';
 import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
-import { slugify } from '@/lib/utils';
+import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 import ProfileTabs from '@/components/profile/ProfileTabs';
@@ -14,29 +15,31 @@ function flattenAnswersByAuthor(comments: MockComment[], authorName: string): Mo
   return comments.filter((c) => c.author.name === authorName);
 }
 
-export default function ProfilePage({ params }: ProfilePageProps) {
-  const isOwnProfile = slugify(MOCK_USER.name) === params.username;
+export default async function ProfilePage({ params }: ProfilePageProps) {
+  const session = await auth();
+  const currentUser = session?.user;
+  const isOwnProfile = !!currentUser?.name && slugify(currentUser.name) === params.username;
 
   const matchingPost = MOCK_POSTS.find((p) => slugify(p.author.name) === params.username);
 
   const profile = isOwnProfile
     ? {
-        name: MOCK_USER.name,
-        initials: MOCK_USER.initials,
-        year: MOCK_USER.year,
-        dept: MOCK_USER.dept,
-        avatarColor: MOCK_USER.avatarColor,
-        bio: MOCK_USER.bio,
-        reputation: MOCK_USER.reputation,
+        name: currentUser!.name ?? 'Student',
+        initials: getInitials(currentUser!.name),
+        year: currentUser!.year,
+        dept: currentUser!.dept,
+        avatarColor: getAvatarColor(currentUser!.id),
+        bio: null as string | null,
+        reputation: undefined as number | undefined,
       }
     : matchingPost
       ? {
           name: matchingPost.author.name,
           initials: matchingPost.author.initials,
-          year: matchingPost.author.year,
-          dept: matchingPost.author.dept,
+          year: matchingPost.author.year as number | null,
+          dept: matchingPost.author.dept as string | null,
           avatarColor: matchingPost.author.avatarColor,
-          bio: undefined as string | undefined,
+          bio: null as string | null,
           reputation: undefined as number | undefined,
         }
       : null;

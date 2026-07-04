@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { MOCK_USER } from '@/lib/mock';
+import { useSession } from 'next-auth/react';
+import { getInitials, getAvatarColor } from '@/lib/utils';
 import Avatar from '@/components/shared/Avatar';
 
 interface CommentComposerProps {
@@ -15,6 +16,7 @@ export default function CommentComposer({
   onCancel,
   placeholder = 'Write a reply...',
 }: CommentComposerProps) {
+  const { data: session } = useSession();
   const [value, setValue] = useState('');
 
   const submit = () => {
@@ -26,7 +28,7 @@ export default function CommentComposer({
 
   return (
     <div className="mt-2 flex gap-2">
-      <Avatar initials={MOCK_USER.initials} color={MOCK_USER.avatarColor} size={24} />
+      <Avatar initials={getInitials(session?.user?.name)} color={getAvatarColor(session?.user?.id)} size={24} />
       <div className="flex-1">
         <textarea
           autoFocus

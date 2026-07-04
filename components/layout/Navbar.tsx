@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useSession, signOut } from 'next-auth/react';
 import {
   GraduationCap,
   Search,
@@ -28,8 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { COLLEGE_NAME, PLATFORM_NAME } from '@/lib/constants';
-import { MOCK_USER } from '@/lib/mock';
-import { slugify } from '@/lib/utils';
+import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
 import Avatar from '@/components/shared/Avatar';
 import SearchOverlay from '@/components/layout/SearchOverlay';
@@ -49,9 +49,11 @@ function NavBadge({ count }: { count: number }) {
 
 export default function Navbar() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [searchOpen, setSearchOpen] = useState(false);
   const openCreatePost = useCreatePostStore((s) => s.openDialog);
-  const profileHref = `/profile/${slugify(MOCK_USER.name)}`;
+  const user = session?.user;
+  const profileHref = `/profile/${slugify(user?.name ?? '')}`;
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -157,7 +159,7 @@ export default function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="ml-1 flex items-center gap-1 rounded py-1 pl-1 pr-1.5 transition-colors hover:bg-[var(--bg-panel)]">
-                <Avatar initials={MOCK_USER.initials} color={MOCK_USER.avatarColor} size={28} online />
+                <Avatar initials={getInitials(user?.name)} color={getAvatarColor(user?.id)} size={28} online />
                 <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)]" />
               </button>
             </DropdownMenuTrigger>
@@ -166,7 +168,7 @@ export default function Navbar() {
               className="w-[220px] border-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-primary)]"
             >
               <DropdownMenuLabel className="text-[12px] text-[var(--text-secondary)]">
-                {MOCK_USER.name}
+                {user?.name}
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[var(--border)]" />
               <DropdownMenuItem className="gap-2 text-[13px]" onClick={() => router.push(profileHref)}>
@@ -193,7 +195,7 @@ export default function Navbar() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2 text-[13px] text-[var(--danger)] focus:text-[var(--danger)]"
-                onClick={() => router.push('/landing')}
+                onClick={() => signOut({ callbackUrl: '/landing' })}
               >
                 <LogOut className="h-4 w-4" /> Log out
               </DropdownMenuItem>

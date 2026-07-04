@@ -4,16 +4,17 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Search, Plus, Bookmark, User } from 'lucide-react';
-import { MOCK_USER } from '@/lib/mock';
+import { useSession } from 'next-auth/react';
 import { slugify } from '@/lib/utils';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
 import SearchOverlay from '@/components/layout/SearchOverlay';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [searchOpen, setSearchOpen] = useState(false);
   const openCreatePost = useCreatePostStore((s) => s.openDialog);
-  const profileHref = `/profile/${slugify(MOCK_USER.name)}`;
+  const profileHref = `/profile/${slugify(session?.user?.name ?? '')}`;
 
   const tabs = [
     { key: 'home', label: 'Home', icon: Home, href: '/home' },

@@ -38,3 +38,6 @@ Thumbs.db
 
 # Claude Code local tooling/skill cache (not project source)
 .claude
+
+.vercel
+.env*

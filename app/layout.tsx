@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
+import Providers from '@/components/shared/Providers';
 
 export const metadata: Metadata = {
   title: 'CampusVoice — SITM College Forum',
@@ -15,17 +16,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
-        <Toaster
-          style={
-            {
-              '--normal-bg': 'var(--bg-elevated)',
-              '--normal-text': 'var(--text-primary)',
-              '--normal-border': 'var(--border)',
-              '--border-radius': 'var(--radius)',
-            } as React.CSSProperties
-          }
-        />
+        <Providers>
+          {children}
+          <Toaster
+            style={
+              {
+                '--normal-bg': 'var(--bg-elevated)',
+                '--normal-text': 'var(--text-primary)',
+                '--normal-border': 'var(--border)',
+                '--border-radius': 'var(--radius)',
+              } as React.CSSProperties
+            }
+          />
+        </Providers>
       </body>
     </html>
   );

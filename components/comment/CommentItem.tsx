@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, Reply as ReplyIcon } from 'lucide-react';
 import type { MockComment } from '@/lib/mock/comments';
-import { MOCK_USER } from '@/lib/mock';
+import { getInitials, getAvatarColor } from '@/lib/utils';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 import CommentComposer from '@/components/comment/CommentComposer';
@@ -27,6 +28,7 @@ interface CommentItemProps {
 }
 
 export default function CommentItem({ comment, depth, postAuthorName }: CommentItemProps) {
+  const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [replying, setReplying] = useState(false);
   const [upvoted, setUpvoted] = useState(false);
@@ -41,11 +43,11 @@ export default function CommentItem({ comment, depth, postAuthorName }: CommentI
       id: `${comment.id}-local-${Date.now()}`,
       body,
       author: {
-        name: MOCK_USER.name,
-        initials: MOCK_USER.initials,
-        year: MOCK_USER.year,
-        dept: MOCK_USER.dept,
-        avatarColor: MOCK_USER.avatarColor,
+        name: session?.user?.name ?? 'You',
+        initials: getInitials(session?.user?.name),
+        year: session?.user?.year ?? 0,
+        dept: session?.user?.dept ?? '',
+        avatarColor: getAvatarColor(session?.user?.id),
       },
       voteCount: 0,
       createdAt: new Date(),

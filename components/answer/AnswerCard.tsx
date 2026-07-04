@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { CheckCircle2, ChevronUp, ChevronDown, Reply as ReplyIcon } from 'lucide-react';
 import type { MockComment } from '@/lib/mock/comments';
-import { MOCK_USER } from '@/lib/mock';
+import { getInitials, getAvatarColor } from '@/lib/utils';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 import CommentComposer from '@/components/comment/CommentComposer';
@@ -16,6 +17,7 @@ interface AnswerCardProps {
 }
 
 export default function AnswerCard({ answer, postAuthorName }: AnswerCardProps) {
+  const { data: session } = useSession();
   const [vote, setVote] = useState<'up' | 'down' | null>(null);
   const [replying, setReplying] = useState(false);
   const [replies, setReplies] = useState(answer.replies);
@@ -28,11 +30,11 @@ export default function AnswerCard({ answer, postAuthorName }: AnswerCardProps) 
       id: `${answer.id}-local-${Date.now()}`,
       body,
       author: {
-        name: MOCK_USER.name,
-        initials: MOCK_USER.initials,
-        year: MOCK_USER.year,
-        dept: MOCK_USER.dept,
-        avatarColor: MOCK_USER.avatarColor,
+        name: session?.user?.name ?? 'You',
+        initials: getInitials(session?.user?.name),
+        year: session?.user?.year ?? 0,
+        dept: session?.user?.dept ?? '',
+        avatarColor: getAvatarColor(session?.user?.id),
       },
       voteCount: 0,
       createdAt: new Date(),
