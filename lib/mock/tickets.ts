@@ -1,8 +1,8 @@
 export interface MockTicketUser {
   name: string;
   initials: string;
-  year: number;
-  dept: string;
+  year: number | null;
+  dept: string | null;
   avatarColor: string;
 }
 
@@ -16,6 +16,7 @@ export interface MockTicketMessage {
 export interface MockTicket {
   id: string;
   subject: string;
+  type?: string;
   status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
   user: MockTicketUser;
   createdAt: Date;

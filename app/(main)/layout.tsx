@@ -4,6 +4,7 @@ import LeftSidebar from '@/components/layout/LeftSidebar';
 import RightSidebar from '@/components/layout/RightSidebar';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
 import CreatePostDialog from '@/components/post/CreatePostDialog';
+import ContactAdminDialog from '@/components/shared/ContactAdminDialog';
 
 export default function MainLayout({
   children,
@@ -21,6 +22,7 @@ export default function MainLayout({
       </div>
       <MobileBottomNav />
       <CreatePostDialog />
+      <ContactAdminDialog />
     </div>
   );
 }

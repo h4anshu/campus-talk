@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LifeBuoy, Settings } from 'lucide-react';
-import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { SPACES, TOPICS } from '@/lib/constants';
 import { ICON_MAP } from '@/lib/icon-map';
 import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
+import { useContactAdminStore } from '@/store/useContactAdminStore';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 
@@ -56,6 +56,7 @@ export default function LeftSidebar() {
   const { data: session } = useSession();
   const user = session?.user;
   const profileHref = `/profile/${slugify(user?.name ?? '')}`;
+  const { openDialog } = useContactAdminStore();
 
   return (
     <aside className="sticky top-[88px] hidden h-[calc(100vh-88px)] w-[200px] shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 lg:flex">
@@ -112,7 +113,7 @@ export default function LeftSidebar() {
 
       <div className="mt-auto flex flex-col gap-1 pt-4">
         <button
-          onClick={() => toast('Ticket submitted to admin')}
+          onClick={openDialog}
           className="flex items-center gap-2.5 rounded px-2.5 py-1.5 text-left text-[13px] text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-panel)] hover:text-[var(--text-secondary)]"
         >
           <LifeBuoy className="h-4 w-4" />

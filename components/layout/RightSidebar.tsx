@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { TrendingUp, CalendarDays, LifeBuoy } from 'lucide-react';
-import { toast } from 'sonner';
 import { MOCK_TRENDING, MOCK_EVENTS } from '@/lib/mock';
+import { useContactAdminStore } from '@/store/useContactAdminStore';
 
 const COMMUNITY_STATS = [
   { label: 'Students', value: '847' },
@@ -13,6 +13,8 @@ const COMMUNITY_STATS = [
 ];
 
 export default function RightSidebar() {
+  const { openDialog } = useContactAdminStore();
+
   return (
     <aside className="sticky top-[88px] hidden h-[calc(100vh-88px)] w-[180px] shrink-0 flex-col gap-6 overflow-y-auto border-l-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 xl:flex">
       <div>
@@ -72,7 +74,7 @@ export default function RightSidebar() {
       </div>
 
       <button
-        onClick={() => toast('Ticket submitted to admin')}
+        onClick={openDialog}
         className="mt-auto flex items-center justify-center gap-1.5 rounded border-[0.5px] border-[var(--border-med)] px-2.5 py-2 text-[12px] text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-panel)] hover:text-[var(--text-primary)]"
       >
         <LifeBuoy className="h-3.5 w-3.5" />

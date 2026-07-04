@@ -147,6 +147,7 @@ model Post {
   space     SpaceType?
   topic     TopicType?
   status    PostStatus @default(PENDING)
+  rejectionReason String?
   anonymous Boolean    @default(false)
   pinned    Boolean    @default(false)
   locked    Boolean    @default(false)

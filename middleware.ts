@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// '/admin' is intentionally NOT here — admin auth is a completely separate
+// signed-cookie system (see lib/admin-auth.ts), unrelated to the student
+// NextAuth session this middleware checks for below. Its own gating happens
+// server-side in app/admin/(protected)/layout.tsx.
 const protectedRoutes = ['/home', '/discussions', '/spaces',
-  '/post', '/profile', '/saved', '/admin'];
+  '/post', '/profile', '/saved', '/tickets'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,6 +37,6 @@ export const config = {
     '/post/:path*',
     '/profile/:path*',
     '/saved/:path*',
-    '/admin/:path*',
+    '/tickets/:path*',
   ]
 };

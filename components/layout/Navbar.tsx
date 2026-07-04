@@ -31,12 +31,12 @@ import {
 import { COLLEGE_NAME, PLATFORM_NAME } from '@/lib/constants';
 import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
+import { useTickets } from '@/hooks/useTickets';
 import Avatar from '@/components/shared/Avatar';
 import SearchOverlay from '@/components/layout/SearchOverlay';
 
 const MESSAGE_COUNT = 3;
 const NOTIFICATION_COUNT = 5;
-const ADMIN_MESSAGE_COUNT = 2;
 
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -54,6 +54,8 @@ export default function Navbar() {
   const openCreatePost = useCreatePostStore((s) => s.openDialog);
   const user = session?.user;
   const profileHref = `/profile/${slugify(user?.name ?? '')}`;
+  const { data: tickets } = useTickets();
+  const openTicketCount = tickets?.filter((t) => t.status !== 'RESOLVED').length ?? 0;
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -180,12 +182,12 @@ export default function Navbar() {
               <DropdownMenuItem className="gap-2 text-[13px]" onClick={() => router.push('/saved')}>
                 <Bookmark className="h-4 w-4" /> Saved posts
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 text-[13px]" onClick={() => toast('Admin messages — coming soon')}>
+              <DropdownMenuItem className="gap-2 text-[13px]" onClick={() => router.push('/tickets')}>
                 <ShieldQuestion className="h-4 w-4" />
                 Admin messages
-                {ADMIN_MESSAGE_COUNT > 0 && (
+                {openTicketCount > 0 && (
                   <span className="ml-auto rounded-full bg-[var(--danger)] px-1.5 text-[10px] text-white">
-                    {ADMIN_MESSAGE_COUNT}
+                    {openTicketCount}
                   </span>
                 )}
               </DropdownMenuItem>

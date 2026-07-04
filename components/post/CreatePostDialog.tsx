@@ -10,6 +10,7 @@ import RichTextEditor from '@/components/editor/RichTextEditor';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
 import { useCreatePost } from '@/hooks/useCreatePost';
 import { TOPICS, type TopicKey } from '@/lib/constants';
+import { fetchJson } from '@/lib/api-client';
 
 const DESTINATIONS = [
   { key: 'discussion', label: 'Discussion' },
@@ -30,6 +31,7 @@ export default function CreatePostDialog() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [draftState, setDraftState] = useState<DraftState>('idle');
+  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; publicId: string }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const markDirty = () => {
@@ -50,6 +52,7 @@ export default function CreatePostDialog() {
     setTitle('');
     setBody('');
     setDraftState('idle');
+    setUploadedMedia([]);
   };
 
   const canPost = title.trim().length >= 5 && (destination !== 'discussion' || !!topic) && !isPending;
@@ -71,6 +74,16 @@ export default function CreatePostDialog() {
 
     createPost(payload, {
       onSuccess: (post) => {
+        // The image is already embedded in `post.body` (inserted into the
+        // editor at upload time), so this is just recording it as a proper
+        // Media row too — best-effort, doesn't block navigating to the post.
+        for (const media of uploadedMedia) {
+          fetchJson('/api/media', {
+            method: 'POST',
+            body: JSON.stringify({ postId: post.id, url: media.url, providerId: media.publicId, type: 'image' }),
+          }).catch(() => {});
+        }
+
         closeDialog();
         reset();
         toast(post.status === 'PENDING' ? 'Post submitted for admin approval' : 'Post created');
@@ -153,6 +166,9 @@ export default function CreatePostDialog() {
                   setBody(html);
                   markDirty();
                 }}
+                onImageUploaded={(url, publicId) =>
+                  setUploadedMedia((prev) => [...prev, { url, publicId }])
+                }
                 placeholder={`Write your ${DESTINATIONS.find((d) => d.key === destination)?.label.toLowerCase()} post...`}
               />
             </div>

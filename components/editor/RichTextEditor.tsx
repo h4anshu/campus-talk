@@ -1,15 +1,29 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
-import { Bold, Italic, Code, List, Link2, ImagePlus, Video } from 'lucide-react';
+import Image from '@tiptap/extension-image';
+import { Bold, Italic, Code, List, Link2, ImagePlus, Video, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchJson } from '@/lib/api-client';
 
 interface RichTextEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
+  /** Fires once the file has actually landed in Cloudinary, so the composer
+   * can also record it as a Media row once the post itself exists. */
+  onImageUploaded?: (url: string, publicId: string) => void;
+}
+
+interface SignatureResponse {
+  signature: string;
+  timestamp: number;
+  apiKey: string;
+  cloudName: string;
+  folder: string;
 }
 
 function ToolbarButton({
@@ -42,13 +56,18 @@ function ToolbarButton({
 export default function RichTextEditor({
   onChange,
   placeholder = 'Write your post...',
+  onImageUploaded,
 }: RichTextEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit,
       Placeholder.configure({ placeholder }),
       Link.configure({ openOnClick: false, autolink: true }),
+      Image,
     ],
     editorProps: {
       attributes: {
@@ -65,6 +84,38 @@ export default function RichTextEditor({
     const url = window.prompt('Enter a URL');
     if (!url) return;
     editor.chain().focus().setLink({ href: url }).run();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const sig = await fetchJson<SignatureResponse>('/api/upload/signature', { method: 'POST' });
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sig.apiKey);
+      formData.append('timestamp', String(sig.timestamp));
+      formData.append('signature', sig.signature);
+      formData.append('folder', sig.folder);
+
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!uploadRes.ok) throw new Error('Upload to Cloudinary failed');
+      const uploaded = (await uploadRes.json()) as { secure_url: string; public_id: string };
+
+      editor.chain().focus().setImage({ src: uploaded.secure_url }).run();
+      onImageUploaded?.(uploaded.secure_url, uploaded.public_id);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Image upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -106,10 +157,17 @@ export default function RichTextEditor({
 
         <ToolbarButton
           label="Upload image"
-          onClick={() => toast('Image upload — coming soon')}
+          onClick={() => fileInputRef.current?.click()}
         >
-          <ImagePlus className="h-3.5 w-3.5" />
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
         </ToolbarButton>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileSelected}
+        />
         <ToolbarButton
           label="Embed YouTube video"
           onClick={() => toast('Paste a YouTube link — embedding coming soon')}

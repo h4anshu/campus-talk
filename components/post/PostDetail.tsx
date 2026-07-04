@@ -43,7 +43,7 @@ export default function PostDetail({ post }: PostDetailProps) {
 
         {/* post.body is server-sanitized HTML (Tiptap output) — safe to render directly. */}
         <div
-          className="mt-3 text-[13px] leading-[1.75] text-[var(--text-secondary)] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc"
+          className="mt-3 text-[13px] leading-[1.75] text-[var(--text-secondary)] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_img]:mt-2 [&_img]:max-w-full [&_img]:rounded-[9px] [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc"
           dangerouslySetInnerHTML={{ __html: post.body }}
         />
 
