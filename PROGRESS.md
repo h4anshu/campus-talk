@@ -4,6 +4,35 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — YouTube/Drive paste-embed detection (feature never actually existed)
+
+**Status:** Complete, typechecked, built, deployed. Live click-through handed to the user.
+
+**Reported as a bug ("Phase 4 was supposed to build this") — it wasn't.** Investigated before writing anything: grepped the whole repo for `YoutubeEmbed`, `DriveCard`, `paste`, `embed` — the only hits were CLAUDE.md's planned component list, a Zod enum in `/api/media` that *accepted* `video`/`youtube`/`drive` as media types without anything ever producing them, and a toolbar button whose entire implementation was `onClick={() => toast('Paste a YouTube link — embedding coming soon')}`. `components/media/` was an empty directory. Checked PROGRESS.md too — no phase ever claimed this was built. So the five debugging steps in the request (confirm the paste listener is registered, confirm the regex, confirm it calls the Media API, etc.) all had the same answer: none of it existed to check. Built it for real instead of pretending to "fix" a pre-existing implementation.
+
+**`lib/embed.ts`:** regex detection for YouTube (`youtube.com/watch?v=`, `/embed/`, `/shorts/`, and `youtu.be/` short links) and Google Drive (`file/d/ID`, `open?id=ID`, `drive/folders/ID`). Verified directly against the exact URL from the report, `https://youtu.be/b4d32pBa3UY?si=xxxx` — the video-ID capture group is `{11}` chars exactly, so it stops matching before the `?si=...` query string rather than needing special-case handling for it.
+
+**Real paste detection:** added `editorProps.handlePaste` to `RichTextEditor`'s Tiptap config — a plain-text paste matching either pattern is replaced with a visible embed card instead of being left for Tiptap Link's default autolink to turn into a plain blue hyperlink. The card is deliberately static markup (`<div class="cv-embed">` + `<img>`/`<a>`, no iframe, no client JS) so it survives `sanitizeBody` unchanged and renders identically in the composer, card previews, and the full post page. Added `div` (with `class`/`data-video-id`/`data-url` only) to the sanitize-html allowlist for this. Also rewired the "Embed YouTube video" toolbar button (previously the toast stub) to prompt for a URL and run the same detection, for anyone who doesn't paste.
+
+**Media persisted properly, not just visually embedded:** generalized last phase's image-only `images: string[]` into a full `media: {type, url, providerId, thumbnailUrl}[]` on the post serializer, matching what the `Media` Prisma model already supported end to end (its `type`/`providerId`/`thumbnailUrl` columns existed since Phase 1's base schema but were never selected or surfaced to the client). `CreatePostDialog` and the admin Compose page collect detected embeds via the same `pendingMedia` pattern already used for uploaded images, and record each as a real `Media` row once the post exists (`Media.postId` is required, same ordering constraint noted in the Cloudinary phase).
+
+**Built the two components CLAUDE.md names but nothing had ever created:** `components/media/YoutubeEmbed.tsx` (a real playable iframe) and `DriveCard.tsx` (an "Open in Google Drive" card) — wired into `PostDetail` for a richer full-page experience layered on top of the static thumbnail card already in the body.
+
+**Fixed `ResourceCard` — this is what "0 votes · 0 comments" and no thumbnail turned out to be about:** it never rendered any `Media` at all, only the mock-only `resourceType`/`driveUrl` fields that real API posts have always left `undefined`. That's the actual reason a real Resources post showed a blank icon: not a symptom of the missing embed feature, a separate pre-existing gap in the same component. Now prefers real `Media` (image thumbnail → YouTube thumbnail → Drive link) and falls back to the mock fields only for legacy mock data.
+
+**Deliberately left alone:** "0 votes · 0 comments · 0 views" on a freshly created post is not a bug — a new post genuinely has zero votes and comments, and `viewCount` has been hardcoded to `0` since Phase 2 (view tracking was never built). "Helpful · 0" likewise has never had real persistence in any phase — it's a local `useState` toggle with nowhere to save to. Flagging these as known, pre-existing simplifications rather than silently inventing fake numbers or new persistence systems that weren't asked for.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds (same benign `DYNAMIC_SERVER_USAGE` notice as every prior phase, exit 0)
+- Regex tested directly (Node, not just visually inspected) against all 6 YouTube URL shapes plus the exact failing `youtu.be/...?si=xxxx` case, and all 3 Drive URL shapes — all matched correctly
+- `sanitizeBody` tested directly against a real embed-card HTML string plus an injected `<script>` — the card survives intact, the script is stripped
+- Pushed to `main`, Vercel redeployed, confirmed `● Ready`; unauthenticated smoke checks against the live URL (`/api/media`, `/api/posts`, `/spaces/resources`) all return the expected 401/404/307 — no 500s
+
+**Not verified — the same constraint as every phase so far:** actually pasting the link into a real composer and watching a real embed card render needs a working authenticated student session, which I still can't complete myself (no real Google account). The user is testing this directly on the deployed URL.
+
+---
+
 ## Fix — Admin post creation/image thumbnails, and a real ticket chat
 
 **Status:** Complete, typechecked, built, deployed. Live authenticated click-through handed to the user — same OAuth/admin-password constraint as every prior phase.
