@@ -26,7 +26,7 @@ export async function GET() {
         })();
 
     return NextResponse.json({
-      tickets: tickets.map((t) => serializeTicket(t as TicketForSerialization)),
+      tickets: tickets.map((t) => serializeTicket(t as TicketForSerialization, admin)),
     });
   } catch (error) {
     return handleApiError(error);
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { ticket: serializeTicket(ticket as TicketForSerialization) },
+      { ticket: serializeTicket(ticket as TicketForSerialization, false) },
       { status: 201 }
     );
   } catch (error) {

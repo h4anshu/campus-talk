@@ -15,7 +15,11 @@ function hydrateTicket(ticket: MockTicket): MockTicket {
   };
 }
 
-/** Server scopes this to the caller's own tickets, or every ticket if the caller is admin. */
+/**
+ * Server scopes this to the caller's own tickets, or every ticket if the
+ * caller is admin. Polls every 15s so both sides notice new messages without
+ * Supabase Realtime (that's a later phase) — cheap enough at this scale.
+ */
 export function useTickets() {
   return useQuery({
     queryKey: TICKETS_KEY,
@@ -23,6 +27,7 @@ export function useTickets() {
       const data = await fetchJson<{ tickets: MockTicket[] }>('/api/tickets');
       return data.tickets.map(hydrateTicket);
     },
+    refetchInterval: 15_000,
   });
 }
 
@@ -50,6 +55,14 @@ export function useReplyTicket(ticketId: string) {
       });
       return data.message;
     },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: TICKETS_KEY }),
+  });
+}
+
+export function useMarkTicketRead(ticketId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => fetchJson(`/api/tickets/${ticketId}/read`, { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: TICKETS_KEY }),
   });
 }

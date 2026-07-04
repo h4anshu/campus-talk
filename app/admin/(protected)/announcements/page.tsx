@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Pin, Megaphone } from 'lucide-react';
+import { Pin, Megaphone, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import RichTextEditor from '@/components/editor/RichTextEditor';
+import { useCreateAdminPost } from '@/hooks/useAdminPosts';
+import { fetchJson } from '@/lib/api-client';
 
 const PRIORITIES = ['Critical', 'Info', 'General'] as const;
 type Priority = (typeof PRIORITIES)[number];
@@ -15,17 +17,41 @@ const PRIORITY_STYLES: Record<Priority, string> = {
 };
 
 export default function ComposeAnnouncementPage() {
+  const { mutate: createPost, isPending } = useCreateAdminPost();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [priority, setPriority] = useState<Priority>('Info');
   const [pinned, setPinned] = useState(false);
+  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; publicId: string }[]>([]);
+
+  const canPublish = title.trim().length >= 5 && !isPending;
 
   const publish = () => {
-    setTitle('');
-    setBody('');
-    setPriority('Info');
-    setPinned(false);
-    toast('Announcement published');
+    if (!canPublish) return;
+
+    createPost(
+      { title, body, space: 'announcements', priority, pinned, tags: [] },
+      {
+        onSuccess: (post) => {
+          for (const media of uploadedMedia) {
+            fetchJson('/api/media', {
+              method: 'POST',
+              body: JSON.stringify({ postId: post.id, url: media.url, providerId: media.publicId, type: 'image' }),
+            }).catch(() => {});
+          }
+
+          setTitle('');
+          setBody('');
+          setPriority('Info');
+          setPinned(false);
+          setUploadedMedia([]);
+          toast(`Announcement published — visible now at /spaces/announcements`);
+        },
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : 'Failed to publish announcement');
+        },
+      }
+    );
   };
 
   return (
@@ -74,15 +100,20 @@ export default function ComposeAnnouncementPage() {
       />
 
       <div className="mt-3">
-        <RichTextEditor onChange={setBody} placeholder="Write the announcement..." />
+        <RichTextEditor
+          onChange={setBody}
+          placeholder="Write the announcement..."
+          onImageUploaded={(url, publicId) => setUploadedMedia((prev) => [...prev, { url, publicId }])}
+        />
       </div>
 
       <div className="mt-4 flex justify-end">
         <button
           onClick={publish}
-          disabled={!title.trim()}
-          className="rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!canPublish}
+          className="flex items-center gap-1.5 rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
+          {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           Publish announcement
         </button>
       </div>

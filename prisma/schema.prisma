@@ -148,6 +148,7 @@ model Post {
   topic     TopicType?
   status    PostStatus @default(PENDING)
   rejectionReason String?
+  priority  String?
   anonymous Boolean    @default(false)
   pinned    Boolean    @default(false)
   locked    Boolean    @default(false)
@@ -238,6 +239,11 @@ model Ticket {
   body      String       @db.Text
   type      String       // POST_REQUEST | REPORT | QUERY
   status    TicketStatus @default(OPEN)
+  // Tracks only whether admin has ever opened this ticket — the opening
+  // message lives on the Ticket row itself (subject/body), not as a
+  // TicketMessage, so it needs its own read flag separate from the
+  // per-message TicketMessage.isRead below.
+  openedByAdmin Boolean  @default(false)
   userId    String
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
@@ -250,8 +256,11 @@ model TicketMessage {
   id        String   @id @default(cuid())
   body      String   @db.Text
   fromAdmin Boolean  @default(false)
+  // Whether the *recipient* (the side that didn't send this message) has
+  // seen it yet — flips to true when they open the ticket detail view.
+  isRead    Boolean  @default(false)
   ticketId  String
   createdAt DateTime @default(now())
 
-  ticket Ticket @relation(fields: [ticketId], references: [id])
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }

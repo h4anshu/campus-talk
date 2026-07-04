@@ -1,6 +1,9 @@
 import crypto from 'crypto';
 import { cookies } from 'next/headers';
 import { ApiError } from '@/lib/api-helpers';
+import { prisma } from '@/lib/prisma';
+
+const ADMIN_OFFICE_EMAIL = 'admin-office@campusvoice.system';
 
 // Admin panel auth is a single shared password, completely decoupled from
 // student Google OAuth/NextAuth — there is no admin User row, no email, no
@@ -48,4 +51,24 @@ export async function requireAdmin(): Promise<void> {
   if (!(await isAdminSession())) {
     throw new ApiError('Admin authentication required', 401);
   }
+}
+
+/**
+ * The admin panel has no real User account of its own (see the module
+ * comment above) — but Post.authorId is a required FK. Admin-authored
+ * content (announcements, events) is attributed to a single stable system
+ * user instead, created lazily on first use. `collegeId: null` marks it as
+ * platform-wide, not scoped to any one college.
+ */
+export async function getOrCreateAdminOfficeUser() {
+  return prisma.user.upsert({
+    where: { email: ADMIN_OFFICE_EMAIL },
+    update: {},
+    create: {
+      name: 'Admin Office',
+      email: ADMIN_OFFICE_EMAIL,
+      role: 'ADMIN',
+      collegeId: null,
+    },
+  });
 }

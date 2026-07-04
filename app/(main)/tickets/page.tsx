@@ -70,6 +70,9 @@ export default function MyTicketsPage() {
                 className="rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 text-left transition-colors hover:border-[var(--border-med)]"
               >
                 <div className="flex flex-wrap items-center gap-2">
+                  {ticket.unread && (
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--accent)]" aria-label="Unread" />
+                  )}
                   <span className="text-[13px] font-medium text-[var(--text-primary)]">{ticket.subject}</span>
                   <span
                     className={`rounded-full border-[0.5px] px-2 py-0.5 text-[10px] font-medium ${STATUS_STYLES[ticket.status]}`}

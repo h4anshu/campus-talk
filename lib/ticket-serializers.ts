@@ -15,7 +15,13 @@ export type TicketForSerialization = Ticket & {
 // ticket as a subject + a flat `messages[]` thread with no separate `body`.
 // Rather than changing either the schema or the UI, this synthesizes that
 // opening message from `ticket.body` so both sides stay compatible.
-export function serializeTicket(ticket: TicketForSerialization): MockTicket {
+export function serializeTicket(ticket: TicketForSerialization, viewerIsAdmin: boolean): MockTicket {
+  // The opening message is authored by the student, so it's never "unread"
+  // for them — only admin needs `openedByAdmin` to know if they've seen it.
+  const unread = viewerIsAdmin
+    ? !ticket.openedByAdmin || ticket.messages.some((m) => !m.fromAdmin && !m.isRead)
+    : ticket.messages.some((m) => m.fromAdmin && !m.isRead);
+
   return {
     id: ticket.id,
     subject: ticket.subject,
@@ -38,5 +44,6 @@ export function serializeTicket(ticket: TicketForSerialization): MockTicket {
         createdAt: m.createdAt,
       })),
     ],
+    unread,
   };
 }

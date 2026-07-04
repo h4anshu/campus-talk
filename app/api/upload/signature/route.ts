@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
+import { isAdminSession } from '@/lib/admin-auth';
 
 // The API secret never leaves the server — the browser gets back a signature
 // for these exact params, uploads straight to Cloudinary itself, and Cloudinary
-// verifies the signature matches before accepting the file.
+// verifies the signature matches before accepting the file. Used by both the
+// student composer (real session) and the admin announcement composer
+// (admin_session cookie, no student account) — same upload path either way.
 export async function POST() {
   try {
-    await getSessionOrThrow();
+    if (!(await isAdminSession())) {
+      await getSessionOrThrow();
+    }
 
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
     const apiKey = process.env.CLOUDINARY_API_KEY;

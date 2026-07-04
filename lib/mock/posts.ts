@@ -52,6 +52,10 @@ export interface MockPost {
   lostFoundStatus?: 'LOST' | 'FOUND' | 'RESOLVED';
   hasImage?: boolean;
   location?: string;
+  // Real Media rows attached to this post (undefined for mock data) — used
+  // for card-view thumbnails, separate from any <img> already embedded in
+  // the sanitized `body` HTML itself.
+  images?: string[];
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);

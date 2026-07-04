@@ -56,6 +56,7 @@ export default function Navbar() {
   const profileHref = `/profile/${slugify(user?.name ?? '')}`;
   const { data: tickets } = useTickets();
   const openTicketCount = tickets?.filter((t) => t.status !== 'RESOLVED').length ?? 0;
+  const unreadTicketCount = tickets?.filter((t) => t.unread).length ?? 0;
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -127,7 +128,7 @@ export default function Navbar() {
             <DropdownMenuTrigger asChild>
               <button className="relative flex h-8 w-8 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-panel)] hover:text-[var(--text-primary)]">
                 <Bell className="h-[18px] w-[18px]" />
-                <NavBadge count={NOTIFICATION_COUNT} />
+                <NavBadge count={NOTIFICATION_COUNT + unreadTicketCount} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -138,6 +139,11 @@ export default function Navbar() {
                 Notifications
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[var(--border)]" />
+              {unreadTicketCount > 0 && (
+                <DropdownMenuItem className="text-[12px]" onClick={() => router.push('/tickets')}>
+                  {unreadTicketCount} new admin message{unreadTicketCount === 1 ? '' : 's'}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem className="text-[12px]" onClick={() => router.push('/home')}>
                 {NOTIFICATION_COUNT} new notifications
               </DropdownMenuItem>

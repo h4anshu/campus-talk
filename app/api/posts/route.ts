@@ -18,7 +18,9 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.PostWhereInput = {
       status: 'APPROVED',
-      collegeId: session.user.collegeId,
+      // Admin-authored posts (announcements/events) have collegeId: null —
+      // platform-wide, visible to every college — alongside the viewer's own.
+      OR: [{ collegeId: session.user.collegeId }, { collegeId: null }],
     };
     if (topicKey) {
       where.type = 'DISCUSSION';

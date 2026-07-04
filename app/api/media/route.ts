@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
+import { isAdminSession, getOrCreateAdminOfficeUser } from '@/lib/admin-auth';
 
 const createMediaSchema = z.object({
   postId: z.string().min(1),
@@ -12,13 +13,22 @@ const createMediaSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSessionOrThrow();
+    const admin = await isAdminSession();
     const data = createMediaSchema.parse(await req.json());
 
     const post = await prisma.post.findUnique({ where: { id: data.postId }, select: { authorId: true } });
     if (!post) throw new ApiError('Post not found', 404);
-    if (post.authorId !== session.user.id) {
-      throw new ApiError('You can only attach media to your own posts', 403);
+
+    if (admin) {
+      const adminOffice = await getOrCreateAdminOfficeUser();
+      if (post.authorId !== adminOffice.id) {
+        throw new ApiError('You can only attach media to your own posts', 403);
+      }
+    } else {
+      const session = await getSessionOrThrow();
+      if (post.authorId !== session.user.id) {
+        throw new ApiError('You can only attach media to your own posts', 403);
+      }
     }
 
     const media = await prisma.media.create({

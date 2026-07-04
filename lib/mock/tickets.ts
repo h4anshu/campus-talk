@@ -21,6 +21,10 @@ export interface MockTicket {
   user: MockTicketUser;
   createdAt: Date;
   messages: MockTicketMessage[];
+  // Whether the *current viewer* (whichever side they're on) has an unseen
+  // message on this ticket. Computed server-side per request, since "unread"
+  // is relative to who's asking — undefined for mock data.
+  unread?: boolean;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
