@@ -104,7 +104,9 @@ export default function AnswerCard({ answer, postId, postAuthorName, viewerIsAut
           </span>
         </div>
 
-        <p className="mt-2 text-[13px] leading-[1.7] text-[var(--text-secondary)]">{answer.body}</p>
+        <p className="mt-2 break-words text-[13px] leading-[1.7] text-[var(--text-secondary)] [word-break:break-word]">
+          {answer.body}
+        </p>
 
         <button
           onClick={() => setReplying((r) => !r)}

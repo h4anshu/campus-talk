@@ -69,7 +69,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
         </button>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <h1 className="text-[16px] font-medium text-[var(--text-primary)]">{ticket.subject}</h1>
+          <h1 className="break-words text-[16px] font-medium text-[var(--text-primary)]">{ticket.subject}</h1>
           {viewerIsAdmin ? (
             <select
               value={ticket.status}
@@ -112,7 +112,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
                       : 'border-[var(--border)] bg-[var(--bg-surface)]'
                   }`}
                 >
-                  <p className="text-[12px] leading-relaxed text-[var(--text-primary)]">{msg.body}</p>
+                  <p className="break-words text-[12px] leading-relaxed text-[var(--text-primary)]">{msg.body}</p>
                 </div>
                 <span
                   className="mt-1 px-1 text-[10px] text-[var(--text-muted)]"

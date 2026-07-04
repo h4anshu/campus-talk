@@ -80,7 +80,9 @@ export default function ProfileTabs({ posts, answers, isOwnProfile }: ProfileTab
                     Accepted answer
                   </div>
                 )}
-                <p className="text-[12px] leading-relaxed text-[var(--text-secondary)]">{answer.body}</p>
+                <p className="line-clamp-2 break-words text-[12px] leading-relaxed text-[var(--text-secondary)]">
+                  {answer.body}
+                </p>
                 <div className="mt-2 flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
                   <span className="flex items-center gap-1">
                     <ChevronUp className="h-3.5 w-3.5" />

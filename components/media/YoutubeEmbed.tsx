@@ -4,8 +4,8 @@ interface YoutubeEmbedProps {
 
 export default function YoutubeEmbed({ videoId }: YoutubeEmbedProps) {
   return (
-    <div className="mt-3 overflow-hidden rounded-[9px] border-[0.5px] border-[var(--border)]">
-      <div className="relative aspect-video w-full">
+    <div className="mt-3 w-full max-w-full overflow-hidden rounded-[9px] border-[0.5px] border-[var(--border)]">
+      <div className="relative aspect-video w-full max-w-full">
         <iframe
           src={`https://www.youtube.com/embed/${videoId}`}
           title="YouTube video player"

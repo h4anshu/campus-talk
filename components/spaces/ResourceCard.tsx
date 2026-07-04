@@ -9,6 +9,7 @@ import {
   FileSpreadsheet,
   FileVideo,
   Link2,
+  Image as ImageIcon,
   ThumbsUp,
   ExternalLink,
   type LucideIcon,
@@ -40,17 +41,20 @@ export default function ResourceCard({ post }: ResourceCardProps) {
   // Prefer real Media rows (from a pasted/uploaded embed) over the
   // mock-only resourceType/driveUrl fields, which real API posts never
   // populate — that's what left this card blank for real resource posts.
+  // The compact feed card only ever shows an icon here, never the actual
+  // image/thumbnail pixels — full media is detail-page-only (Section 10).
   const imageMedia = post.media?.find((m) => m.type === 'image');
   const youtubeMedia = post.media?.find((m) => m.type === 'youtube');
   const driveMedia = post.media?.find((m) => m.type === 'drive');
   const driveUrl = driveMedia?.url ?? post.driveUrl;
-  const thumbnailUrl = imageMedia?.url ?? youtubeMedia?.thumbnailUrl;
 
   const Icon = youtubeMedia
     ? FileVideo
     : driveMedia
       ? Link2
-      : FILE_ICONS[post.resourceType ?? 'pdf'];
+      : imageMedia
+        ? ImageIcon
+        : FILE_ICONS[post.resourceType ?? 'pdf'];
 
   return (
     <motion.div
@@ -59,14 +63,9 @@ export default function ResourceCard({ post }: ResourceCardProps) {
       transition={{ duration: 0.15 }}
       className="grid cursor-pointer grid-cols-[40px_1fr] gap-3 rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]"
     >
-      {thumbnailUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={thumbnailUrl} alt="" className="h-10 w-10 rounded-[9px] object-cover" />
-      ) : (
-        <div className="flex h-10 w-10 items-center justify-center rounded-[9px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)]">
-          <Icon className="h-5 w-5 text-[var(--accent)]" />
-        </div>
-      )}
+      <div className="flex h-10 w-10 items-center justify-center rounded-[9px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)]">
+        <Icon className="h-5 w-5 text-[var(--accent)]" />
+      </div>
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -81,11 +80,11 @@ export default function ResourceCard({ post }: ResourceCardProps) {
           <PostMeta author={post.author} createdAt={post.createdAt} />
         </div>
 
-        <h3 className="mt-2 text-[14px] font-medium leading-snug text-[var(--text-primary)]">
+        <h3 className="mt-2 break-words text-[14px] font-medium leading-snug text-[var(--text-primary)]">
           {post.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
+        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
 

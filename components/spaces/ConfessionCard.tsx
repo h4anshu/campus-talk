@@ -9,6 +9,7 @@ import { stripHtmlTags } from '@/lib/utils';
 import PostActions from '@/components/post/PostActions';
 import ReactionButtons from '@/components/post/ReactionButtons';
 import TagPill from '@/components/shared/TagPill';
+import MediaBadge from '@/components/shared/MediaBadge';
 
 interface ConfessionCardProps {
   post: MockPost;
@@ -36,16 +37,17 @@ export default function ConfessionCard({ post }: ConfessionCardProps) {
           <span className="rounded-full border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
             Anonymous
           </span>
+          <MediaBadge media={post.media} />
           <span className="ml-auto shrink-0 text-[11px] text-[var(--text-muted)]">
             {formatDistanceToNowStrict(post.createdAt, { addSuffix: true })}
           </span>
         </div>
 
-        <h3 className="mt-2 text-[14px] font-medium leading-snug text-[var(--text-primary)]">
+        <h3 className="mt-2 break-words text-[14px] font-medium leading-snug text-[var(--text-primary)]">
           {post.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
+        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
 

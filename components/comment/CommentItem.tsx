@@ -92,7 +92,7 @@ export default function CommentItem({ comment, depth, postId, postAuthorName }: 
               transition={{ duration: 0.2 }}
               style={{ overflow: 'hidden' }}
             >
-              <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">
+              <p className="mt-1 break-words text-[12px] leading-relaxed text-[var(--text-secondary)] [word-break:break-word]">
                 {comment.body}
               </p>
 

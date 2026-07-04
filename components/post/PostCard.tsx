@@ -11,7 +11,6 @@ import PostActions from '@/components/post/PostActions';
 import ReactionButtons from '@/components/post/ReactionButtons';
 import CollabSlotBar from '@/components/post/CollabSlotBar';
 import TagPill from '@/components/shared/TagPill';
-import MediaPreview from '@/components/shared/MediaPreview';
 
 interface PostCardProps {
   post: MockPost;
@@ -41,21 +40,19 @@ export default function PostCard({ post }: PostCardProps) {
       <VoteBlock postId={post.id} voteCount={post.voteCount} userVote={post.userVote} variant={voteVariant} />
 
       <div className="min-w-0">
-        <PostBadges post={post} />
+        <PostBadges post={post} showMediaBadge />
 
         <div className="mt-2">
           <PostMeta author={post.author} createdAt={post.createdAt} anonymous={post.anonymous} />
         </div>
 
-        <h3 className="mt-2 text-[14px] font-medium leading-snug text-[var(--text-primary)]">
+        <h3 className="mt-2 break-words text-[14px] font-medium leading-snug text-[var(--text-primary)]">
           {post.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
+        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
-
-        <MediaPreview media={post.media} />
 
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

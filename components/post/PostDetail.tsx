@@ -39,13 +39,17 @@ export default function PostDetail({ post }: PostDetailProps) {
           <PostMeta author={post.author} createdAt={post.createdAt} anonymous={post.anonymous} />
         </div>
 
-        <h1 className="mt-3 text-[20px] font-medium leading-snug text-[var(--text-primary)]">
+        <h1 className="mt-3 break-words text-[20px] font-medium leading-snug text-[var(--text-primary)] [word-break:break-word]">
           {post.title}
         </h1>
 
-        {/* post.body is server-sanitized HTML (Tiptap output) — safe to render directly. */}
+        {/* post.body is server-sanitized HTML (Tiptap output) — safe to render directly.
+            break-words + word-break together so an unbroken string (no spaces —
+            e.g. a wall of repeated characters) wraps inside the card instead of
+            overflowing past its edge; both are inherited, so every child element
+            (p, li, a, the .cv-embed caption) gets it from this one place. */}
         <div
-          className="mt-3 text-[13px] leading-[1.75] text-[var(--text-secondary)] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_img]:mt-2 [&_img]:max-w-full [&_img]:rounded-[9px] [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc [&_.cv-embed]:my-2 [&_.cv-embed]:block [&_.cv-embed]:overflow-hidden [&_.cv-embed]:rounded-[9px] [&_.cv-embed]:border [&_.cv-embed]:border-[var(--border)] [&_.cv-embed_img]:m-0 [&_.cv-embed_img]:block [&_.cv-embed_img]:max-w-full [&_.cv-embed-drive]:bg-[var(--bg-panel)] [&_.cv-embed-drive_a]:block [&_.cv-embed-drive_a]:p-3 [&_.cv-embed-drive_a]:text-[var(--accent)]"
+          className="mt-3 break-words text-[13px] leading-[1.75] text-[var(--text-secondary)] [word-break:break-word] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_img]:mt-2 [&_img]:max-w-full [&_img]:rounded-[9px] [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc [&_.cv-embed]:my-2 [&_.cv-embed]:block [&_.cv-embed]:max-w-full [&_.cv-embed]:overflow-hidden [&_.cv-embed]:rounded-[9px] [&_.cv-embed]:border [&_.cv-embed]:border-[var(--border)] [&_.cv-embed_img]:m-0 [&_.cv-embed_img]:block [&_.cv-embed_img]:max-w-full [&_.cv-embed-drive]:bg-[var(--bg-panel)] [&_.cv-embed-drive_a]:block [&_.cv-embed-drive_a]:p-3 [&_.cv-embed-drive_a]:text-[var(--accent)]"
           dangerouslySetInnerHTML={{ __html: post.body }}
         />
 

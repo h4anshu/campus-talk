@@ -1,11 +1,15 @@
 import { SPACES, TOPICS } from '@/lib/constants';
 import type { MockPost } from '@/lib/mock/posts';
+import MediaBadge from '@/components/shared/MediaBadge';
 
 interface PostBadgesProps {
   post: MockPost;
+  /** Only the compact card view shows the media indicator — the detail
+   * page already renders the real media, so it'd be redundant there. */
+  showMediaBadge?: boolean;
 }
 
-export default function PostBadges({ post }: PostBadgesProps) {
+export default function PostBadges({ post, showMediaBadge = false }: PostBadgesProps) {
   const flair = post.topic
     ? TOPICS.find((t) => t.key === post.topic)?.label
     : post.space
@@ -49,6 +53,7 @@ export default function PostBadges({ post }: PostBadgesProps) {
           Anonymous
         </span>
       )}
+      {showMediaBadge && <MediaBadge media={post.media} />}
     </div>
   );
 }

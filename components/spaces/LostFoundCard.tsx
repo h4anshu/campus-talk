@@ -9,6 +9,7 @@ import { stripHtmlTags } from '@/lib/utils';
 import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
 import TagPill from '@/components/shared/TagPill';
+import MediaBadge from '@/components/shared/MediaBadge';
 
 const STATUS_STYLES: Record<string, string> = {
   LOST: 'border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]',
@@ -23,6 +24,7 @@ interface LostFoundCardProps {
 export default function LostFoundCard({ post }: LostFoundCardProps) {
   const router = useRouter();
   const status = post.lostFoundStatus ?? 'LOST';
+  const hasImage = post.hasImage || post.media?.some((m) => m.type === 'image');
 
   return (
     <motion.div
@@ -41,17 +43,18 @@ export default function LostFoundCard({ post }: LostFoundCardProps) {
           <span className="rounded-full border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
             Lost &amp; Found
           </span>
+          <MediaBadge media={post.media?.filter((m) => m.type !== 'image')} />
         </div>
 
         <div className="mt-2.5">
           <PostMeta author={post.author} createdAt={post.createdAt} />
         </div>
 
-        <h3 className="mt-2 text-[14px] font-medium leading-snug text-[var(--text-primary)]">
+        <h3 className="mt-2 break-words text-[14px] font-medium leading-snug text-[var(--text-primary)]">
           {post.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
+        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
 
@@ -85,7 +88,7 @@ export default function LostFoundCard({ post }: LostFoundCardProps) {
         />
       </div>
 
-      {post.hasImage && (
+      {hasImage && (
         <div className="flex h-[72px] w-full items-center justify-center rounded-[9px] border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] sm:h-full sm:w-[72px]">
           <ImageIcon className="h-5 w-5 text-[var(--text-muted)]" />
         </div>

@@ -9,6 +9,7 @@ import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
 import CollabSlotBar from '@/components/post/CollabSlotBar';
 import TagPill from '@/components/shared/TagPill';
+import MediaBadge from '@/components/shared/MediaBadge';
 
 interface CollaborationCardProps {
   post: MockPost;
@@ -36,17 +37,18 @@ export default function CollaborationCard({ post }: CollaborationCardProps) {
               {post.projectType}
             </span>
           )}
+          <MediaBadge media={post.media} />
         </div>
 
         <div className="mt-2.5">
           <PostMeta author={post.author} createdAt={post.createdAt} />
         </div>
 
-        <h3 className="mt-2 text-[14px] font-medium leading-snug text-[var(--text-primary)]">
+        <h3 className="mt-2 break-words text-[14px] font-medium leading-snug text-[var(--text-primary)]">
           {post.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
+        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
 

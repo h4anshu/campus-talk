@@ -34,9 +34,16 @@ export default function ApprovalCard({ post, onApprove, onReject }: ApprovalCard
         <PostMeta author={post.author} createdAt={post.createdAt} anonymous={post.anonymous} />
       </div>
 
-      <h3 className="mt-2 text-[14px] font-medium leading-snug text-[var(--text-primary)]">{post.title}</h3>
+      <h3 className="mt-2 break-words text-[14px] font-medium leading-snug text-[var(--text-primary)]">
+        {post.title}
+      </h3>
 
-      <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">{stripHtmlTags(post.body)}</p>
+      {/* Admin needs the full text to make an approve/reject decision, so no
+          line-clamp here (unlike the public feed cards) — just break-words
+          so a long unbroken string still wraps instead of overflowing. */}
+      <p className="mt-1 break-words text-[12px] leading-relaxed text-[var(--text-secondary)]">
+        {stripHtmlTags(post.body)}
+      </p>
 
       {post.tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
