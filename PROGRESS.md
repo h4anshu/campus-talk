@@ -4,6 +4,32 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Redesign — Reddit-style full-width media block (replaces icon-only feed indicators)
+
+**Status:** Complete, typechecked, built, visually + numerically verified, deployed.
+
+**This is a deliberate reversal of the previous round's rule**, per explicit new direction: that round established "compact cards never show real media, only a small icon badge," reconciling the card spec with what a list view should look like. This round replaces that rule entirely — images and YouTube now render as an actual full-card-width block below the text preview, in every card that can carry media. Drive/document links are the one exception, explicitly kept at the small icon treatment since they're not a visual asset.
+
+**New `components/shared/MediaBlock.tsx`:** width 100%, height floored at 140px and capped at 340px (feed cards) / 500px (detail page), `object-contain` so the actual image scales to fit and letterboxes against the container's own background (`var(--bg-page)`) rather than cropping (`cover`) or distorting (`fill`/stretch). YouTube shows a thumbnail with a centered 44px play-button overlay; clicking swaps in the real iframe (no iframe cost paid until someone actually wants to watch). `components/media/YoutubeEmbed.tsx` (the detail-page-specific component) got the identical click-to-play treatment and a 500px cap.
+
+**`ResourceCard` and `LostFoundCard` needed real restructuring, not just an added block:** both had a side-column layout (a 40px icon or a 72px image box sitting next to the text) that's fundamentally incompatible with "full width below the text." Both are now single-column when they carry visual media, and fall back to their original compact layout (file icon / nothing) when they don't.
+
+**Removed something to avoid a new redundancy, not because it was asked for directly:** the custom Tiptap `embedCard` Node from two rounds ago inserted a static thumbnail card into the post body at paste time. With `MediaBlock`/`YoutubeEmbed` now rendering an actual interactive block from the `Media` row, that static card would show the *same* video twice on the detail page — once frozen in the text, once as the real click-to-play block. Removed the node entirely: paste detection still fires and still creates the `Media` row (that's the actual source `MediaBlock` reads from), but the pasted text now just stays a normal link via Tiptap Link's own autolink, the way any other pasted URL would. Deleted `components/editor/embedCardNode.ts` and the `@tiptap/core` dependency it needed (nothing else imported it).
+
+**Found and fixed a real injection risk while touching this code, unrelated to the visual redesign itself:** `detectEmbed()` returned the *entire* pasted string as the embed's `url`, not just the regex match. A paste like `javascript:alert(1)//youtu.be/xxxxxxxxxxx` still satisfies the pattern (it only requires the domain pattern to appear *somewhere* in the string) and would have carried that attacker-controlled prefix into a value later used as a real `href` (`DriveCard`'s link, and previously the now-deleted embed card's own href). Fixed to use only `match[0]`, which by construction can never include content the pattern didn't actually consume.
+
+**Verified visually *and* numerically, not just by reading the CSS.** Rebuilt the temporary `/dev-preview` harness (removed before committing) with a deliberately wide (900×220), a deliberately tall (300×900), and a normally-proportioned test image, plus a YouTube post and Drive-only/no-media posts. Used `getBoundingClientRect`/`getComputedStyle` to confirm the actual rendered box respects the 140/340/500 floor-and-cap and that `object-fit` resolved to `contain` (not the Tailwind class string — the *computed* CSS property) — this caught a real false positive on the first pass: `computedObjectFit` came back `"fill"` and `computedMaxHeight` came back `"none"` for every image, which turned out to be a stale dev server left over from the previous round's verification, squatting on port 3000 and serving old code while my test hit it thinking it was current. Killed it, restarted clean, and re-verified — genuinely zero overflow, computed styles matching exactly. Screenshots confirm real letterboxing (visible dark bars on whichever axis has slack) for both the too-wide and too-tall cases, and directly confirm the click-to-play mechanism by screenshotting before and after clicking the play button — the DOM literally swapped from a thumbnail `<img>` to a live buffering YouTube `<iframe>`.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds (same benign `DYNAMIC_SERVER_USAGE` notice as every prior phase); confirmed no leftover `/dev-preview` in the final build
+- Playwright and the temporary preview route both fully removed before committing — `git diff --stat` on `package.json`/`pnpm-lock.yaml` shows only the intentional `@tiptap/core` removal, nothing left over from the verification tooling
+- Pushed to `main`, Vercel redeployed, confirmed `● Ready`; smoke-checked `/home`, every space page, a discussion topic page, and a real post detail page on the live URL — all 307 (correct unauthenticated redirect), no 500s
+
+**Not verified — the same constraint as every phase so far:** the actual authenticated click-through (uploading a real image, pasting a real YouTube link, watching both render full-width and letterboxed with correct proportions across Resources/Placements/every other feed) needs a real login I still can't complete myself. Given this round's verification was numerical (computed styles) and visual (real screenshots, including the actual play→iframe swap) rather than code-reading alone, confidence is high that the authenticated pass will mostly confirm what's already been shown working.
+
+---
+
 ## Fix — Full card-rendering audit: truncation, media badges, text wrapping
 
 **Status:** Complete, typechecked, built, visually verified with real screenshots, deployed.
