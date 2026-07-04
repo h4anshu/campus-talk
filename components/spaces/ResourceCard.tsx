@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   FileVideo,
   Link2,
-  Image as ImageIcon,
   ThumbsUp,
   ExternalLink,
   type LucideIcon,
@@ -19,6 +18,7 @@ import { stripHtmlTags } from '@/lib/utils';
 import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
 import TagPill from '@/components/shared/TagPill';
+import MediaBlock from '@/components/shared/MediaBlock';
 
 const FILE_ICONS: Record<string, LucideIcon> = {
   pdf: FileText,
@@ -41,31 +41,31 @@ export default function ResourceCard({ post }: ResourceCardProps) {
   // Prefer real Media rows (from a pasted/uploaded embed) over the
   // mock-only resourceType/driveUrl fields, which real API posts never
   // populate — that's what left this card blank for real resource posts.
-  // The compact feed card only ever shows an icon here, never the actual
-  // image/thumbnail pixels — full media is detail-page-only (Section 10).
   const imageMedia = post.media?.find((m) => m.type === 'image');
   const youtubeMedia = post.media?.find((m) => m.type === 'youtube');
   const driveMedia = post.media?.find((m) => m.type === 'drive');
   const driveUrl = driveMedia?.url ?? post.driveUrl;
 
-  const Icon = youtubeMedia
-    ? FileVideo
-    : driveMedia
-      ? Link2
-      : imageMedia
-        ? ImageIcon
-        : FILE_ICONS[post.resourceType ?? 'pdf'];
+  // A photo or video is an actual visual asset — it gets the full-width
+  // Reddit-style media block. A Drive/document link isn't a visual asset,
+  // so it keeps the original compact file-icon treatment instead.
+  const hasVisualMedia = !!imageMedia || !!youtubeMedia;
+  const Icon = driveMedia ? Link2 : FILE_ICONS[post.resourceType ?? 'pdf'];
 
   return (
     <motion.div
       onClick={() => router.push(`/post/${post.id}`)}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
-      className="grid cursor-pointer grid-cols-[40px_1fr] gap-3 rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]"
+      className={`cursor-pointer rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)] ${
+        hasVisualMedia ? 'flex flex-col' : 'grid grid-cols-[40px_1fr] gap-3'
+      }`}
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-[9px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)]">
-        <Icon className="h-5 w-5 text-[var(--accent)]" />
-      </div>
+      {!hasVisualMedia && (
+        <div className="flex h-10 w-10 items-center justify-center rounded-[9px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)]">
+          <Icon className="h-5 w-5 text-[var(--accent)]" />
+        </div>
+      )}
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -87,6 +87,8 @@ export default function ResourceCard({ post }: ResourceCardProps) {
         <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
+
+        <MediaBlock media={post.media} variant="feed" />
 
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

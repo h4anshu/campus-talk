@@ -17,7 +17,18 @@ export interface DetectedEmbed {
   thumbnailUrl?: string;
 }
 
-/** Returns null if the pasted/typed text isn't a recognized YouTube or Drive link. */
+function normalizeMatchedUrl(matched: string): string {
+  return matched.startsWith('http') ? matched : `https://${matched}`;
+}
+
+/**
+ * Returns null if the pasted/typed text isn't a recognized YouTube or Drive
+ * link. Deliberately uses only the *matched* substring (`match[0]`) as the
+ * embed's url — never the raw input — so a crafted paste like
+ * `javascript:alert(1)//youtu.be/xxxxxxxxxxx` (which still matches, since the
+ * regex just needs the pattern somewhere in the string) can't smuggle an
+ * attacker-controlled prefix into a value that later gets used as an href.
+ */
 export function detectEmbed(text: string): DetectedEmbed | null {
   const trimmed = text.trim();
 
@@ -26,7 +37,7 @@ export function detectEmbed(text: string): DetectedEmbed | null {
     const videoId = youtubeMatch[1];
     return {
       type: 'youtube',
-      url: trimmed,
+      url: normalizeMatchedUrl(youtubeMatch[0]),
       providerId: videoId,
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     };
@@ -35,7 +46,7 @@ export function detectEmbed(text: string): DetectedEmbed | null {
   const driveMatch = trimmed.match(DRIVE_REGEX);
   if (driveMatch) {
     const fileId = driveMatch[1] ?? driveMatch[2] ?? driveMatch[3];
-    return { type: 'drive', url: trimmed, providerId: fileId };
+    return { type: 'drive', url: normalizeMatchedUrl(driveMatch[0]), providerId: fileId };
   }
 
   return null;

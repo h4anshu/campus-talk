@@ -47,16 +47,22 @@ export default function PostDetail({ post }: PostDetailProps) {
             break-words + word-break together so an unbroken string (no spaces —
             e.g. a wall of repeated characters) wraps inside the card instead of
             overflowing past its edge; both are inherited, so every child element
-            (p, li, a, the .cv-embed caption) gets it from this one place. */}
+            (p, li, a) gets it from this one place. Any inline <img> (a direct
+            upload, or the .cv-embed markup a handful of older posts still have
+            from before that was simplified out of the composer) gets the same
+            capped-height/object-contain/letterboxed containment as MediaBlock —
+            object-fit works on the <img> itself, no wrapping div needed, and its
+            own background-color shows through the letterboxed gaps. */}
         <div
-          className="mt-3 break-words text-[13px] leading-[1.75] text-[var(--text-secondary)] [word-break:break-word] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_img]:mt-2 [&_img]:max-w-full [&_img]:rounded-[9px] [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc [&_.cv-embed]:my-2 [&_.cv-embed]:block [&_.cv-embed]:max-w-full [&_.cv-embed]:overflow-hidden [&_.cv-embed]:rounded-[9px] [&_.cv-embed]:border [&_.cv-embed]:border-[var(--border)] [&_.cv-embed_img]:m-0 [&_.cv-embed_img]:block [&_.cv-embed_img]:max-w-full [&_.cv-embed-drive]:bg-[var(--bg-panel)] [&_.cv-embed-drive_a]:block [&_.cv-embed-drive_a]:p-3 [&_.cv-embed-drive_a]:text-[var(--accent)]"
+          className="mt-3 break-words text-[13px] leading-[1.75] text-[var(--text-secondary)] [word-break:break-word] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_img]:mt-2 [&_img]:block [&_img]:w-full [&_img]:min-h-[140px] [&_img]:max-h-[500px] [&_img]:rounded-[9px] [&_img]:bg-[var(--bg-page)] [&_img]:object-contain [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc [&_.cv-embed]:my-2 [&_.cv-embed]:block [&_.cv-embed]:max-w-full [&_.cv-embed]:overflow-hidden [&_.cv-embed]:rounded-[9px] [&_.cv-embed]:border [&_.cv-embed]:border-[var(--border)] [&_.cv-embed-drive]:bg-[var(--bg-panel)] [&_.cv-embed-drive_a]:block [&_.cv-embed-drive_a]:p-3 [&_.cv-embed-drive_a]:text-[var(--accent)]"
           dangerouslySetInnerHTML={{ __html: post.body }}
         />
 
-        {/* Real playable YouTube iframe / Drive link card, driven off the
-            Media rows (not the static thumbnail already embedded above). */}
+        {/* Real playable YouTube (thumbnail + click-to-play, replacing the
+            iframe cost until requested) / Drive link card — driven off the
+            Media rows, this is the actual hero media, not the inline body. */}
         {post.media?.filter((m) => m.type === 'youtube' && m.providerId).map((m) => (
-          <YoutubeEmbed key={m.url} videoId={m.providerId!} />
+          <YoutubeEmbed key={m.url} videoId={m.providerId!} thumbnailUrl={m.thumbnailUrl ?? undefined} />
         ))}
         {post.media?.filter((m) => m.type === 'drive').map((m) => (
           <DriveCard key={m.url} url={m.url} />

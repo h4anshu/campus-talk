@@ -10,6 +10,7 @@ import PostActions from '@/components/post/PostActions';
 import CollabSlotBar from '@/components/post/CollabSlotBar';
 import TagPill from '@/components/shared/TagPill';
 import MediaBadge from '@/components/shared/MediaBadge';
+import MediaBlock from '@/components/shared/MediaBlock';
 
 interface CollaborationCardProps {
   post: MockPost;
@@ -37,7 +38,7 @@ export default function CollaborationCard({ post }: CollaborationCardProps) {
               {post.projectType}
             </span>
           )}
-          <MediaBadge media={post.media} />
+          <MediaBadge media={post.media?.filter((m) => m.type === 'drive')} />
         </div>
 
         <div className="mt-2.5">
@@ -51,6 +52,8 @@ export default function CollaborationCard({ post }: CollaborationCardProps) {
         <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
+
+        <MediaBlock media={post.media} variant="feed" />
 
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

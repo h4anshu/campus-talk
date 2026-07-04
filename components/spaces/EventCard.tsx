@@ -12,6 +12,7 @@ import PostActions from '@/components/post/PostActions';
 import TagPill from '@/components/shared/TagPill';
 import Avatar from '@/components/shared/Avatar';
 import MediaBadge from '@/components/shared/MediaBadge';
+import MediaBlock from '@/components/shared/MediaBlock';
 
 interface EventCardProps {
   post: MockPost;
@@ -24,6 +25,7 @@ export default function EventCard({ post }: EventCardProps) {
   const goingCount = (post.goingCount ?? 0) + (rsvp === 'going' ? 1 : 0);
   const interestedCount = (post.interestedCount ?? 0) + (rsvp === 'interested' ? 1 : 0);
   const attendees = post.attendees ?? [];
+  const hasVisualMedia = post.media?.some((m) => m.type === 'image' || m.type === 'youtube');
 
   const toggle = (e: React.MouseEvent, next: 'going' | 'interested') => {
     e.stopPropagation();
@@ -37,16 +39,18 @@ export default function EventCard({ post }: EventCardProps) {
       transition={{ duration: 0.15 }}
       className="cursor-pointer overflow-hidden rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] transition-colors hover:border-[var(--border-med)]"
     >
-      <div className="flex h-[100px] items-center justify-center border-b-[0.5px] border-[var(--border)] bg-[var(--bg-panel)]">
-        <Calendar className="h-7 w-7 text-[var(--text-muted)]" />
-      </div>
+      {!hasVisualMedia && (
+        <div className="flex h-[100px] items-center justify-center border-b-[0.5px] border-[var(--border)] bg-[var(--bg-panel)]">
+          <Calendar className="h-7 w-7 text-[var(--text-muted)]" />
+        </div>
+      )}
 
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="rounded-full border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]">
             Events
           </span>
-          <MediaBadge media={post.media} />
+          <MediaBadge media={post.media?.filter((m) => m.type === 'drive')} />
         </div>
 
         <div className="mt-2.5">
@@ -60,6 +64,8 @@ export default function EventCard({ post }: EventCardProps) {
         <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
+
+        <MediaBlock media={post.media} variant="feed" />
 
         {post.eventDate && post.venue && (
           <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-secondary)]">

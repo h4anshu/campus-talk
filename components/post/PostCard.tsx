@@ -11,6 +11,7 @@ import PostActions from '@/components/post/PostActions';
 import ReactionButtons from '@/components/post/ReactionButtons';
 import CollabSlotBar from '@/components/post/CollabSlotBar';
 import TagPill from '@/components/shared/TagPill';
+import MediaBlock from '@/components/shared/MediaBlock';
 
 interface PostCardProps {
   post: MockPost;
@@ -53,6 +54,8 @@ export default function PostCard({ post }: PostCardProps) {
         <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
+
+        <MediaBlock media={post.media} variant="feed" />
 
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

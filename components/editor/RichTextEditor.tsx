@@ -10,7 +10,6 @@ import { Bold, Italic, Code, List, Link2, ImagePlus, Video, Loader2 } from 'luci
 import { toast } from 'sonner';
 import { fetchJson } from '@/lib/api-client';
 import { detectEmbed, type DetectedEmbed } from '@/lib/embed';
-import { EmbedCard, type EmbedCardAttrs } from '@/components/editor/embedCardNode';
 
 interface RichTextEditorProps {
   onChange: (html: string) => void;
@@ -74,25 +73,25 @@ export default function RichTextEditor({
       Placeholder.configure({ placeholder }),
       Link.configure({ openOnClick: false, autolink: true }),
       Image,
-      EmbedCard,
     ],
     editorProps: {
       attributes: {
         class:
-          'min-h-[160px] text-[13px] leading-[1.7] text-[var(--text-primary)] outline-none [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px] [&_.cv-embed]:my-2 [&_.cv-embed]:block [&_.cv-embed]:overflow-hidden [&_.cv-embed]:rounded-[9px] [&_.cv-embed]:border [&_.cv-embed]:border-[var(--border)] [&_.cv-embed_img]:block [&_.cv-embed_img]:max-w-full [&_.cv-embed-drive]:bg-[var(--bg-panel)] [&_.cv-embed-drive_a]:block [&_.cv-embed-drive_a]:p-3 [&_.cv-embed-drive_a]:text-[var(--accent)]',
+          'min-h-[160px] text-[13px] leading-[1.7] text-[var(--text-primary)] outline-none [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px]',
       },
-      // Real embed detection: a plain-text paste that matches a YouTube/Drive
-      // URL gets replaced with a visible card instead of falling through to
-      // Tiptap/Link's default autolink behavior (a plain blue hyperlink).
+      // The pasted YouTube/Drive link stays as a normal link right where the
+      // user pasted it (Tiptap Link's own autolink handles that automatically
+      // — this handler doesn't touch insertion at all) — the actual visual
+      // card (full-width image/play-button thumbnail) lives in its own
+      // dedicated slot below the text, driven by the Media row this creates,
+      // not by anything embedded in the body text itself. That's what
+      // MediaBlock (feed cards) and YoutubeEmbed (detail page) render.
       handlePaste: (_view, event) => {
         const text = event.clipboardData?.getData('text/plain');
         if (!text) return false;
         const embed = detectEmbed(text);
-        if (!embed) return false;
-
-        event.preventDefault();
-        insertEmbed(embed);
-        return true;
+        if (embed) onEmbedDetected?.(embed);
+        return false;
       },
     },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -106,17 +105,6 @@ export default function RichTextEditor({
     editor.chain().focus().setLink({ href: url }).run();
   };
 
-  const insertEmbed = (embed: DetectedEmbed) => {
-    const attrs: EmbedCardAttrs = {
-      embedType: embed.type,
-      videoId: embed.providerId ?? null,
-      url: embed.url,
-      thumbnailUrl: embed.thumbnailUrl ?? null,
-    };
-    editor.chain().focus().insertEmbedCard(attrs).run();
-    onEmbedDetected?.(embed);
-  };
-
   const promptForEmbed = () => {
     const url = window.prompt('Paste a YouTube or Google Drive link');
     if (!url) return;
@@ -125,7 +113,18 @@ export default function RichTextEditor({
       toast.error("That doesn't look like a YouTube or Google Drive link");
       return;
     }
-    insertEmbed(embed);
+    // Inserted as a structured text+mark node (never a raw HTML string), so
+    // there's no way for embed.url to be interpreted as markup.
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'text',
+        text: embed.url,
+        marks: [{ type: 'link', attrs: { href: embed.url, target: '_blank', rel: 'noopener noreferrer' } }],
+      })
+      .run();
+    onEmbedDetected?.(embed);
   };
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {

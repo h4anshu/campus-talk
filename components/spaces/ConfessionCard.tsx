@@ -10,6 +10,7 @@ import PostActions from '@/components/post/PostActions';
 import ReactionButtons from '@/components/post/ReactionButtons';
 import TagPill from '@/components/shared/TagPill';
 import MediaBadge from '@/components/shared/MediaBadge';
+import MediaBlock from '@/components/shared/MediaBlock';
 
 interface ConfessionCardProps {
   post: MockPost;
@@ -37,7 +38,7 @@ export default function ConfessionCard({ post }: ConfessionCardProps) {
           <span className="rounded-full border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
             Anonymous
           </span>
-          <MediaBadge media={post.media} />
+          <MediaBadge media={post.media?.filter((m) => m.type === 'drive')} />
           <span className="ml-auto shrink-0 text-[11px] text-[var(--text-muted)]">
             {formatDistanceToNowStrict(post.createdAt, { addSuffix: true })}
           </span>
@@ -50,6 +51,8 @@ export default function ConfessionCard({ post }: ConfessionCardProps) {
         <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
           {stripHtmlTags(post.body)}
         </p>
+
+        <MediaBlock media={post.media} variant="feed" />
 
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

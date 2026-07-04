@@ -53,7 +53,10 @@ export default function PostBadges({ post, showMediaBadge = false }: PostBadgesP
           Anonymous
         </span>
       )}
-      {showMediaBadge && <MediaBadge media={post.media} />}
+      {/* Photo/video are visual assets — they get the full-width MediaBlock
+          below the text instead, so only Drive (not a visual asset) shows
+          here as a small icon indicator. */}
+      {showMediaBadge && <MediaBadge media={post.media?.filter((m) => m.type === 'drive')} />}
     </div>
   );
 }
