@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { Calendar, MapPin, PartyPopper } from 'lucide-react';
 import type { MockPost } from '@/lib/mock/posts';
+import { stripHtmlTags } from '@/lib/utils';
 import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
 import TagPill from '@/components/shared/TagPill';
@@ -53,7 +54,7 @@ export default function EventCard({ post }: EventCardProps) {
         </h3>
 
         <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
-          {post.body}
+          {stripHtmlTags(post.body)}
         </p>
 
         {post.eventDate && post.venue && (
@@ -116,7 +117,12 @@ export default function EventCard({ post }: EventCardProps) {
           </div>
         </div>
 
-        <PostActions postId={post.id} commentCount={post.commentCount} viewCount={post.viewCount} />
+        <PostActions
+          postId={post.id}
+          commentCount={post.commentCount}
+          viewCount={post.viewCount}
+          isSaved={post.isSaved}
+        />
       </div>
     </motion.div>
   );

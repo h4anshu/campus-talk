@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { EyeOff } from 'lucide-react';
 import type { MockPost } from '@/lib/mock/posts';
+import { stripHtmlTags } from '@/lib/utils';
 import PostActions from '@/components/post/PostActions';
 import ReactionButtons from '@/components/post/ReactionButtons';
 import TagPill from '@/components/shared/TagPill';
@@ -45,7 +46,7 @@ export default function ConfessionCard({ post }: ConfessionCardProps) {
         </h3>
 
         <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
-          {post.body}
+          {stripHtmlTags(post.body)}
         </p>
 
         {post.tags.length > 0 && (
@@ -58,7 +59,12 @@ export default function ConfessionCard({ post }: ConfessionCardProps) {
 
         <ReactionButtons />
 
-        <PostActions postId={post.id} commentCount={post.commentCount} viewCount={post.viewCount} />
+        <PostActions
+          postId={post.id}
+          commentCount={post.commentCount}
+          viewCount={post.viewCount}
+          isSaved={post.isSaved}
+        />
       </div>
     </motion.div>
   );

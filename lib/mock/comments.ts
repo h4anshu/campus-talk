@@ -1,8 +1,8 @@
 export interface MockCommentAuthor {
   name: string;
   initials: string;
-  year: number;
-  dept: string;
+  year: number | null;
+  dept: string | null;
   avatarColor: string;
 }
 
@@ -15,6 +15,8 @@ export interface MockComment {
   parentId: string | null;
   accepted?: boolean;
   replies: MockComment[];
+  // Populated by real API responses (undefined for mock data).
+  userVote?: 'up' | 'down' | null;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);

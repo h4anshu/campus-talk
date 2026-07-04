@@ -9,18 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSavedPostsStore } from '@/store/useSavedPostsStore';
+import { useSavePost } from '@/hooks/useSavePost';
 
 interface PostActionsProps {
   postId: string;
   commentCount: number;
   viewCount: number;
+  isSaved?: boolean;
 }
 
-export default function PostActions({ postId, commentCount, viewCount }: PostActionsProps) {
+export default function PostActions({ postId, commentCount, viewCount, isSaved = false }: PostActionsProps) {
   const router = useRouter();
-  const saved = useSavedPostsStore((s) => s.isSaved(postId));
-  const toggleSaved = useSavedPostsStore((s) => s.toggleSaved);
+  const { mutate: toggleSaved } = useSavePost(postId);
 
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
@@ -56,14 +56,14 @@ export default function PostActions({ postId, commentCount, viewCount }: PostAct
       <button
         onClick={(e) => {
           stop(e);
-          toggleSaved(postId);
+          toggleSaved();
         }}
         className={`flex items-center gap-1.5 text-[11px] transition-colors hover:text-[var(--text-secondary)] ${
-          saved ? 'text-[var(--accent)]' : ''
+          isSaved ? 'text-[var(--accent)]' : ''
         }`}
       >
-        <Bookmark className="h-3.5 w-3.5" fill={saved ? 'var(--accent)' : 'none'} />
-        {saved ? 'Saved' : 'Save'}
+        <Bookmark className="h-3.5 w-3.5" fill={isSaved ? 'var(--accent)' : 'none'} />
+        {isSaved ? 'Saved' : 'Save'}
       </button>
 
       <DropdownMenu>

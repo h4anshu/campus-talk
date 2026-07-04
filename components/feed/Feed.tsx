@@ -1,34 +1,23 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { SortOption } from '@/lib/constants';
-import type { MockPost } from '@/lib/mock/posts';
+import { usePosts } from '@/hooks/usePosts';
 import SortBar from '@/components/feed/SortBar';
 import CreatePostBar from '@/components/feed/CreatePostBar';
 import PostCard from '@/components/post/PostCard';
+import EmptyState from '@/components/shared/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FeedProps {
-  posts: MockPost[];
+  topic?: string;
+  space?: string;
 }
 
-export default function Feed({ posts }: FeedProps) {
+export default function Feed({ topic, space }: FeedProps) {
   const [sort, setSort] = useState<SortOption>('Hot');
-
-  const sorted = useMemo(() => {
-    const list = [...posts];
-    switch (sort) {
-      case 'New':
-        return list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      case 'Top':
-        return list.sort((a, b) => b.voteCount - a.voteCount);
-      case 'Rising':
-        return list.sort((a, b) => b.commentCount - a.commentCount);
-      case 'Hot':
-      default:
-        return list.sort((a, b) => (b.hot ? 1 : 0) - (a.hot ? 1 : 0) || b.voteCount - a.voteCount);
-    }
-  }, [posts, sort]);
+  const { data: posts, isLoading, isError } = usePosts({ topic, space, sort });
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4 sm:px-6">
@@ -36,16 +25,26 @@ export default function Feed({ posts }: FeedProps) {
       <CreatePostBar />
 
       <div className="flex flex-col gap-3">
-        {sorted.map((post, i) => (
-          <motion.div
-            key={post.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.05 }}
-          >
-            <PostCard post={post} />
-          </motion.div>
-        ))}
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[132px] rounded-card bg-[var(--bg-surface)]" />
+          ))
+        ) : isError ? (
+          <EmptyState title="Couldn't load posts" description="Something went wrong. Try refreshing the page." />
+        ) : posts && posts.length > 0 ? (
+          posts.map((post, i) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.05 }}
+            >
+              <PostCard post={post} />
+            </motion.div>
+          ))
+        ) : (
+          <EmptyState title="No posts yet" description="Be the first to post here." />
+        )}
       </div>
     </div>
   );

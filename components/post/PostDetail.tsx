@@ -28,7 +28,7 @@ export default function PostDetail({ post }: PostDetailProps) {
     <div
       className={`grid grid-cols-[32px_1fr] gap-4 rounded-card border-[0.5px] ${borderClass} bg-[var(--bg-surface)] p-5`}
     >
-      <VoteBlock initialVotes={post.voteCount} variant={voteVariant} />
+      <VoteBlock postId={post.id} voteCount={post.voteCount} userVote={post.userVote} variant={voteVariant} />
 
       <div className="min-w-0">
         <PostBadges post={post} />
@@ -41,9 +41,11 @@ export default function PostDetail({ post }: PostDetailProps) {
           {post.title}
         </h1>
 
-        <p className="mt-3 whitespace-pre-line text-[13px] leading-[1.75] text-[var(--text-secondary)]">
-          {post.body}
-        </p>
+        {/* post.body is server-sanitized HTML (Tiptap output) — safe to render directly. */}
+        <div
+          className="mt-3 text-[13px] leading-[1.75] text-[var(--text-secondary)] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc"
+          dangerouslySetInnerHTML={{ __html: post.body }}
+        />
 
         {post.tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -66,7 +68,12 @@ export default function PostDetail({ post }: PostDetailProps) {
         </div>
 
         <div className="mt-1 border-t-[0.5px] border-[var(--border)] pt-1">
-          <PostActions postId={post.id} commentCount={post.commentCount} viewCount={post.viewCount} />
+          <PostActions
+            postId={post.id}
+            commentCount={post.commentCount}
+            viewCount={post.viewCount}
+            isSaved={post.isSaved}
+          />
         </div>
       </div>
     </div>

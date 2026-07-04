@@ -8,10 +8,12 @@ import EmptyState from '@/components/shared/EmptyState';
 
 interface AnswerListProps {
   answers: MockComment[];
+  postId: string;
   postAuthorName: string;
+  viewerIsAuthor?: boolean;
 }
 
-export default function AnswerList({ answers, postAuthorName }: AnswerListProps) {
+export default function AnswerList({ answers, postId, postAuthorName, viewerIsAuthor }: AnswerListProps) {
   const [visible, setVisible] = useState(3);
 
   const sorted = useMemo(() => {
@@ -36,7 +38,13 @@ export default function AnswerList({ answers, postAuthorName }: AnswerListProps)
       </h2>
 
       {shown.map((answer) => (
-        <AnswerCard key={answer.id} answer={answer} postAuthorName={postAuthorName} />
+        <AnswerCard
+          key={answer.id}
+          answer={answer}
+          postId={postId}
+          postAuthorName={postAuthorName}
+          viewerIsAuthor={viewerIsAuthor}
+        />
       ))}
 
       {remaining > 0 && (

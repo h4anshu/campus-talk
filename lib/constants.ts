@@ -31,3 +31,13 @@ export type SortOption = typeof SORT_OPTIONS[number];
 export const COLLEGE_NAME = 'SITM College, Lucknow';
 export const PLATFORM_NAME = 'CampusVoice';
 export const COLLEGE_EMAIL_DOMAIN = '@sitm.ac.in';
+
+// UI keys are kebab-case ('hostel-mess'); Prisma's TopicType/SpaceType enums
+// are UPPER_SNAKE_CASE ('HOSTEL_MESS'). These convert between the two.
+export function keyToEnum(key: string): string {
+  return key.toUpperCase().replace(/-/g, '_');
+}
+
+export function enumToKey(value: string): string {
+  return value.toLowerCase().replace(/_/g, '-');
+}

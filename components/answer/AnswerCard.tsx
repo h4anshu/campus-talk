@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { CheckCircle2, ChevronUp, ChevronDown, Reply as ReplyIcon } from 'lucide-react';
 import type { MockComment } from '@/lib/mock/comments';
-import { getInitials, getAvatarColor } from '@/lib/utils';
+import { useCommentVote } from '@/hooks/useVote';
+import { useCreateComment, useAcceptAnswer } from '@/hooks/useComments';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 import CommentComposer from '@/components/comment/CommentComposer';
@@ -13,36 +13,24 @@ import CommentThread from '@/components/comment/CommentThread';
 
 interface AnswerCardProps {
   answer: MockComment;
+  postId: string;
   postAuthorName: string;
+  viewerIsAuthor?: boolean;
 }
 
-export default function AnswerCard({ answer, postAuthorName }: AnswerCardProps) {
-  const { data: session } = useSession();
-  const [vote, setVote] = useState<'up' | 'down' | null>(null);
+export default function AnswerCard({ answer, postId, postAuthorName, viewerIsAuthor }: AnswerCardProps) {
   const [replying, setReplying] = useState(false);
-  const [replies, setReplies] = useState(answer.replies);
+  const { mutate: vote } = useCommentVote(postId, answer.id);
+  const { mutate: createReply } = useCreateComment(postId);
+  const { mutate: acceptAnswer, isPending: accepting } = useAcceptAnswer(postId);
 
-  const voteCount = answer.voteCount + (vote === 'up' ? 1 : vote === 'down' ? -1 : 0);
   const isOP = answer.author.name === postAuthorName;
 
   const addReply = (body: string) => {
-    const newReply: MockComment = {
-      id: `${answer.id}-local-${Date.now()}`,
-      body,
-      author: {
-        name: session?.user?.name ?? 'You',
-        initials: getInitials(session?.user?.name),
-        year: session?.user?.year ?? 0,
-        dept: session?.user?.dept ?? '',
-        avatarColor: getAvatarColor(session?.user?.id),
-      },
-      voteCount: 0,
-      createdAt: new Date(),
-      parentId: answer.id,
-      replies: [],
-    };
-    setReplies((prev) => [...prev, newReply]);
-    setReplying(false);
+    createReply(
+      { postId, body, parentId: answer.id },
+      { onSuccess: () => setReplying(false) }
+    );
   };
 
   return (
@@ -55,23 +43,23 @@ export default function AnswerCard({ answer, postAuthorName }: AnswerCardProps) 
     >
       <div className="flex flex-col items-center gap-0.5 pt-1">
         <button
-          onClick={() => setVote((p) => (p === 'up' ? null : 'up'))}
+          onClick={() => vote('up')}
           className={`rounded p-0.5 transition-colors hover:bg-[var(--bg-panel)] ${
-            vote === 'up' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+            answer.userVote === 'up' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
           }`}
           aria-label="Upvote"
         >
           <ChevronUp className="h-4 w-4" />
         </button>
         <span
-          className={`text-[12px] font-medium ${vote ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'}`}
+          className={`text-[12px] font-medium ${answer.userVote ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'}`}
         >
-          {voteCount}
+          {answer.voteCount}
         </span>
         <button
-          onClick={() => setVote((p) => (p === 'down' ? null : 'down'))}
+          onClick={() => vote('down')}
           className={`rounded p-0.5 transition-colors hover:bg-[var(--bg-panel)] ${
-            vote === 'down' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+            answer.userVote === 'down' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
           }`}
           aria-label="Downvote"
         >
@@ -80,12 +68,24 @@ export default function AnswerCard({ answer, postAuthorName }: AnswerCardProps) 
       </div>
 
       <div className="min-w-0">
-        {answer.accepted && (
-          <div className="mb-2 flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)]">
-            <CheckCircle2 className="h-3 w-3" />
-            Accepted answer
-          </div>
-        )}
+        <div className="mb-2 flex items-center gap-2">
+          {answer.accepted && (
+            <div className="flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)]">
+              <CheckCircle2 className="h-3 w-3" />
+              Accepted answer
+            </div>
+          )}
+          {viewerIsAuthor && !answer.accepted && (
+            <button
+              onClick={() => acceptAnswer(answer.id)}
+              disabled={accepting}
+              className="flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--border)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--success-border)] hover:text-[var(--success)] disabled:opacity-50"
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              Mark as accepted
+            </button>
+          )}
+        </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
           <Avatar initials={answer.author.initials} color={answer.author.avatarColor} size={22} />
@@ -116,9 +116,9 @@ export default function AnswerCard({ answer, postAuthorName }: AnswerCardProps) 
 
         {replying && <CommentComposer onSubmit={addReply} onCancel={() => setReplying(false)} />}
 
-        {replies.length > 0 && (
+        {answer.replies.length > 0 && (
           <div className="mt-3 border-t-[0.5px] border-[var(--border)] pt-3">
-            <CommentThread comments={replies} postAuthorName={postAuthorName} />
+            <CommentThread comments={answer.replies} postId={postId} postAuthorName={postAuthorName} />
           </div>
         )}
       </div>

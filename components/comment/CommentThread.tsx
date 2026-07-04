@@ -8,12 +8,14 @@ import EmptyState from '@/components/shared/EmptyState';
 
 interface CommentThreadProps {
   comments: MockComment[];
+  postId: string;
   postAuthorName: string;
   initialVisible?: number;
 }
 
 export default function CommentThread({
   comments,
+  postId,
   postAuthorName,
   initialVisible = 3,
 }: CommentThreadProps) {
@@ -29,7 +31,7 @@ export default function CommentThread({
   return (
     <div className="flex flex-col gap-3">
       {shown.map((comment) => (
-        <CommentItem key={comment.id} comment={comment} depth={1} postAuthorName={postAuthorName} />
+        <CommentItem key={comment.id} comment={comment} depth={1} postId={postId} postAuthorName={postAuthorName} />
       ))}
 
       {remaining > 0 && (

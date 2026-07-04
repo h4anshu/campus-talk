@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { MockPost } from '@/lib/mock/posts';
+import { stripHtmlTags } from '@/lib/utils';
 import VoteBlock from '@/components/post/VoteBlock';
 import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
@@ -23,7 +24,7 @@ export default function CollaborationCard({ post }: CollaborationCardProps) {
       transition={{ duration: 0.15 }}
       className="grid cursor-pointer grid-cols-[32px_1fr] gap-3 rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]"
     >
-      <VoteBlock initialVotes={post.voteCount} />
+      <VoteBlock postId={post.id} voteCount={post.voteCount} userVote={post.userVote} />
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -46,7 +47,7 @@ export default function CollaborationCard({ post }: CollaborationCardProps) {
         </h3>
 
         <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
-          {post.body}
+          {stripHtmlTags(post.body)}
         </p>
 
         {post.tags.length > 0 && (
@@ -59,7 +60,12 @@ export default function CollaborationCard({ post }: CollaborationCardProps) {
 
         {post.slots && <CollabSlotBar slots={post.slots} skills={post.skills ?? []} />}
 
-        <PostActions postId={post.id} commentCount={post.commentCount} viewCount={post.viewCount} />
+        <PostActions
+          postId={post.id}
+          commentCount={post.commentCount}
+          viewCount={post.viewCount}
+          isSaved={post.isSaved}
+        />
       </div>
     </motion.div>
   );

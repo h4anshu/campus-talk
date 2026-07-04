@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
+import { useCreatePost } from '@/hooks/useCreatePost';
+import { TOPICS, type TopicKey } from '@/lib/constants';
 
 const DESTINATIONS = [
   { key: 'discussion', label: 'Discussion' },
@@ -19,8 +22,11 @@ const DESTINATIONS = [
 type DraftState = 'idle' | 'saving' | 'saved';
 
 export default function CreatePostDialog() {
+  const router = useRouter();
   const { open, closeDialog } = useCreatePostStore();
+  const { mutate: createPost, isPending } = useCreatePost();
   const [destination, setDestination] = useState<(typeof DESTINATIONS)[number]['key']>('discussion');
+  const [topic, setTopic] = useState<TopicKey | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [draftState, setDraftState] = useState<DraftState>('idle');
@@ -40,15 +46,40 @@ export default function CreatePostDialog() {
 
   const reset = () => {
     setDestination('discussion');
+    setTopic(null);
     setTitle('');
     setBody('');
     setDraftState('idle');
   };
 
+  const canPost = title.trim().length >= 5 && (destination !== 'discussion' || !!topic) && !isPending;
+
   const handlePost = () => {
-    closeDialog();
-    reset();
-    toast('Post created');
+    if (!canPost) return;
+
+    const payload =
+      destination === 'discussion'
+        ? { title, body, type: 'DISCUSSION' as const, topic: topic!, tags: [], anonymous: false }
+        : {
+            title,
+            body,
+            type: 'SPACE' as const,
+            space: destination,
+            tags: [],
+            anonymous: destination === 'confession',
+          };
+
+    createPost(payload, {
+      onSuccess: (post) => {
+        closeDialog();
+        reset();
+        toast(post.status === 'PENDING' ? 'Post submitted for admin approval' : 'Post created');
+        router.push(`/post/${post.id}`);
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : 'Failed to create post');
+      },
+    });
   };
 
   return (
@@ -87,6 +118,24 @@ export default function CreatePostDialog() {
                 </button>
               ))}
             </div>
+
+            {destination === 'discussion' && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {TOPICS.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setTopic(t.key)}
+                    className={`rounded-full border-[0.5px] px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                      topic === t.key
+                        ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                        : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)] hover:text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <input
               value={title}
@@ -137,9 +186,10 @@ export default function CreatePostDialog() {
               </button>
               <button
                 onClick={handlePost}
-                disabled={!title.trim()}
-                className="rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={!canPost}
+                className="flex items-center gap-1.5 rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
+                {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                 Post
               </button>
             </div>

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, Reply as ReplyIcon } from 'lucide-react';
 import type { MockComment } from '@/lib/mock/comments';
-import { getInitials, getAvatarColor } from '@/lib/utils';
+import { useCommentVote } from '@/hooks/useVote';
+import { useCreateComment } from '@/hooks/useComments';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 import CommentComposer from '@/components/comment/CommentComposer';
@@ -24,38 +24,24 @@ const MAX_DEPTH = 6;
 interface CommentItemProps {
   comment: MockComment;
   depth: number;
+  postId: string;
   postAuthorName: string;
 }
 
-export default function CommentItem({ comment, depth, postAuthorName }: CommentItemProps) {
-  const { data: session } = useSession();
+export default function CommentItem({ comment, depth, postId, postAuthorName }: CommentItemProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [replying, setReplying] = useState(false);
-  const [upvoted, setUpvoted] = useState(false);
-  const [replies, setReplies] = useState(comment.replies);
+  const { mutate: vote } = useCommentVote(postId, comment.id);
+  const { mutate: createReply } = useCreateComment(postId);
 
   const color = DEPTH_COLORS[(depth - 1) % DEPTH_COLORS.length];
   const isOP = comment.author.name === postAuthorName;
-  const voteCount = comment.voteCount + (upvoted ? 1 : 0);
 
   const addReply = (body: string) => {
-    const newReply: MockComment = {
-      id: `${comment.id}-local-${Date.now()}`,
-      body,
-      author: {
-        name: session?.user?.name ?? 'You',
-        initials: getInitials(session?.user?.name),
-        year: session?.user?.year ?? 0,
-        dept: session?.user?.dept ?? '',
-        avatarColor: getAvatarColor(session?.user?.id),
-      },
-      voteCount: 0,
-      createdAt: new Date(),
-      parentId: comment.id,
-      replies: [],
-    };
-    setReplies((prev) => [...prev, newReply]);
-    setReplying(false);
+    createReply(
+      { postId, body, parentId: comment.id },
+      { onSuccess: () => setReplying(false) }
+    );
   };
 
   return (
@@ -95,7 +81,7 @@ export default function CommentItem({ comment, depth, postAuthorName }: CommentI
             onClick={() => setCollapsed(false)}
             className="mt-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
           >
-            Comment collapsed · {replies.length > 0 ? `${replies.length} replies hidden` : 'click to expand'}
+            Comment collapsed · {comment.replies.length > 0 ? `${comment.replies.length} replies hidden` : 'click to expand'}
           </button>
         ) : (
           <AnimatePresence initial={false}>
@@ -112,13 +98,13 @@ export default function CommentItem({ comment, depth, postAuthorName }: CommentI
 
               <div className="mt-1.5 flex items-center gap-3">
                 <button
-                  onClick={() => setUpvoted((v) => !v)}
+                  onClick={() => vote('up')}
                   className={`flex items-center gap-1 text-[11px] transition-colors ${
-                    upvoted ? 'text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                    comment.userVote === 'up' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
                   }`}
                 >
                   <ChevronUp className="h-3.5 w-3.5" />
-                  {voteCount}
+                  {comment.voteCount}
                 </button>
 
                 {depth < MAX_DEPTH && (
@@ -136,13 +122,14 @@ export default function CommentItem({ comment, depth, postAuthorName }: CommentI
                 <CommentComposer onSubmit={addReply} onCancel={() => setReplying(false)} />
               )}
 
-              {replies.length > 0 && (
+              {comment.replies.length > 0 && (
                 <div className="mt-3 flex flex-col gap-3">
-                  {replies.map((reply) => (
+                  {comment.replies.map((reply) => (
                     <CommentItem
                       key={reply.id}
                       comment={reply}
                       depth={depth + 1}
+                      postId={postId}
                       postAuthorName={postAuthorName}
                     />
                   ))}

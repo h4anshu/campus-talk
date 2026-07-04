@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import { ChevronUp, ChevronDown, EyeOff, Pin } from 'lucide-react';
+import { useVote } from '@/hooks/useVote';
 
 interface VoteBlockProps {
-  initialVotes: number;
+  postId: string;
+  voteCount: number;
+  userVote?: 'up' | 'down' | null;
   variant?: 'vote' | 'confession' | 'pin';
 }
 
-export default function VoteBlock({ initialVotes, variant = 'vote' }: VoteBlockProps) {
-  const [vote, setVote] = useState<'up' | 'down' | null>(null);
+export default function VoteBlock({ postId, voteCount, userVote = null, variant = 'vote' }: VoteBlockProps) {
+  const { mutate: vote } = useVote(postId);
 
   if (variant === 'confession') {
     return (
@@ -27,11 +29,9 @@ export default function VoteBlock({ initialVotes, variant = 'vote' }: VoteBlockP
     );
   }
 
-  const count = initialVotes + (vote === 'up' ? 1 : vote === 'down' ? -1 : 0);
-
-  const toggle = (e: React.MouseEvent, next: 'up' | 'down') => {
+  const toggle = (e: React.MouseEvent, direction: 'up' | 'down') => {
     e.stopPropagation();
-    setVote((prev) => (prev === next ? null : next));
+    vote(direction);
   };
 
   return (
@@ -39,7 +39,7 @@ export default function VoteBlock({ initialVotes, variant = 'vote' }: VoteBlockP
       <button
         onClick={(e) => toggle(e, 'up')}
         className={`rounded p-0.5 transition-colors hover:bg-[var(--bg-panel)] ${
-          vote === 'up' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+          userVote === 'up' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
         }`}
         aria-label="Upvote"
       >
@@ -47,15 +47,15 @@ export default function VoteBlock({ initialVotes, variant = 'vote' }: VoteBlockP
       </button>
       <span
         className={`text-[12px] font-medium ${
-          vote ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'
+          userVote ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'
         }`}
       >
-        {count}
+        {voteCount}
       </span>
       <button
         onClick={(e) => toggle(e, 'down')}
         className={`rounded p-0.5 transition-colors hover:bg-[var(--bg-panel)] ${
-          vote === 'down' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+          userVote === 'down' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
         }`}
         aria-label="Downvote"
       >

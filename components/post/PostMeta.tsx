@@ -20,7 +20,7 @@ export default function PostMeta({ author, createdAt, anonymous }: PostMetaProps
       <span className="text-[12px] font-medium text-[var(--text-primary)]">
         {anonymous ? 'Anonymous' : author.name}
       </span>
-      {!anonymous && author.year > 0 && <YearBadge year={author.year} />}
+      {!anonymous && !!author.year && <YearBadge year={author.year} />}
       {!anonymous && author.dept && (
         <span className="text-[11px] text-[var(--text-muted)]">{author.dept}</span>
       )}

@@ -180,8 +180,8 @@ model Comment {
   college   College? @relation(fields: [collegeId], references: [id])
 
   author    User      @relation(fields: [authorId], references: [id])
-  post      Post      @relation(fields: [postId], references: [id])
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
   votes     Vote[]
 }
@@ -195,8 +195,8 @@ model Vote {
   createdAt DateTime @default(now())
 
   user    User     @relation(fields: [userId], references: [id])
-  post    Post?    @relation(fields: [postId], references: [id])
-  comment Comment? @relation(fields: [commentId], references: [id])
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@unique([userId, commentId])
@@ -211,7 +211,7 @@ model Media {
   postId       String
   createdAt    DateTime @default(now())
 
-  post Post @relation(fields: [postId], references: [id])
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Tag {
@@ -225,8 +225,8 @@ model SavedPost {
   postId    String
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
-  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@id([userId, postId])
 }

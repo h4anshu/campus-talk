@@ -3,8 +3,8 @@ import type { SpaceKey, TopicKey } from '@/lib/constants';
 export interface MockAuthor {
   name: string;
   initials: string;
-  year: number;
-  dept: string;
+  year: number | null;
+  dept: string | null;
   avatarColor: string;
 }
 
@@ -27,6 +27,14 @@ export interface MockPost {
   createdAt: Date;
   author: MockAuthor;
   tags: string[];
+  // Populated by real API responses (undefined for mock data) — the
+  // current viewer's own vote/save state, so reloading the page shows
+  // the correct persisted state instead of resetting to "not voted".
+  userVote?: 'up' | 'down' | null;
+  isSaved?: boolean;
+  // True when the logged-in viewer is this post's author — used to gate
+  // the "mark as accepted" answer control (only the OP may accept).
+  viewerIsAuthor?: boolean;
   eventDate?: Date;
   venue?: string;
   slots?: { filled: number; total: number };

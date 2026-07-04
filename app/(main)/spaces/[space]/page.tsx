@@ -1,8 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { MOCK_POSTS } from '@/lib/mock';
 import { SPACES, type SpaceKey } from '@/lib/constants';
 import type { MockPost } from '@/lib/mock/posts';
+import { usePosts } from '@/hooks/usePosts';
 import AnnouncementCard from '@/components/spaces/AnnouncementCard';
 import EventCard from '@/components/spaces/EventCard';
 import ResourceCard from '@/components/spaces/ResourceCard';
@@ -10,6 +12,7 @@ import LostFoundCard from '@/components/spaces/LostFoundCard';
 import CollaborationCard from '@/components/spaces/CollaborationCard';
 import ConfessionCard from '@/components/spaces/ConfessionCard';
 import EmptyState from '@/components/shared/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SPACE_CARD_MAP: Record<SpaceKey, ComponentType<{ post: MockPost }>> = {
   announcements: AnnouncementCard,
@@ -26,6 +29,7 @@ interface SpacePageProps {
 
 export default function SpacePage({ params }: SpacePageProps) {
   const space = SPACES.find((s) => s.key === params.space);
+  const { data: posts, isLoading, isError } = usePosts({ space: params.space });
 
   if (!space) {
     return (
@@ -38,23 +42,27 @@ export default function SpacePage({ params }: SpacePageProps) {
     );
   }
 
-  const posts = MOCK_POSTS.filter(
-    (p) => p.space === (params.space as SpaceKey) && p.status === 'APPROVED'
-  );
   const Card = SPACE_CARD_MAP[space.key as SpaceKey];
+  const count = posts?.length ?? 0;
 
   return (
     <div className="mx-auto max-w-[720px] px-4 py-5 sm:px-6">
       <h1 className="text-[18px] font-medium text-[var(--text-primary)]">{space.label}</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        {posts.length} post{posts.length === 1 ? '' : 's'} in this space
+        {count} post{count === 1 ? '' : 's'} in this space
       </p>
 
       <div className="mt-4 flex flex-col gap-3">
-        {posts.length === 0 ? (
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-[132px] rounded-card bg-[var(--bg-surface)]" />
+          ))
+        ) : isError ? (
+          <EmptyState title="Couldn't load posts" description="Something went wrong. Try refreshing the page." />
+        ) : count === 0 ? (
           <EmptyState title={`No posts in ${space.label} yet`} description="Check back soon." />
         ) : (
-          posts.map((post) => <Card key={post.id} post={post} />)
+          posts!.map((post) => <Card key={post.id} post={post} />)
         )}
       </div>
     </div>

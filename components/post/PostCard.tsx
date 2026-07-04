@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { MockPost } from '@/lib/mock/posts';
+import { stripHtmlTags } from '@/lib/utils';
 import VoteBlock from '@/components/post/VoteBlock';
 import PostMeta from '@/components/post/PostMeta';
 import PostBadges from '@/components/post/PostBadges';
@@ -36,7 +37,7 @@ export default function PostCard({ post }: PostCardProps) {
       transition={{ duration: 0.15 }}
       className={`grid cursor-pointer grid-cols-[32px_1fr] gap-3 rounded-card border-[0.5px] ${borderClass} bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]`}
     >
-      <VoteBlock initialVotes={post.voteCount} variant={voteVariant} />
+      <VoteBlock postId={post.id} voteCount={post.voteCount} userVote={post.userVote} variant={voteVariant} />
 
       <div className="min-w-0">
         <PostBadges post={post} />
@@ -50,7 +51,7 @@ export default function PostCard({ post }: PostCardProps) {
         </h3>
 
         <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
-          {post.body}
+          {stripHtmlTags(post.body)}
         </p>
 
         {post.tags.length > 0 && (
@@ -67,7 +68,12 @@ export default function PostCard({ post }: PostCardProps) {
 
         {isConfession && <ReactionButtons />}
 
-        <PostActions postId={post.id} commentCount={post.commentCount} viewCount={post.viewCount} />
+        <PostActions
+          postId={post.id}
+          commentCount={post.commentCount}
+          viewCount={post.viewCount}
+          isSaved={post.isSaved}
+        />
       </div>
     </motion.div>
   );

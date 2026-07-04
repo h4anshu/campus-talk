@@ -1,6 +1,8 @@
+'use client';
+
 import Link from 'next/link';
-import { MOCK_POSTS } from '@/lib/mock';
 import { TOPICS, type TopicKey } from '@/lib/constants';
+import { usePosts } from '@/hooks/usePosts';
 import Feed from '@/components/feed/Feed';
 
 interface TopicPageProps {
@@ -8,7 +10,9 @@ interface TopicPageProps {
 }
 
 export default function TopicPage({ params }: TopicPageProps) {
-  const topic = TOPICS.find((t) => t.key === params.topic);
+  const topicParam = params.topic;
+  const topic = TOPICS.find((t) => t.key === topicParam);
+  const { data: posts } = usePosts({ topic: topicParam });
 
   if (!topic) {
     return (
@@ -21,17 +25,17 @@ export default function TopicPage({ params }: TopicPageProps) {
     );
   }
 
-  const posts = MOCK_POSTS.filter((p) => p.topic === (params.topic as TopicKey));
+  const count = posts?.length ?? 0;
 
   return (
     <div>
       <div className="px-4 pt-5 sm:px-6">
         <h1 className="text-[18px] font-medium text-[var(--text-primary)]">{topic.label}</h1>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-          {posts.length} post{posts.length === 1 ? '' : 's'} in this topic
+          {count} post{count === 1 ? '' : 's'} in this topic
         </p>
       </div>
-      <Feed posts={posts} />
+      <Feed topic={topicParam as TopicKey} />
     </div>
   );
 }

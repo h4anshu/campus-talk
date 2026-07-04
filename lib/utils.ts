@@ -30,3 +30,10 @@ export function getAvatarColor(seed: string | null | undefined) {
   }
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length]
 }
+
+// Post bodies are stored as sanitized HTML (from the Tiptap editor). This is
+// a plain display-formatting strip for truncated previews — not a security
+// boundary, the server already sanitized the content before it was saved.
+export function stripHtmlTags(html: string) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
