@@ -25,15 +25,23 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const matchingPost = MOCK_POSTS.find((p) => slugify(p.author.name) === params.username);
 
-  const profile = isOwnProfile
+  let dbUser = null;
+  if (isOwnProfile && currentUser) {
+    dbUser = await prisma.user.findUnique({
+      where: { id: currentUser.id },
+    });
+  }
+
+  const profile = isOwnProfile && dbUser
     ? {
-        name: currentUser!.name ?? 'Student',
-        initials: getInitials(currentUser!.name),
-        year: currentUser!.year,
-        dept: currentUser!.dept,
-        avatarColor: getAvatarColor(currentUser!.id),
-        bio: null as string | null,
-        reputation: undefined as number | undefined,
+        name: dbUser.name,
+        initials: getInitials(dbUser.name),
+        year: dbUser.year,
+        dept: dbUser.dept,
+        avatarColor: getAvatarColor(dbUser.id),
+        bio: dbUser.bio,
+        reputation: dbUser.reputation,
+        image: dbUser.image,
       }
     : matchingPost
       ? {
@@ -44,6 +52,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           avatarColor: matchingPost.author.avatarColor,
           bio: null as string | null,
           reputation: undefined as number | undefined,
+          image: null as string | null,
         }
       : null;
 
@@ -109,8 +118,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const acceptedCount = answers.filter((a) => a.accepted).length;
 
   const reputation =
-    profile.reputation ??
-    posts.reduce((sum, p) => sum + p.voteCount, 0) + answers.reduce((sum, a) => sum + a.voteCount, 0);
+    (profile.reputation ?? 0) +
+    posts.reduce((sum, p) => sum + p.voteCount, 0) +
+    answers.reduce((sum, a) => sum + a.voteCount, 0);
 
   return (
     <div className="mx-auto max-w-[720px] pb-8">
@@ -121,7 +131,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       <div className="px-4 sm:px-6">
         <div className="-mt-9 flex items-end gap-3">
           <div className="rounded-full ring-4 ring-[var(--bg-page)]">
-            <Avatar initials={profile.initials} color={profile.avatarColor} size={72} />
+            <Avatar initials={profile.initials} color={profile.avatarColor} size={72} src={profile.image} />
           </div>
         </div>
 

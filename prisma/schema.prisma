@@ -165,6 +165,7 @@ model Post {
   media     Media[]
   tags      Tag[]
   savedBy   SavedPost[]
+  searchVector Unsupported("tsvector")?
 }
 
 model Comment {

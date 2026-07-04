@@ -1,15 +1,20 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Search, FileText, User as UserIcon } from 'lucide-react';
+import { Search, FileText, User as UserIcon, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { TOPICS } from '@/lib/constants';
-import { MOCK_POSTS } from '@/lib/mock';
+import { fetchJson } from '@/lib/api-client';
 import { ICON_MAP } from '@/lib/icon-map';
-import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
+import { slugify } from '@/lib/utils';
+
+interface SearchResult {
+  posts: any[];
+  people: any[];
+  topics: any[];
+}
 
 interface SearchOverlayProps {
   open: boolean;
@@ -18,43 +23,36 @@ interface SearchOverlayProps {
 
 export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
   const router = useRouter();
-  const { data: session } = useSession();
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult>({ posts: [], people: [], topics: [] });
+  const [loading, setLoading] = useState(false);
 
-  const { posts, people, topics } = useMemo(() => {
-    const q = query.trim().toLowerCase();
-
-    const matchedPosts = MOCK_POSTS.filter((p) => p.status === 'APPROVED')
-      .filter((p) => !q || p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q))
-      .slice(0, 5);
-
-    const authorNames = new Map<string, { name: string; initials: string; avatarColor: string }>();
-    if (session?.user?.name) {
-      authorNames.set(session.user.name, {
-        name: session.user.name,
-        initials: getInitials(session.user.name),
-        avatarColor: getAvatarColor(session.user.id),
-      });
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setResults({ posts: [], people: [], topics: [] });
+      setLoading(false);
+      return;
     }
-    for (const p of MOCK_POSTS) {
-      if (p.author.name === 'Anonymous' || p.author.name === 'Admin Office') continue;
-      if (!authorNames.has(p.author.name)) {
-        authorNames.set(p.author.name, {
-          name: p.author.name,
-          initials: p.author.initials,
-          avatarColor: p.author.avatarColor,
-        });
+
+    setLoading(true);
+    const delayDebounce = setTimeout(async () => {
+      try {
+        const data = await fetchJson<SearchResult>(
+          `/api/search?q=${encodeURIComponent(trimmed)}`
+        );
+        setResults(data);
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-    const matchedPeople = [...authorNames.values()]
-      .filter((a) => !q || a.name.toLowerCase().includes(q))
-      .slice(0, 5);
+    }, 300);
 
-    const matchedTopics = TOPICS.filter((t) => !q || t.label.toLowerCase().includes(q)).slice(0, 6);
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
 
-    return { posts: matchedPosts, people: matchedPeople, topics: matchedTopics };
-  }, [query, session]);
-
+  const { posts, people, topics } = results;
   const hasResults = posts.length > 0 || people.length > 0 || topics.length > 0;
 
   const goTo = (href: string) => {
@@ -76,7 +74,11 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
           transition={{ duration: 0.15 }}
         >
           <div className="flex items-center gap-2.5 border-b-[0.5px] border-[var(--border)] px-4 py-3">
-            <Search className="h-4 w-4 text-[var(--text-muted)]" />
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />
+            ) : (
+              <Search className="h-4 w-4 text-[var(--text-muted)]" />
+            )}
             <input
               autoFocus
               value={query}
@@ -147,7 +149,13 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
                   return (
                     <button
                       key={topic.key}
-                      onClick={() => goTo(`/discussions/${topic.key}`)}
+                      onClick={() =>
+                        goTo(
+                          topic.type === 'space'
+                            ? `/spaces/${topic.key}`
+                            : `/discussions/${topic.key}`
+                        )
+                      }
                       className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-left text-[13px] text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-panel)]"
                     >
                       <Icon className="h-4 w-4 shrink-0 text-[var(--accent)]" />

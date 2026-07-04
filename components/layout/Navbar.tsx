@@ -167,7 +167,7 @@ export default function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="ml-1 flex items-center gap-1 rounded py-1 pl-1 pr-1.5 transition-colors hover:bg-[var(--bg-panel)]">
-                <Avatar initials={getInitials(user?.name)} color={getAvatarColor(user?.id)} size={28} online />
+                <Avatar initials={getInitials(user?.name)} color={getAvatarColor(user?.id)} size={28} online src={user?.image} />
                 <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)]" />
               </button>
             </DropdownMenuTrigger>

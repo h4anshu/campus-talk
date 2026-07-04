@@ -9,6 +9,7 @@ declare module 'next-auth' {
       role: Role;
       year: number | null;
       dept: string | null;
+      bio: string | null;
     } & DefaultSession['user'];
   }
 }

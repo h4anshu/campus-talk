@@ -64,7 +64,7 @@ export default function LeftSidebar() {
         href={profileHref}
         className="flex items-center gap-2.5 rounded px-1.5 py-2 transition-colors hover:bg-[var(--bg-panel)]"
       >
-        <Avatar initials={getInitials(user?.name)} color={getAvatarColor(user?.id)} size={36} />
+        <Avatar initials={getInitials(user?.name)} color={getAvatarColor(user?.id)} size={36} src={user?.image} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-medium text-[var(--text-primary)]">
             {user?.name}
