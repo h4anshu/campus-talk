@@ -6,6 +6,14 @@ import { toast } from 'sonner';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { useCreateAdminPost } from '@/hooks/useAdminPosts';
 import { fetchJson } from '@/lib/api-client';
+import type { DetectedEmbed } from '@/lib/embed';
+
+interface PendingMedia {
+  type: 'image' | 'youtube' | 'drive';
+  url: string;
+  providerId?: string;
+  thumbnailUrl?: string;
+}
 
 const PRIORITIES = ['Critical', 'Info', 'General'] as const;
 type Priority = (typeof PRIORITIES)[number];
@@ -22,7 +30,7 @@ export default function ComposeAnnouncementPage() {
   const [body, setBody] = useState('');
   const [priority, setPriority] = useState<Priority>('Info');
   const [pinned, setPinned] = useState(false);
-  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; publicId: string }[]>([]);
+  const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
 
   const canPublish = title.trim().length >= 5 && !isPending;
 
@@ -33,10 +41,16 @@ export default function ComposeAnnouncementPage() {
       { title, body, space: 'announcements', priority, pinned, tags: [] },
       {
         onSuccess: (post) => {
-          for (const media of uploadedMedia) {
+          for (const media of pendingMedia) {
             fetchJson('/api/media', {
               method: 'POST',
-              body: JSON.stringify({ postId: post.id, url: media.url, providerId: media.publicId, type: 'image' }),
+              body: JSON.stringify({
+                postId: post.id,
+                url: media.url,
+                providerId: media.providerId,
+                thumbnailUrl: media.thumbnailUrl,
+                type: media.type,
+              }),
             }).catch(() => {});
           }
 
@@ -44,7 +58,7 @@ export default function ComposeAnnouncementPage() {
           setBody('');
           setPriority('Info');
           setPinned(false);
-          setUploadedMedia([]);
+          setPendingMedia([]);
           toast(`Announcement published — visible now at /spaces/announcements`);
         },
         onError: (error) => {
@@ -103,7 +117,15 @@ export default function ComposeAnnouncementPage() {
         <RichTextEditor
           onChange={setBody}
           placeholder="Write the announcement..."
-          onImageUploaded={(url, publicId) => setUploadedMedia((prev) => [...prev, { url, publicId }])}
+          onImageUploaded={(url, publicId) =>
+            setPendingMedia((prev) => [...prev, { type: 'image', url, providerId: publicId }])
+          }
+          onEmbedDetected={(embed: DetectedEmbed) =>
+            setPendingMedia((prev) => [
+              ...prev,
+              { type: embed.type, url: embed.url, providerId: embed.providerId, thumbnailUrl: embed.thumbnailUrl },
+            ])
+          }
         />
       </div>
 

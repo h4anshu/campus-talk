@@ -11,6 +11,14 @@ import { useCreatePostStore } from '@/store/useCreatePostStore';
 import { useCreatePost } from '@/hooks/useCreatePost';
 import { TOPICS, type TopicKey } from '@/lib/constants';
 import { fetchJson } from '@/lib/api-client';
+import type { DetectedEmbed } from '@/lib/embed';
+
+interface PendingMedia {
+  type: 'image' | 'youtube' | 'drive';
+  url: string;
+  providerId?: string;
+  thumbnailUrl?: string;
+}
 
 const DESTINATIONS = [
   { key: 'discussion', label: 'Discussion' },
@@ -31,7 +39,7 @@ export default function CreatePostDialog() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [draftState, setDraftState] = useState<DraftState>('idle');
-  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; publicId: string }[]>([]);
+  const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const markDirty = () => {
@@ -52,7 +60,7 @@ export default function CreatePostDialog() {
     setTitle('');
     setBody('');
     setDraftState('idle');
-    setUploadedMedia([]);
+    setPendingMedia([]);
   };
 
   const canPost = title.trim().length >= 5 && (destination !== 'discussion' || !!topic) && !isPending;
@@ -74,13 +82,20 @@ export default function CreatePostDialog() {
 
     createPost(payload, {
       onSuccess: (post) => {
-        // The image is already embedded in `post.body` (inserted into the
-        // editor at upload time), so this is just recording it as a proper
-        // Media row too — best-effort, doesn't block navigating to the post.
-        for (const media of uploadedMedia) {
+        // Images and embed cards are already visible in `post.body` (inserted
+        // into the editor at upload/paste time), so this is just recording
+        // each one as a proper Media row too — best-effort, doesn't block
+        // navigating to the post.
+        for (const media of pendingMedia) {
           fetchJson('/api/media', {
             method: 'POST',
-            body: JSON.stringify({ postId: post.id, url: media.url, providerId: media.publicId, type: 'image' }),
+            body: JSON.stringify({
+              postId: post.id,
+              url: media.url,
+              providerId: media.providerId,
+              thumbnailUrl: media.thumbnailUrl,
+              type: media.type,
+            }),
           }).catch(() => {});
         }
 
@@ -167,7 +182,13 @@ export default function CreatePostDialog() {
                   markDirty();
                 }}
                 onImageUploaded={(url, publicId) =>
-                  setUploadedMedia((prev) => [...prev, { url, publicId }])
+                  setPendingMedia((prev) => [...prev, { type: 'image', url, providerId: publicId }])
+                }
+                onEmbedDetected={(embed: DetectedEmbed) =>
+                  setPendingMedia((prev) => [
+                    ...prev,
+                    { type: embed.type, url: embed.url, providerId: embed.providerId, thumbnailUrl: embed.thumbnailUrl },
+                  ])
                 }
                 placeholder={`Write your ${DESTINATIONS.find((d) => d.key === destination)?.label.toLowerCase()} post...`}
               />

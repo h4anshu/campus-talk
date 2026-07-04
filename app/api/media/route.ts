@@ -8,6 +8,7 @@ const createMediaSchema = z.object({
   postId: z.string().min(1),
   url: z.string().url(),
   providerId: z.string().optional(),
+  thumbnailUrl: z.string().url().optional(),
   type: z.enum(['image', 'video', 'youtube', 'drive']).default('image'),
 });
 
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
         postId: data.postId,
         url: data.url,
         providerId: data.providerId,
+        thumbnailUrl: data.thumbnailUrl,
         type: data.type,
       },
     });

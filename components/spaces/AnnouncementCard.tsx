@@ -22,7 +22,7 @@ interface AnnouncementCardProps {
 export default function AnnouncementCard({ post }: AnnouncementCardProps) {
   const router = useRouter();
   const priority = post.priority ?? 'General';
-  const thumbnail = post.images?.[0];
+  const thumbnail = post.media?.find((m) => m.type === 'image')?.url;
 
   return (
     <motion.div

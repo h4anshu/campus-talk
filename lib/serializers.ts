@@ -1,7 +1,7 @@
 import type { Post, Comment, User, Tag, Vote, SavedPost, Media, Prisma } from '@prisma/client';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 import { enumToKey } from '@/lib/constants';
-import type { MockPost, MockAuthor } from '@/lib/mock/posts';
+import type { MockPost, MockAuthor, MockPostMedia } from '@/lib/mock/posts';
 import type { MockComment, MockCommentAuthor } from '@/lib/mock/comments';
 
 type AuthorLite = Pick<User, 'id' | 'name' | 'image' | 'year' | 'dept'>;
@@ -12,7 +12,10 @@ export const POST_INCLUDE = {
   author: { select: { id: true, name: true, image: true, year: true, dept: true } },
   tags: true,
   votes: { select: { type: true, userId: true } },
-  media: { select: { url: true, type: true }, orderBy: { createdAt: 'asc' as const } },
+  media: {
+    select: { url: true, type: true, providerId: true, thumbnailUrl: true },
+    orderBy: { createdAt: 'asc' as const },
+  },
   _count: { select: { comments: true } },
 } satisfies Prisma.PostInclude;
 
@@ -51,7 +54,7 @@ export type PostForSerialization = Post & {
   tags: Tag[];
   votes: Pick<Vote, 'type' | 'userId'>[];
   savedBy?: Pick<SavedPost, 'userId'>[];
-  media?: Pick<Media, 'url' | 'type'>[];
+  media?: Pick<Media, 'url' | 'type' | 'providerId' | 'thumbnailUrl'>[];
   // Filtered include of just accepted top-level comments (used only to
   // compute the `answered` flag — not the full comment tree).
   comments?: { id: string }[];
@@ -85,7 +88,12 @@ export function serializePost(post: PostForSerialization, viewerId: string): Moc
     isSaved: (post.savedBy?.length ?? 0) > 0,
     viewerIsAuthor: post.authorId === viewerId,
     priority: (post.priority as MockPost['priority']) ?? undefined,
-    images: post.media?.filter((m) => m.type === 'image').map((m) => m.url) ?? [],
+    media: post.media?.map((m) => ({
+      type: m.type as MockPostMedia['type'],
+      url: m.url,
+      providerId: m.providerId,
+      thumbnailUrl: m.thumbnailUrl,
+    })),
   };
 }
 

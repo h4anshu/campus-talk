@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image';
 import { Bold, Italic, Code, List, Link2, ImagePlus, Video, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchJson } from '@/lib/api-client';
+import { detectEmbed, buildEmbedCardHtml, type DetectedEmbed } from '@/lib/embed';
 
 interface RichTextEditorProps {
   onChange: (html: string) => void;
@@ -16,6 +17,9 @@ interface RichTextEditorProps {
   /** Fires once the file has actually landed in Cloudinary, so the composer
    * can also record it as a Media row once the post itself exists. */
   onImageUploaded?: (url: string, publicId: string) => void;
+  /** Fires when a pasted (or manually entered) URL resolves to a YouTube/Drive
+   * embed, so the composer can record it as a Media row once the post exists. */
+  onEmbedDetected?: (embed: DetectedEmbed) => void;
 }
 
 interface SignatureResponse {
@@ -57,6 +61,7 @@ export default function RichTextEditor({
   onChange,
   placeholder = 'Write your post...',
   onImageUploaded,
+  onEmbedDetected,
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -72,7 +77,21 @@ export default function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          'min-h-[160px] text-[13px] leading-[1.7] text-[var(--text-primary)] outline-none [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px]',
+          'min-h-[160px] text-[13px] leading-[1.7] text-[var(--text-primary)] outline-none [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px] [&_.cv-embed]:my-2 [&_.cv-embed]:block [&_.cv-embed]:overflow-hidden [&_.cv-embed]:rounded-[9px] [&_.cv-embed]:border [&_.cv-embed]:border-[var(--border)] [&_.cv-embed_img]:block [&_.cv-embed_img]:max-w-full [&_.cv-embed-drive]:bg-[var(--bg-panel)] [&_.cv-embed-drive_a]:block [&_.cv-embed-drive_a]:p-3 [&_.cv-embed-drive_a]:text-[var(--accent)]',
+      },
+      // Real embed detection: a plain-text paste that matches a YouTube/Drive
+      // URL gets replaced with a visible card instead of falling through to
+      // Tiptap/Link's default autolink behavior (a plain blue hyperlink).
+      handlePaste: (_view, event) => {
+        const text = event.clipboardData?.getData('text/plain');
+        if (!text) return false;
+        const embed = detectEmbed(text);
+        if (!embed) return false;
+
+        event.preventDefault();
+        editor?.chain().focus().insertContent(buildEmbedCardHtml(embed)).run();
+        onEmbedDetected?.(embed);
+        return true;
       },
     },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -84,6 +103,18 @@ export default function RichTextEditor({
     const url = window.prompt('Enter a URL');
     if (!url) return;
     editor.chain().focus().setLink({ href: url }).run();
+  };
+
+  const promptForEmbed = () => {
+    const url = window.prompt('Paste a YouTube or Google Drive link');
+    if (!url) return;
+    const embed = detectEmbed(url);
+    if (!embed) {
+      toast.error("That doesn't look like a YouTube or Google Drive link");
+      return;
+    }
+    editor.chain().focus().insertContent(buildEmbedCardHtml(embed)).run();
+    onEmbedDetected?.(embed);
   };
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,10 +199,7 @@ export default function RichTextEditor({
           className="hidden"
           onChange={handleFileSelected}
         />
-        <ToolbarButton
-          label="Embed YouTube video"
-          onClick={() => toast('Paste a YouTube link — embedding coming soon')}
-        >
+        <ToolbarButton label="Embed YouTube or Drive link" onClick={promptForEmbed}>
           <Video className="h-3.5 w-3.5" />
         </ToolbarButton>
       </div>

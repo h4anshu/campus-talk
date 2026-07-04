@@ -35,8 +35,22 @@ interface ResourceCardProps {
 export default function ResourceCard({ post }: ResourceCardProps) {
   const router = useRouter();
   const [helpful, setHelpful] = useState(false);
-  const Icon = FILE_ICONS[post.resourceType ?? 'pdf'];
   const helpfulCount = (post.helpfulCount ?? 0) + (helpful ? 1 : 0);
+
+  // Prefer real Media rows (from a pasted/uploaded embed) over the
+  // mock-only resourceType/driveUrl fields, which real API posts never
+  // populate — that's what left this card blank for real resource posts.
+  const imageMedia = post.media?.find((m) => m.type === 'image');
+  const youtubeMedia = post.media?.find((m) => m.type === 'youtube');
+  const driveMedia = post.media?.find((m) => m.type === 'drive');
+  const driveUrl = driveMedia?.url ?? post.driveUrl;
+  const thumbnailUrl = imageMedia?.url ?? youtubeMedia?.thumbnailUrl;
+
+  const Icon = youtubeMedia
+    ? FileVideo
+    : driveMedia
+      ? Link2
+      : FILE_ICONS[post.resourceType ?? 'pdf'];
 
   return (
     <motion.div
@@ -45,9 +59,14 @@ export default function ResourceCard({ post }: ResourceCardProps) {
       transition={{ duration: 0.15 }}
       className="grid cursor-pointer grid-cols-[40px_1fr] gap-3 rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]"
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-[9px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)]">
-        <Icon className="h-5 w-5 text-[var(--accent)]" />
-      </div>
+      {thumbnailUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={thumbnailUrl} alt="" className="h-10 w-10 rounded-[9px] object-cover" />
+      ) : (
+        <div className="flex h-10 w-10 items-center justify-center rounded-[9px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)]">
+          <Icon className="h-5 w-5 text-[var(--accent)]" />
+        </div>
+      )}
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -92,9 +111,9 @@ export default function ResourceCard({ post }: ResourceCardProps) {
             Helpful · {helpfulCount}
           </button>
 
-          {post.driveUrl && (
+          {driveUrl && (
             <a
-              href={post.driveUrl}
+              href={driveUrl}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}

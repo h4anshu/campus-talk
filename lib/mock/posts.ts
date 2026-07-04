@@ -53,9 +53,16 @@ export interface MockPost {
   hasImage?: boolean;
   location?: string;
   // Real Media rows attached to this post (undefined for mock data) — used
-  // for card-view thumbnails, separate from any <img> already embedded in
-  // the sanitized `body` HTML itself.
-  images?: string[];
+  // for card-view thumbnails/icons, separate from any <img>/embed card
+  // already embedded in the sanitized `body` HTML itself.
+  media?: MockPostMedia[];
+}
+
+export interface MockPostMedia {
+  type: 'image' | 'video' | 'youtube' | 'drive';
+  url: string;
+  providerId?: string | null;
+  thumbnailUrl?: string | null;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
