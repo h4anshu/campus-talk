@@ -9,10 +9,10 @@ const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const COLLEGES = [
-  { name: 'BBDU', domainPattern: 'bbdu\\.ac\\.in' },
-  { name: 'BBDNITM', domainPattern: 'bbdnitm\\.ac\\.in' },
-  { name: 'BBDEC', domainPattern: 'bbdec\\.ac\\.in' },
-  { name: 'BBD Group', domainPattern: 'bbd[a-z0-9]*\\.ac\\.in' },
+  { name: 'BBDU', domainPattern: '^bbdu\\.ac\\.in$' },
+  { name: 'BBDNITM', domainPattern: '^bbdnitm\\.ac\\.in$' },
+  { name: 'BBDEC', domainPattern: '^bbdec\\.ac\\.in$' },
+  { name: 'BBD Group', domainPattern: '^bbd[a-z0-9]*\\.ac\\.in$' },
 ];
 
 async function main() {

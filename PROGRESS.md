@@ -4,6 +4,16 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — Anchor college domain regex patterns
+
+**Status:** Complete
+
+Closes out the substring-matching flag raised at the end of Backend Phase 1. Updated all 4 `domainPattern` values in `prisma/seed.ts` to be anchored (`^...$`) and re-ran `prisma db seed` against the live Neon database to update the existing rows.
+
+**Verified:** re-ran the same domain-matching test as before — `student@bbdu.ac.in`/`bbdnitm.ac.in`/`bbdec.ac.in` and the `BBD Group` fallback (`bbdxyz123.ac.in`) still match correctly, `gmail.com` is still blocked, and the two previous false positives (`somebbd.ac.in`, `notbbdu.ac.in`) are now correctly rejected. `tsc --noEmit` clean.
+
+---
+
 ## Backend Phase 1 — Real Database, Google OAuth, College Domain Gating
 
 **Status:** Complete (except the live Google OAuth round-trip — see caveat below)
