@@ -4,6 +4,36 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — Admin post creation/image thumbnails, and a real ticket chat
+
+**Status:** Complete, typechecked, built, deployed. Live authenticated click-through handed to the user — same OAuth/admin-password constraint as every prior phase.
+
+**Bug 1 — image uploads never appeared on Announcement posts.** Root cause was one level up from "images": there was no way to create a *real* Announcement post at all yet. `app/admin/(protected)/announcements/page.tsx` was still exactly what Phase 6 left it as — `Publish` just reset local state and showed a toast, no API call, ever. Wiring it up surfaced a structural gap from Phase 3's admin/student auth split: `POST /api/posts` requires a real student NextAuth session, but the admin panel now has no student account of any kind (that's the whole point of decoupling it). `Post.authorId` is a required FK, so admin-authored content needs *some* real `User` row to point at.
+
+Fixed by adding `getOrCreateAdminOfficeUser()` (`lib/admin-auth.ts`) — lazily upserts one stable system user ("Admin Office", `role: ADMIN`, `collegeId: null`) the first time it's needed — and a new admin-only `POST /api/admin/posts` that creates the post under that identity, `status: APPROVED` immediately (no queue, matching CLAUDE.md's "admin posts directly"). `collegeId: null` is treated as platform-wide: updated `GET /api/posts`'s student-facing query from `collegeId: session.user.collegeId` to `OR: [{collegeId: viewer's college}, {collegeId: null}]`, so one announcement is visible to every college rather than only whichever college the (nonexistent) authoring account would've belonged to.
+
+Loosened `POST /api/upload/signature` and `POST /api/media` to accept the `admin_session` cookie as an alternative to a student session (previously `getSessionOrThrow()`-only) — this is what makes "confirm the composer's image upload path works identically for all post types" literally true: `RichTextEditor`'s upload button, the Cloudinary signing flow, and the image-insertion logic are the exact same code for the student composer and the admin one now, just gated differently underneath.
+
+**Two schema fields added, both to preserve existing UI rather than quietly dropping it:** `Post.priority` (nullable string) — the Compose page already had a working Critical/Info/General selector with nowhere in the database to persist it; and a `Media` include on `POST_INCLUDE` plus a new `images: string[]` field on the serialized post. The latter is the actual fix for "image doesn't show": card views (`AnnouncementCard`, and every other space card) only ever render `stripHtmlTags(post.body)` for the compact preview text, which throws away any `<img>` embedded in the body HTML — that image was only ever visible on the full post-detail page. Added a real thumbnail banner to `AnnouncementCard` (`post.images[0]`, `EventCard`'s banner-div pattern) since that's what the task specifically named; didn't extend it to the other 5 space cards or the generic `PostCard`, since that wasn't asked and each has its own layout conventions worth a separate look.
+
+**Bug 2 — ticket system as a real two-way chat.** Checked first whether the reply mechanism itself was actually limited to one exchange: it wasn't — `POST /api/tickets/[id]/reply` never had a message-count cap, so unlimited back-and-forth already worked at the data layer before this fix. What was missing: the unread-tracking system (didn't exist at all) and a proper chat-style UI (the old `TicketThread` had bubbles already, but timestamps were inside the bubble header, not "under" it as asked, and there was no scrollable dedicated pane or auto-scroll).
+
+Added `TicketMessage.isRead` (flips to `true` when the *other* side opens the thread) and `Ticket.openedByAdmin` (the ticket's opening message lives on the `Ticket` row itself as `subject`/`body`, not as a `TicketMessage` — see the Phase 3 note on this — so it needed its own separate read flag; a student's own opening message is trivially "read" for them, no flag needed on that side). New `POST /api/tickets/[id]/read`, called once when a thread is opened (`useEffect` in `TicketThread`, keyed on `ticket.id`), marks the *other* side's unread messages read. `GET /api/tickets` now computes `unread: boolean` per ticket relative to the caller's actual role (`serializeTicket` takes a `viewerIsAdmin` argument) — both the admin and student ticket-list pages show a small accent dot next to unread tickets.
+
+Rebuilt `TicketThread` as an actual chat pane: fixed-height scrollable message area (auto-scrolls to the newest message), timestamp caption below each bubble instead of inside it, Enter-to-send (Shift+Enter for a newline), single send button — same component, unchanged, for both the student's `/tickets` page and the admin's `/admin/tickets` page, since both already hit the identical reply endpoint.
+
+**Polling, not Realtime (as directed):** `useTickets()` now sets `refetchInterval: 15_000`. Since every ticket-related surface — both list pages and the navbar bell — reads through this one hook, this single change point covers all of them. The bell's badge now adds unread ticket count to the existing mock notification count, and gains a new dropdown line ("N new admin messages") when that count is nonzero, linking to `/tickets`.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds (same benign `DYNAMIC_SERVER_USAGE` cosmetic notice as prior phases for a `cookies()`-reading route — exit 0, all 24 routes generated)
+- Pushed to `main`, Vercel redeployed, confirmed `● Ready` via `vercel inspect`
+- Unauthenticated smoke tests against the live URL: `POST /api/admin/posts` (no admin cookie) → 401; `POST /api/tickets/[id]/read` on a made-up id → 404 without ever hitting the auth branch (pre-existing ordering in this route family, not something introduced here — ticket-lookup happens before the student-ownership check, same as the reply route); `GET /api/posts` unauthenticated → 401. No 500s anywhere.
+
+**Not verified — the same constraint as every phase so far:** actually publishing an announcement with a real image and watching it render, and a full student↔admin ticket back-and-forth with the unread dot clearing on open, both need a working authenticated session on each side (a real Google-logged-in student, and the admin password once `ADMIN_PASSWORD_HASH`/`ADMIN_SESSION_SECRET` are set on Vercel — see the prior phase's entry). The user is testing both flows directly.
+
+---
+
 ## Backend Phase 3 — Standalone Admin Auth, Approvals, Tickets, Cloudinary Uploads
 
 **Status:** Code complete, typechecked, built, deployed. Admin login and image upload are **not yet functional on the live URL** until the env vars below are added to Vercel — see the caveat at the end.
