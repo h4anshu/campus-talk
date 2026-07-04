@@ -2,18 +2,40 @@
 
 import Link from 'next/link';
 import { TrendingUp, CalendarDays, LifeBuoy } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { MOCK_TRENDING, MOCK_EVENTS } from '@/lib/mock';
 import { useContactAdminStore } from '@/store/useContactAdminStore';
+import { fetchJson } from '@/lib/api-client';
 
-const COMMUNITY_STATS = [
-  { label: 'Students', value: '847' },
-  { label: 'Online', value: '94' },
-  { label: 'Posts', value: '3.2k' },
-  { label: 'Answers', value: '12k' },
-];
+function formatNumber(num: number | undefined): string {
+  if (num === undefined) return '...';
+  if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+  if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(num);
+}
+
+interface StatsData {
+  students: number;
+  online: number;
+  posts: number;
+  answers: number;
+}
 
 export default function RightSidebar() {
   const { openDialog } = useContactAdminStore();
+
+  const { data: stats } = useQuery<StatsData>({
+    queryKey: ['collegeStats'],
+    queryFn: () => fetchJson<StatsData>('/api/college/stats'),
+    refetchInterval: 30 * 1000, // Refresh every 30 seconds
+  });
+
+  const communityStats = [
+    { label: 'Students', value: formatNumber(stats?.students) },
+    { label: 'Online', value: formatNumber(stats?.online) },
+    { label: 'Posts', value: formatNumber(stats?.posts) },
+    { label: 'Answers', value: formatNumber(stats?.answers) },
+  ];
 
   return (
     <aside className="sticky top-[88px] hidden h-[calc(100vh-88px)] w-[180px] shrink-0 flex-col gap-6 overflow-y-auto border-l-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 xl:flex">
@@ -61,7 +83,7 @@ export default function RightSidebar() {
           Community
         </div>
         <div className="mt-2 grid grid-cols-2 gap-1.5">
-          {COMMUNITY_STATS.map((stat) => (
+          {communityStats.map((stat) => (
             <div
               key={stat.label}
               className="rounded border-[0.5px] border-[var(--border)] px-2 py-1.5 text-center"

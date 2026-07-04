@@ -34,9 +34,11 @@ import { useCreatePostStore } from '@/store/useCreatePostStore';
 import { useTickets } from '@/hooks/useTickets';
 import Avatar from '@/components/shared/Avatar';
 import SearchOverlay from '@/components/layout/SearchOverlay';
-
-const MESSAGE_COUNT = 3;
-const NOTIFICATION_COUNT = 5;
+import {
+  useNotifications,
+  useMarkNotificationsRead,
+  useNotificationsRealtime,
+} from '@/hooks/useNotifications';
 
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -57,6 +59,14 @@ export default function Navbar() {
   const { data: tickets } = useTickets();
   const openTicketCount = tickets?.filter((t) => t.status !== 'RESOLVED').length ?? 0;
   const unreadTicketCount = tickets?.filter((t) => t.unread).length ?? 0;
+
+  const { data: notificationsData } = useNotifications();
+  const { mutate: markNotificationsRead } = useMarkNotificationsRead();
+  const unreadNotificationCount = notificationsData?.unreadCount ?? 0;
+  const notificationsList = notificationsData?.notifications ?? [];
+
+  // Enable live realtime notification updates via Supabase
+  useNotificationsRealtime(user?.id);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -107,7 +117,7 @@ export default function Navbar() {
             <DropdownMenuTrigger asChild>
               <button className="relative flex h-8 w-8 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-panel)] hover:text-[var(--text-primary)]">
                 <MessageSquare className="h-[18px] w-[18px]" />
-                <NavBadge count={MESSAGE_COUNT} />
+                <NavBadge count={unreadTicketCount} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -118,17 +128,21 @@ export default function Navbar() {
                 Messages
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[var(--border)]" />
-              <DropdownMenuItem className="text-[12px]" onClick={() => toast('Messages — coming soon')}>
-                You have {MESSAGE_COUNT} unread messages
+              <DropdownMenuItem className="text-[12px]" onClick={() => router.push('/tickets')}>
+                {unreadTicketCount > 0 ? (
+                  <>You have {unreadTicketCount} unread ticket reply{unreadTicketCount === 1 ? '' : 'ies'}</>
+                ) : (
+                  <>No unread messages</>
+                )}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu>
+          <DropdownMenu onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
             <DropdownMenuTrigger asChild>
               <button className="relative flex h-8 w-8 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-panel)] hover:text-[var(--text-primary)]">
                 <Bell className="h-[18px] w-[18px]" />
-                <NavBadge count={NOTIFICATION_COUNT + unreadTicketCount} />
+                <NavBadge count={unreadNotificationCount} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -139,14 +153,32 @@ export default function Navbar() {
                 Notifications
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[var(--border)]" />
-              {unreadTicketCount > 0 && (
-                <DropdownMenuItem className="text-[12px]" onClick={() => router.push('/tickets')}>
-                  {unreadTicketCount} new admin message{unreadTicketCount === 1 ? '' : 's'}
-                </DropdownMenuItem>
+              {notificationsList.length === 0 ? (
+                <div className="px-3 py-4 text-center text-[11px] text-[var(--text-muted)]">
+                  No notifications yet
+                </div>
+              ) : (
+                <div className="max-h-[300px] overflow-y-auto">
+                  {notificationsList.slice(0, 5).map((notif) => (
+                    <DropdownMenuItem
+                      key={notif.id}
+                      className="flex flex-col items-start gap-0.5 text-[11px] py-2 border-b-[0.5px] border-[var(--border)] last:border-b-0"
+                      onClick={() => router.push(`/post/${notif.postId}`)}
+                    >
+                      <div className="text-[var(--text-primary)]">
+                        {notif.type === 'COMMENT' ? (
+                          <><strong>{notif.actor?.name}</strong> commented on your post</>
+                        ) : (
+                          <><strong>{notif.actor?.name}</strong> replied to your comment</>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-[var(--text-muted)] truncate max-w-full">
+                        {notif.post?.title}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
               )}
-              <DropdownMenuItem className="text-[12px]" onClick={() => router.push('/home')}>
-                {NOTIFICATION_COUNT} new notifications
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 

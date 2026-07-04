@@ -3,6 +3,8 @@ import { ZodError } from 'zod';
 import { auth } from '@/auth';
 import type { Session } from 'next-auth';
 
+import { prisma } from '@/lib/prisma';
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status = 400) {
@@ -21,6 +23,13 @@ export async function getSessionOrThrow(): Promise<Session & { user: NonNullable
   if (!session?.user) {
     throw new ApiError('Unauthorized', 401);
   }
+
+  // Asynchronously update last active timestamp without blocking the request
+  prisma.user.update({
+    where: { id: session.user.id },
+    data: { lastActiveAt: new Date() },
+  }).catch((err) => console.error('Failed to update lastActiveAt:', err));
+
   return session as Session & { user: NonNullable<Session['user']> };
 }
 

@@ -37,6 +37,43 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Create notifications for comments/replies
+    try {
+      if (data.parentId) {
+        const parent = await prisma.comment.findUnique({
+          where: { id: data.parentId },
+          select: { authorId: true },
+        });
+        if (parent && parent.authorId !== session.user.id) {
+          await prisma.notification.create({
+            data: {
+              userId: parent.authorId,
+              actorId: session.user.id,
+              type: 'REPLY',
+              postId: data.postId,
+            },
+          });
+        }
+      } else {
+        const postDetail = await prisma.post.findUnique({
+          where: { id: data.postId },
+          select: { authorId: true },
+        });
+        if (postDetail && postDetail.authorId !== session.user.id) {
+          await prisma.notification.create({
+            data: {
+              userId: postDetail.authorId,
+              actorId: session.user.id,
+              type: 'COMMENT',
+              postId: data.postId,
+            },
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Notification creation failed:', err);
+    }
+
     const serialized: MockComment = {
       id: comment.id,
       body: comment.body,
