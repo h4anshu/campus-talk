@@ -4,6 +4,36 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — Delete post, embed rendering everywhere, composer height, pending badge
+
+**Status:** Complete, typechecked, built, deployed. Live click-through handed to the user.
+
+**Bug 2 (embeds only in the composer) — root-caused via the live database before writing any code.** Queried the production DB directly (read-only) rather than guessing. Found two real test Resources posts: one predated last round's embed-detection deploy (a plain autolinked `<a>` — exactly the original bug, stale data, not a new defect); the other was created *after* that deploy and revealed the actual remaining bug — its body had a bare `<img>` with no wrapping `<div>` at all, and **zero** `Media` rows existed for it despite the image clearly having gone through the new embed code.
+
+Root cause: the embed card was inserted via `editor.chain().insertContent(rawHtmlString)`, but the Tiptap schema built from StarterKit/Link/Image has no node type for a plain `<div>` — ProseMirror's HTML parser silently *unwraps* container tags it doesn't recognize, keeping only children it does recognize. The `<img>` survived (Image extension owns that node type); the `<div>` — and with it `data-video-id`/`data-url`, the only things that let `PostDetail`/`ResourceCard` recognize "this is an embed" — did not. Fixed by declaring a real Tiptap `Node` (`components/editor/embedCardNode.ts`, `parseHTML`/`renderHTML`) instead of relying on string insertion, and switched both insertion points (paste + the toolbar prompt) to `editor.chain().insertEmbedCard(attrs)`. Verified directly rather than just visually: used `@tiptap/core`'s `generateHTML`/`generateJSON` against a real jsdom DOM to confirm the node serializes to the exact expected markup AND parses back into the same attributes — a genuine round-trip test, not inspection. `@tiptap/core` had to become an explicit dependency (previously only transitive).
+
+**Second bug found in the same investigation:** even the embed markup that *did* survive had no `Media` row backing it. Cause: `CreatePostDialog` and the admin Compose page fired the post-creation `Media` POSTs with `.catch(() => {})` — any failure there was invisible by design. Replaced with `Promise.allSettled` plus a toast + `console.error` on failure, so this class of silent failure can't hide again.
+
+**Also found while diagnosing "profile page shows raw text":** `ResourceCard` already read `post.media` (from the prior phase), but the *generic* `PostCard` — which is what the profile page's post list and any non-space-specific feed actually render — never did. Added `components/shared/MediaPreview.tsx` (image thumbnail / YouTube thumbnail with play-icon overlay / Drive open-link chip) and wired it into `PostCard`, which is what was actually causing the profile-page symptom specifically.
+
+**Bug 1 — Delete:** `PostActions` gained a "Delete post" item in its "···" menu, gated on `post.viewerIsAuthor` (already computed by the serializer since Backend Phase 2) and wired through `PostCard`, `PostDetail`, and all 6 space cards. Confirms via a new reusable `components/shared/ConfirmDialog.tsx` before calling the already-existing `DELETE /api/posts/[id]`; `hooks/useDeletePost.ts` removes the post from every cached posts-list immediately (not just invalidate-and-refetch, which would flash it back in before the refetch completes) and redirects to `/home` if the deletion happened from the post's own detail page. Scoped to "author only," not "or admin" — the decoupled admin panel (Backend Phase 3) has no view into individual student posts at all, so there's no admin surface this button could appear on; noting this rather than building unrequested new admin UI to reach it.
+
+**Bug 3 — Composer height:** `DialogContent` (`components/ui/dialog.tsx`) has no `max-height` of its own by default — only the inner content wrapper had a flat `max-h-[75vh]`. Header + that 75vh + footer could add up to more than the viewport on their own, with no way for the outer dialog to scroll — it would just overflow past the screen edges. Restructured `CreatePostDialog` as a proper flex column: `DialogContent` capped at `max-h-[85vh]`, header and footer `shrink-0`, and only the middle section is `flex-1 overflow-y-auto` (with `min-h-0`, the actual fix for the classic flexbox gotcha where a flex child won't shrink below its content size without it). The dialog now cannot grow past the viewport regardless of embed size or description length.
+
+**Bug 4 — Pending approval badge:** added directly to `PostBadges`, gated on `post.status === 'PENDING' && post.viewerIsAuthor`. No new data needed — `viewerIsAuthor` already existed, and the two places a `PENDING` post ever reaches a real screen (the profile page's own-post list, and the author's own post-detail page right after submitting) both already scope to the viewer's own posts, so the badge is structurally unreachable by anyone but the author. `viewerIsAuthor` gate is defense-in-depth on top of that, not the only thing preventing leakage.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds (same benign `DYNAMIC_SERVER_USAGE` cosmetic notice as every prior phase)
+- The embed-card fix was verified with an actual round-trip test (jsdom + `generateHTML`/`generateJSON`), not just visual inspection — installed `jsdom` as a dev dependency for this one check, then removed it since the project has no test suite to keep it for
+- Pushed to `main`, Vercel redeployed, confirmed `● Ready`; unauthenticated smoke checks (`DELETE /api/posts/...`, `GET /api/posts`, `/home`, `/spaces/resources`) all return the expected 401/307 — no 500s
+
+**Left alone, flagging rather than touching:** the two stale test Resources posts found during the DB investigation ("jjhjhjh", "jhhjh") — now that Delete actually works, that's the user's call to clean up, not mine to delete unasked.
+
+**Not verified — the same constraint as every phase so far:** actually pasting an embed and watching it show up correctly on the Resources feed/profile/detail page, deleting a post from the UI, watching the composer dialog hold its size, and seeing the pending badge — all of these need a real authenticated student session, which I still can't complete myself. The user is testing all four directly on the deployed URL.
+
+---
+
 ## Fix — YouTube/Drive paste-embed detection (feature never actually existed)
 
 **Status:** Complete, typechecked, built, deployed. Live click-through handed to the user.
