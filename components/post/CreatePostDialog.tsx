@@ -35,7 +35,7 @@ export default function CreatePostDialog() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { open, closeDialog } = useCreatePostStore();
-  const { mutate: createPost, isPending } = useCreatePost();
+  const { mutateAsync: createPostAsync, isPending } = useCreatePost();
   const [destination, setDestination] = useState<(typeof DESTINATIONS)[number]['key']>('discussion');
   const [topic, setTopic] = useState<TopicKey | null>(null);
   const [title, setTitle] = useState('');
@@ -67,7 +67,7 @@ export default function CreatePostDialog() {
 
   const canPost = title.trim().length >= 5 && (destination !== 'discussion' || !!topic) && !isPending;
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!canPost) return;
 
     const payload =
@@ -82,66 +82,66 @@ export default function CreatePostDialog() {
             anonymous: destination === 'confession',
           };
 
-    createPost(payload, {
-      onSuccess: async (post) => {
-        // Images are recorded via pendingMedia as they're uploaded (their
-        // Cloudinary public_id isn't recoverable from the <img src> alone).
-        // YouTube/Drive embeds, on the other hand, are derived straight from
-        // the final submitted body HTML rather than a paste-time callback —
-        // Tiptap's Link extension autolinks a URL the moment it's typed, not
-        // just pasted, so a paste-only detector missed anything the user
-        // typed, retyped, or edited in, leaving a plain link with no Media
-        // row behind it. Scanning the actual body catches it regardless of
-        // how the link got there. Previously these failures were silently
-        // swallowed (`.catch(() => {})`), which is exactly how a post could
-        // end up with an embed visible in its body but no Media row at all —
-        // surfaced now instead.
-        const bodyEmbeds = extractEmbedsFromHtml(body);
-        const mediaToSave: PendingMedia[] = [
-          ...pendingMedia.filter((m) => m.type === 'image'),
-          ...bodyEmbeds.map((embed) => ({
-            type: embed.type,
-            url: embed.url,
-            providerId: embed.providerId,
-            thumbnailUrl: embed.thumbnailUrl,
-          })),
-        ];
+    let post;
+    try {
+      post = await createPostAsync(payload);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to create post');
+      return;
+    }
 
-        const results = await Promise.allSettled(
-          mediaToSave.map((media) =>
-            fetchJson('/api/media', {
-              method: 'POST',
-              body: JSON.stringify({
-                postId: post.id,
-                url: media.url,
-                providerId: media.providerId,
-                thumbnailUrl: media.thumbnailUrl,
-                type: media.type,
-              }),
-            })
-          )
-        );
-        const failures = results.filter((r) => r.status === 'rejected');
-        if (failures.length > 0) {
-          console.error('Failed to save media for post', post.id, failures);
-          toast.error(`Post created, but ${failures.length} attachment(s) failed to save`);
-        }
+    // ── Save media rows ──────────────────────────────────────────────
+    // Images are recorded via pendingMedia as they're uploaded (their
+    // Cloudinary public_id isn't recoverable from the <img src> alone).
+    // YouTube/Drive embeds are derived from the final submitted body
+    // HTML — Tiptap's Link extension autolinks a URL the moment it's
+    // typed, not just pasted, so scanning the body catches it
+    // regardless of how the link got there.
+    //
+    // IMPORTANT: We use mutateAsync (not mutate) here because React
+    // Query's mutate() does NOT await async onSuccess callbacks — it
+    // calls the callback, receives the Promise, and drops it.  That
+    // meant the POST /api/media calls could be silently interrupted
+    // before completing, leaving zero Media rows for the post.
+    const bodyEmbeds = extractEmbedsFromHtml(body);
+    const mediaToSave: PendingMedia[] = [
+      ...pendingMedia.filter((m) => m.type === 'image'),
+      ...bodyEmbeds.map((embed) => ({
+        type: embed.type,
+        url: embed.url,
+        providerId: embed.providerId,
+        thumbnailUrl: embed.thumbnailUrl,
+      })),
+    ];
 
-        // Invalidate AFTER media rows exist in the DB — previously this
-        // ran inside useCreatePost.onSuccess (before media was saved),
-        // causing the refetched feed to cache a response with media: [].
-        queryClient.invalidateQueries({ queryKey: ['posts'] });
-        queryClient.invalidateQueries({ queryKey: ['post', post.id] });
+    const results = await Promise.allSettled(
+      mediaToSave.map((media) =>
+        fetchJson('/api/media', {
+          method: 'POST',
+          body: JSON.stringify({
+            postId: post.id,
+            url: media.url,
+            providerId: media.providerId,
+            thumbnailUrl: media.thumbnailUrl,
+            type: media.type,
+          }),
+        })
+      )
+    );
+    const failures = results.filter((r) => r.status === 'rejected');
+    if (failures.length > 0) {
+      console.error('Failed to save media for post', post.id, failures);
+      toast.error(`Post created, but ${failures.length} attachment(s) failed to save`);
+    }
 
-        closeDialog();
-        reset();
-        toast(post.status === 'PENDING' ? 'Post submitted for admin approval' : 'Post created');
-        router.push(`/post/${post.id}`);
-      },
-      onError: (error) => {
-        toast.error(error instanceof Error ? error.message : 'Failed to create post');
-      },
-    });
+    // Invalidate AFTER media rows exist in the DB.
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+    queryClient.invalidateQueries({ queryKey: ['post', post.id] });
+
+    closeDialog();
+    reset();
+    toast(post.status === 'PENDING' ? 'Post submitted for admin approval' : 'Post created');
+    router.push(`/post/${post.id}`);
   };
 
   return (
