@@ -1,0 +1,96 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { formatDistanceToNowStrict } from 'date-fns';
+import { ChevronUp, CheckCircle2 } from 'lucide-react';
+import type { MockPost } from '@/lib/mock/posts';
+import type { MockComment } from '@/lib/mock/comments';
+import { MOCK_POSTS } from '@/lib/mock';
+import { useSavedPostsStore } from '@/store/useSavedPostsStore';
+import PostCard from '@/components/post/PostCard';
+import EmptyState from '@/components/shared/EmptyState';
+
+interface ProfileTabsProps {
+  posts: MockPost[];
+  answers: MockComment[];
+  isOwnProfile: boolean;
+}
+
+type Tab = 'posts' | 'answers' | 'saved';
+
+export default function ProfileTabs({ posts, answers, isOwnProfile }: ProfileTabsProps) {
+  const [tab, setTab] = useState<Tab>('posts');
+  const savedPostIds = useSavedPostsStore((s) => s.savedPostIds);
+  const savedPosts = MOCK_POSTS.filter((p) => savedPostIds.includes(p.id));
+
+  const tabs: { key: Tab; label: string; count: number }[] = [
+    { key: 'posts', label: 'Posts', count: posts.length },
+    { key: 'answers', label: 'Answers', count: answers.length },
+    ...(isOwnProfile ? [{ key: 'saved' as Tab, label: 'Saved', count: savedPosts.length }] : []),
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 border-b-[0.5px] border-[var(--border)]">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`border-b-2 px-3 py-2 text-[13px] font-medium transition-colors ${
+              tab === t.key
+                ? 'border-[var(--accent)] text-[var(--accent)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+            }`}
+          >
+            {t.label} · {t.count}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3">
+        {tab === 'posts' &&
+          (posts.length === 0 ? (
+            <EmptyState title="No posts yet" />
+          ) : (
+            posts.map((post) => <PostCard key={post.id} post={post} />)
+          ))}
+
+        {tab === 'answers' &&
+          (answers.length === 0 ? (
+            <EmptyState title="No answers yet" />
+          ) : (
+            answers.map((answer) => (
+              <Link
+                key={answer.id}
+                href="/post/post-1"
+                className="rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]"
+              >
+                {answer.accepted && (
+                  <div className="mb-2 flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)]">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Accepted answer
+                  </div>
+                )}
+                <p className="text-[12px] leading-relaxed text-[var(--text-secondary)]">{answer.body}</p>
+                <div className="mt-2 flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
+                  <span className="flex items-center gap-1">
+                    <ChevronUp className="h-3.5 w-3.5" />
+                    {answer.voteCount}
+                  </span>
+                  <span>{formatDistanceToNowStrict(answer.createdAt, { addSuffix: true })}</span>
+                </div>
+              </Link>
+            ))
+          ))}
+
+        {tab === 'saved' &&
+          (savedPosts.length === 0 ? (
+            <EmptyState title="No saved posts" description="Posts you save will show up here." />
+          ) : (
+            savedPosts.map((post) => <PostCard key={post.id} post={post} />)
+          ))}
+      </div>
+    </div>
+  );
+}

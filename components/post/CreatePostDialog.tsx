@@ -1,0 +1,151 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Check, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import RichTextEditor from '@/components/editor/RichTextEditor';
+import { useCreatePostStore } from '@/store/useCreatePostStore';
+
+const DESTINATIONS = [
+  { key: 'discussion', label: 'Discussion' },
+  { key: 'resources', label: 'Resources' },
+  { key: 'lost-found', label: 'Lost & Found' },
+  { key: 'collaboration', label: 'Collaboration' },
+  { key: 'confession', label: 'Confession' },
+] as const;
+
+type DraftState = 'idle' | 'saving' | 'saved';
+
+export default function CreatePostDialog() {
+  const { open, closeDialog } = useCreatePostStore();
+  const [destination, setDestination] = useState<(typeof DESTINATIONS)[number]['key']>('discussion');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [draftState, setDraftState] = useState<DraftState>('idle');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const markDirty = () => {
+    setDraftState('saving');
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDraftState('saved'), 700);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const reset = () => {
+    setDestination('discussion');
+    setTitle('');
+    setBody('');
+    setDraftState('idle');
+  };
+
+  const handlePost = () => {
+    closeDialog();
+    reset();
+    toast('Post created');
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) closeDialog();
+      }}
+    >
+      <DialogContent
+        showCloseButton
+        className="max-w-[640px] gap-0 border-[0.5px] border-[var(--border-med)] bg-[var(--bg-elevated)] p-0"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.18 }}
+        >
+          <DialogTitle className="border-b-[0.5px] border-[var(--border)] px-5 py-4 text-[16px] font-medium text-[var(--text-primary)]">
+            Create a post
+          </DialogTitle>
+
+          <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+            <div className="flex flex-wrap gap-1.5">
+              {DESTINATIONS.map((d) => (
+                <button
+                  key={d.key}
+                  onClick={() => setDestination(d.key)}
+                  className={`rounded-full border-[0.5px] px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                    destination === d.key
+                      ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                      : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)] hover:text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+
+            <input
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                markDirty();
+              }}
+              placeholder="Give your post a clear title..."
+              className="mt-4 w-full border-b-[0.5px] border-[var(--border)] bg-transparent pb-2.5 text-[15px] font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
+            />
+
+            <div className="mt-3">
+              <RichTextEditor
+                onChange={(html) => {
+                  setBody(html);
+                  markDirty();
+                }}
+                placeholder={`Write your ${DESTINATIONS.find((d) => d.key === destination)?.label.toLowerCase()} post...`}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t-[0.5px] border-[var(--border)] px-5 py-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+              {draftState === 'saving' && (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Saving draft...
+                </>
+              )}
+              {draftState === 'saved' && (
+                <>
+                  <Check className="h-3 w-3 text-[var(--success)]" />
+                  Draft saved
+                </>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  closeDialog();
+                  reset();
+                }}
+                className="rounded px-3.5 py-2 text-[12px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePost}
+                disabled={!title.trim()}
+                className="rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </DialogContent>
+    </Dialog>
+  );
+}

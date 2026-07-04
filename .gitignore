@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+
+# Next.js build output
+.next
+out
+build
+
+# Prisma generated client
+/generated/prisma
+
+# Environment variables — keep secrets out of version control
+.env
+.env.local
+.env.*.local
+
+# TypeScript incremental build info
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Vercel
+.vercel
+
+# Claude Code local tooling/skill cache (not project source)
+.claude

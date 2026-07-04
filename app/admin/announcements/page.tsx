@@ -1,0 +1,91 @@
+'use client';
+
+import { useState } from 'react';
+import { Pin, Megaphone } from 'lucide-react';
+import { toast } from 'sonner';
+import RichTextEditor from '@/components/editor/RichTextEditor';
+
+const PRIORITIES = ['Critical', 'Info', 'General'] as const;
+type Priority = (typeof PRIORITIES)[number];
+
+const PRIORITY_STYLES: Record<Priority, string> = {
+  Critical: 'border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]',
+  Info: 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]',
+  General: 'border-[var(--border)] bg-[var(--bg-panel)] text-[var(--text-muted)]',
+};
+
+export default function ComposeAnnouncementPage() {
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [priority, setPriority] = useState<Priority>('Info');
+  const [pinned, setPinned] = useState(false);
+
+  const publish = () => {
+    setTitle('');
+    setBody('');
+    setPriority('Info');
+    setPinned(false);
+    toast('Announcement published');
+  };
+
+  return (
+    <div className="mx-auto max-w-[640px]">
+      <h1 className="flex items-center gap-2 text-[18px] font-medium text-[var(--text-primary)]">
+        <Megaphone className="h-5 w-5 text-[var(--accent)]" />
+        Compose announcement
+      </h1>
+      <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+        Published directly to the Announcements space — no approval needed.
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          {PRIORITIES.map((p) => (
+            <button
+              key={p}
+              onClick={() => setPriority(p)}
+              className={`rounded-full border-[0.5px] px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                priority === p ? PRIORITY_STYLES[p] : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)]'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setPinned((p) => !p)}
+          className={`flex items-center gap-1.5 rounded-full border-[0.5px] px-3 py-1.5 text-[12px] font-medium transition-colors ${
+            pinned
+              ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
+              : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)]'
+          }`}
+        >
+          <Pin className="h-3.5 w-3.5" fill={pinned ? 'var(--accent)' : 'none'} />
+          {pinned ? 'Pinned to top' : 'Pin to top'}
+        </button>
+      </div>
+
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Announcement title..."
+        className="mt-4 w-full border-b-[0.5px] border-[var(--border)] bg-transparent pb-2.5 text-[15px] font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
+      />
+
+      <div className="mt-3">
+        <RichTextEditor onChange={setBody} placeholder="Write the announcement..." />
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={publish}
+          disabled={!title.trim()}
+          className="rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Publish announcement
+        </button>
+      </div>
+    </div>
+  );
+}

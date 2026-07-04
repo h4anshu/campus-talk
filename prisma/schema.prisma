@@ -1,0 +1,189 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  MODERATOR
+  ADMIN
+}
+
+enum PostType {
+  DISCUSSION
+  SPACE
+}
+
+enum SpaceType {
+  ANNOUNCEMENTS
+  EVENTS
+  RESOURCES
+  LOST_FOUND
+  COLLABORATION
+  CONFESSION
+}
+
+enum TopicType {
+  ACADEMICS
+  ASSIGNMENT
+  PLACEMENTS
+  INTERNSHIP
+  CODING
+  PROJECTS
+  HOSTEL_MESS
+  EVENTS
+  GENERAL
+}
+
+enum PostStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REMOVED
+}
+
+enum VoteType {
+  UP
+  DOWN
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  image     String?
+  year      Int
+  dept      String
+  bio       String?
+  role      Role     @default(STUDENT)
+  reputation Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts     Post[]
+  comments  Comment[]
+  votes     Vote[]
+  tickets   Ticket[]
+  savedPosts SavedPost[]
+}
+
+model Post {
+  id        String     @id @default(cuid())
+  title     String
+  body      String     @db.Text
+  type      PostType
+  space     SpaceType?
+  topic     TopicType?
+  status    PostStatus @default(PENDING)
+  anonymous Boolean    @default(false)
+  pinned    Boolean    @default(false)
+  locked    Boolean    @default(false)
+  authorId  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  votes     Vote[]
+  media     Media[]
+  tags      Tag[]
+  savedBy   SavedPost[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String   @db.Text
+  anonymous Boolean  @default(false)
+  accepted  Boolean  @default(false)
+  authorId  String
+  postId    String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User      @relation(fields: [authorId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id])
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  votes     Vote[]
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  type      VoteType
+  userId    String
+  postId    String?
+  commentId String?
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  post    Post?    @relation(fields: [postId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  type         String   // image | video | youtube | drive
+  url          String
+  thumbnailUrl String?
+  providerId   String?
+  postId       String
+  createdAt    DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  posts Post[]
+}
+
+model SavedPost {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@id([userId, postId])
+}
+
+model Ticket {
+  id        String       @id @default(cuid())
+  subject   String
+  body      String       @db.Text
+  type      String       // POST_REQUEST | REPORT | QUERY
+  status    TicketStatus @default(OPEN)
+  userId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id])
+  messages TicketMessage[]
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  body      String   @db.Text
+  fromAdmin Boolean  @default(false)
+  ticketId  String
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+}

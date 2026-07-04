@@ -1,0 +1,106 @@
+import Link from 'next/link';
+import { MOCK_POSTS, MOCK_USER } from '@/lib/mock';
+import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
+import { slugify } from '@/lib/utils';
+import Avatar from '@/components/shared/Avatar';
+import YearBadge from '@/components/shared/YearBadge';
+import ProfileTabs from '@/components/profile/ProfileTabs';
+
+interface ProfilePageProps {
+  params: { username: string };
+}
+
+function flattenAnswersByAuthor(comments: MockComment[], authorName: string): MockComment[] {
+  return comments.filter((c) => c.author.name === authorName);
+}
+
+export default function ProfilePage({ params }: ProfilePageProps) {
+  const isOwnProfile = slugify(MOCK_USER.name) === params.username;
+
+  const matchingPost = MOCK_POSTS.find((p) => slugify(p.author.name) === params.username);
+
+  const profile = isOwnProfile
+    ? {
+        name: MOCK_USER.name,
+        initials: MOCK_USER.initials,
+        year: MOCK_USER.year,
+        dept: MOCK_USER.dept,
+        avatarColor: MOCK_USER.avatarColor,
+        bio: MOCK_USER.bio,
+        reputation: MOCK_USER.reputation,
+      }
+    : matchingPost
+      ? {
+          name: matchingPost.author.name,
+          initials: matchingPost.author.initials,
+          year: matchingPost.author.year,
+          dept: matchingPost.author.dept,
+          avatarColor: matchingPost.author.avatarColor,
+          bio: undefined as string | undefined,
+          reputation: undefined as number | undefined,
+        }
+      : null;
+
+  if (!profile) {
+    return (
+      <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+        <p className="text-[14px] font-medium text-[var(--text-primary)]">Profile not found</p>
+        <Link href="/home" className="text-[13px] text-[var(--accent)]">
+          ← Back to home
+        </Link>
+      </div>
+    );
+  }
+
+  const posts = MOCK_POSTS.filter((p) => p.author.name === profile.name && p.status === 'APPROVED');
+  const answers = flattenAnswersByAuthor(MOCK_COMMENTS_POST_1, profile.name);
+  const acceptedCount = answers.filter((a) => a.accepted).length;
+
+  const reputation =
+    profile.reputation ??
+    posts.reduce((sum, p) => sum + p.voteCount, 0) + answers.reduce((sum, a) => sum + a.voteCount, 0);
+
+  return (
+    <div className="mx-auto max-w-[720px] pb-8">
+      <div className="relative h-[120px] overflow-hidden border-b-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-20%,rgba(29,78,216,0.15)_0%,transparent_60%)]" />
+      </div>
+
+      <div className="px-4 sm:px-6">
+        <div className="-mt-9 flex items-end gap-3">
+          <div className="rounded-full ring-4 ring-[var(--bg-page)]">
+            <Avatar initials={profile.initials} color={profile.avatarColor} size={72} />
+          </div>
+        </div>
+
+        <h1 className="mt-3 text-[18px] font-medium text-[var(--text-primary)]">{profile.name}</h1>
+        <div className="mt-1 flex items-center gap-1.5">
+          <YearBadge year={profile.year} />
+          {profile.dept && <span className="text-[12px] text-[var(--text-muted)]">{profile.dept}</span>}
+        </div>
+        {profile.bio && <p className="mt-2 max-w-[480px] text-[13px] text-[var(--text-secondary)]">{profile.bio}</p>}
+
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            { label: 'Reputation', value: reputation },
+            { label: 'Posts', value: posts.length },
+            { label: 'Answers', value: answers.length },
+            { label: 'Accepted', value: acceptedCount },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-3 text-center"
+            >
+              <div className="text-[18px] font-medium text-[var(--text-primary)]">{stat.value}</div>
+              <div className="text-[11px] text-[var(--text-muted)]">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6">
+          <ProfileTabs posts={posts} answers={answers} isOwnProfile={isOwnProfile} />
+        </div>
+      </div>
+    </div>
+  );
+}
