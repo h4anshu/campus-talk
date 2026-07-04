@@ -1,10 +1,19 @@
-import type { Post, Comment, User, Tag, Vote, SavedPost } from '@prisma/client';
+import type { Post, Comment, User, Tag, Vote, SavedPost, Prisma } from '@prisma/client';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 import { enumToKey } from '@/lib/constants';
 import type { MockPost, MockAuthor } from '@/lib/mock/posts';
 import type { MockComment, MockCommentAuthor } from '@/lib/mock/comments';
 
 type AuthorLite = Pick<User, 'id' | 'name' | 'image' | 'year' | 'dept'>;
+
+// Shared across every route/page that fetches posts for serialization, so the
+// shape backing `PostForSerialization` can't silently drift between them.
+export const POST_INCLUDE = {
+  author: { select: { id: true, name: true, image: true, year: true, dept: true } },
+  tags: true,
+  votes: { select: { type: true, userId: true } },
+  _count: { select: { comments: true } },
+} satisfies Prisma.PostInclude;
 
 const ANONYMOUS_AUTHOR: MockAuthor = {
   name: 'Anonymous',
@@ -24,7 +33,7 @@ export function serializeAuthor(user: AuthorLite): MockAuthor {
   };
 }
 
-function netVoteScore(votes: Pick<Vote, 'type' | 'userId'>[]) {
+export function netVoteScore(votes: Pick<Vote, 'type' | 'userId'>[]) {
   const up = votes.filter((v) => v.type === 'UP').length;
   const down = votes.filter((v) => v.type === 'DOWN').length;
   return up - down;

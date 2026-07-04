@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { usePost } from '@/hooks/usePost';
+import { useCreateComment } from '@/hooks/useComments';
 import PostDetail from '@/components/post/PostDetail';
 import AnswerList from '@/components/answer/AnswerList';
 import CommentThread from '@/components/comment/CommentThread';
+import CommentComposer from '@/components/comment/CommentComposer';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PostPageProps {
@@ -13,6 +15,7 @@ interface PostPageProps {
 
 export default function PostPage({ params }: PostPageProps) {
   const { data, isLoading, isError } = usePost(params.id);
+  const { mutate: createComment } = useCreateComment(params.id);
 
   if (isLoading) {
     return (
@@ -41,19 +44,28 @@ export default function PostPage({ params }: PostPageProps) {
       <PostDetail post={post} />
 
       <div className="rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4">
-        {post.type === 'DISCUSSION' ? (
-          <AnswerList
-            answers={comments}
-            postId={post.id}
-            postAuthorName={post.author.name}
-            viewerIsAuthor={post.viewerIsAuthor}
-          />
-        ) : (
-          <>
-            <h2 className="mb-3 text-[16px] font-medium text-[var(--text-primary)]">Comments</h2>
-            <CommentThread comments={comments} postId={post.id} postAuthorName={post.author.name} />
-          </>
+        {post.type !== 'DISCUSSION' && (
+          <h2 className="mb-3 text-[16px] font-medium text-[var(--text-primary)]">Comments</h2>
         )}
+
+        <CommentComposer
+          placeholder={post.type === 'DISCUSSION' ? 'Write an answer...' : 'Write a comment...'}
+          submitLabel={post.type === 'DISCUSSION' ? 'Post answer' : 'Post comment'}
+          onSubmit={(body) => createComment({ postId: post.id, body })}
+        />
+
+        <div className="mt-4">
+          {post.type === 'DISCUSSION' ? (
+            <AnswerList
+              answers={comments}
+              postId={post.id}
+              postAuthorName={post.author.name}
+              viewerIsAuthor={post.viewerIsAuthor}
+            />
+          ) : (
+            <CommentThread comments={comments} postId={post.id} postAuthorName={post.author.name} />
+          )}
+        </div>
       </div>
     </div>
   );

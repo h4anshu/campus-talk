@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
 import { updatePostSchema } from '@/lib/validations/post';
@@ -7,16 +6,10 @@ import { sanitizeBody } from '@/lib/sanitize';
 import {
   serializePost,
   buildCommentTree,
+  POST_INCLUDE,
   type PostForSerialization,
   type CommentForSerialization,
 } from '@/lib/serializers';
-
-const POST_INCLUDE = {
-  author: { select: { id: true, name: true, image: true, year: true, dept: true } },
-  tags: true,
-  votes: { select: { type: true, userId: true } },
-  _count: { select: { comments: true } },
-} satisfies Prisma.PostInclude;
 
 interface RouteParams {
   params: { id: string };

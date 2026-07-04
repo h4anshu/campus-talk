@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import { MOCK_POSTS } from '@/lib/mock';
 import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
 import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
+import { serializePost, netVoteScore, POST_INCLUDE, type PostForSerialization } from '@/lib/serializers';
+import type { MockPost } from '@/lib/mock/posts';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
-import ProfileTabs from '@/components/profile/ProfileTabs';
+import ProfileTabs, { type ProfileAnswer } from '@/components/profile/ProfileTabs';
 
 interface ProfilePageProps {
   params: { username: string };
@@ -55,8 +58,54 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     );
   }
 
-  const posts = MOCK_POSTS.filter((p) => p.author.name === profile.name && p.status === 'APPROVED');
-  const answers = flattenAnswersByAuthor(MOCK_COMMENTS_POST_1, profile.name);
+  // Own profile reads real posts/answers straight out of Postgres, scoped to
+  // the session user's id — `params.username` is only ever a slug of the
+  // display name (there's no real `username` column on User yet), so it
+  // can't be used to look posts up. Viewing *other* real users' profiles by
+  // that slug isn't wired to the database yet; that's unchanged/out of scope
+  // here and still falls back to the mock lookup below.
+  let posts: MockPost[];
+  let answers: ProfileAnswer[];
+
+  if (isOwnProfile && currentUser) {
+    const [rawPosts, rawComments] = await Promise.all([
+      prisma.post.findMany({
+        where: { authorId: currentUser.id, status: { not: 'REMOVED' } },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          ...POST_INCLUDE,
+          savedBy: { where: { userId: currentUser.id }, select: { userId: true } },
+          comments: { where: { parentId: null, accepted: true }, select: { id: true }, take: 1 },
+        },
+      }),
+      prisma.comment.findMany({
+        where: { authorId: currentUser.id },
+        orderBy: { createdAt: 'desc' },
+        include: { votes: { select: { type: true, userId: true } } },
+      }),
+    ]);
+
+    posts = rawPosts.map((p) => serializePost(p as PostForSerialization, currentUser.id));
+    answers = rawComments.map((c) => ({
+      id: c.id,
+      body: c.body,
+      voteCount: netVoteScore(c.votes),
+      createdAt: c.createdAt,
+      accepted: c.accepted,
+      postId: c.postId,
+    }));
+  } else {
+    posts = MOCK_POSTS.filter((p) => p.author.name === profile.name && p.status === 'APPROVED');
+    answers = flattenAnswersByAuthor(MOCK_COMMENTS_POST_1, profile.name).map((a) => ({
+      id: a.id,
+      body: a.body,
+      voteCount: a.voteCount,
+      createdAt: a.createdAt,
+      accepted: a.accepted,
+      postId: 'post-1',
+    }));
+  }
+
   const acceptedCount = answers.filter((a) => a.accepted).length;
 
   const reputation =

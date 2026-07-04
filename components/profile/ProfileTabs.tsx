@@ -5,15 +5,23 @@ import Link from 'next/link';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ChevronUp, CheckCircle2 } from 'lucide-react';
 import type { MockPost } from '@/lib/mock/posts';
-import type { MockComment } from '@/lib/mock/comments';
 import { MOCK_POSTS } from '@/lib/mock';
 import { useSavedPostsStore } from '@/store/useSavedPostsStore';
 import PostCard from '@/components/post/PostCard';
 import EmptyState from '@/components/shared/EmptyState';
 
+export interface ProfileAnswer {
+  id: string;
+  body: string;
+  voteCount: number;
+  createdAt: Date;
+  accepted?: boolean;
+  postId: string;
+}
+
 interface ProfileTabsProps {
   posts: MockPost[];
-  answers: MockComment[];
+  answers: ProfileAnswer[];
   isOwnProfile: boolean;
 }
 
@@ -63,7 +71,7 @@ export default function ProfileTabs({ posts, answers, isOwnProfile }: ProfileTab
             answers.map((answer) => (
               <Link
                 key={answer.id}
-                href="/post/post-1"
+                href={`/post/${answer.postId}`}
                 className="rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]"
               >
                 {answer.accepted && (

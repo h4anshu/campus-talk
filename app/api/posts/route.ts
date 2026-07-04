@@ -5,14 +5,7 @@ import { getSessionOrThrow, handleApiError } from '@/lib/api-helpers';
 import { createPostSchema } from '@/lib/validations/post';
 import { sanitizeBody } from '@/lib/sanitize';
 import { keyToEnum } from '@/lib/constants';
-import { serializePost, type PostForSerialization } from '@/lib/serializers';
-
-const POST_INCLUDE = {
-  author: { select: { id: true, name: true, image: true, year: true, dept: true } },
-  tags: true,
-  votes: { select: { type: true, userId: true } },
-  _count: { select: { comments: true } },
-} satisfies Prisma.PostInclude;
+import { serializePost, POST_INCLUDE, type PostForSerialization } from '@/lib/serializers';
 
 export async function GET(req: NextRequest) {
   try {
