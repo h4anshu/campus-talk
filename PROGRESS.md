@@ -4,6 +4,38 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — Full card-rendering audit: truncation, media badges, text wrapping
+
+**Status:** Complete, typechecked, built, visually verified with real screenshots, deployed.
+
+Treated as a genuine audit rather than a two-spot patch, per the request — CLAUDE.md's Section 10 card spec never actually defined truncation/overflow rules for card text or media, which is why every card independently arrived at slightly different (and in ResourceCard/AnnouncementCard/PostCard's case, inconsistent) behavior. Fixed the rule everywhere it applies, not just where it broke.
+
+**The rule, applied consistently across all 7 post card types** (`PostCard` and all 6 space cards): the compact feed/list view is title + a `line-clamp-2` text preview + a small icon-only media indicator. It never renders the actual image, YouTube thumbnail, or Drive content — that's detail-page-only. This is a deliberate reversal of part of the *previous* round's embed-rendering fix: that fix correctly solved "embeds are invisible outside the composer" by adding a real thumbnail banner to `AnnouncementCard`, swapping `ResourceCard`'s icon for an actual cropped `<img>`, and rendering a full thumbnail in a new `MediaPreview` component used by `PostCard` — all real progress on visibility, but none of it had yet reconciled with what a *compact* card should show under a stated rule, because no such rule existed yet. This round is that reconciliation.
+
+**Built `components/shared/MediaBadge.tsx`** (icon + label — Photo/Video/File — never pixels) replacing the deleted `MediaPreview.tsx`. Added it to `PostBadges` behind a new `showMediaBadge` prop (default `false`) — `PostCard` passes `true`, `PostDetail` doesn't, since `PostDetail` already renders the real media and showing the indicator there too would be redundant — and directly into all 6 space cards' own badge rows (none of them share the `PostBadges` component). `LostFoundCard` already had an icon-only indicator box (`post.hasImage`), which was already the right pattern — just wired to a mock-only boolean; now it also checks real `post.media`.
+
+**Text wrapping:** added `break-words` plus an explicit `[word-break:break-word]` Tailwind arbitrary-value utility (Tailwind has no built-in for that literal CSS property — `break-words` alone only covers `overflow-wrap`) to every title and body-preview container this audit found: all 7 cards, `PostDetail`'s title and body (both `overflow-wrap`/`word-break` are inherited CSS properties, so one application on the body wrapper covers every child `<p>`/`<li>`/`<a>` inside the sanitized HTML), `CommentItem`, `AnswerCard`, `ApprovalCard` (admin's moderation card — deliberately *not* given `line-clamp-2` like the public cards, since admin needs the full text to decide approve/reject, just `break-words` for safety), `ProfileTabs`' answer preview, `TicketThread`'s subject and message bubbles, and both ticket list pages' subject/last-message previews.
+
+**Embed width:** added explicit `max-w-full` to `YoutubeEmbed` and `DriveCard`'s containers. They were already responsive in practice (block/flex defaults), but "explicitly checked" was the literal ask, and it's a one-class change to make it certain rather than incidental.
+
+**Verified visually, not just by reading the CSS.** Built a temporary `/dev-preview` route (deleted before committing) rendering every card type plus `PostDetail` against a synthetic post carrying an 800-character unbroken title/body string and full image + YouTube + Drive media. Temporarily installed Playwright (removed after), drove the route at 390px and 1280px, and confirmed:
+- `document.documentElement.scrollWidth <= clientWidth` at both widths (no horizontal overflow) — checked programmatically, not eyeballed
+- Zero browser console errors
+- Screenshots confirm the unbroken text wraps cleanly inside every card border at both widths
+- A close-up of the badge row shows exactly `Coding` + `📷 Photo` + `▶ Video` + `📁 File` — icons only, confirming `MediaBadge` renders as intended and not as a thumbnail
+
+One thing the harness itself needed a fix for (not an app bug): the preview page was initially a Server Component, which threw `Event handlers cannot be passed to Client Component props` because `DriveCard`'s `onClick` assumes a client boundary above it — true in the real app (`post/[id]/page.tsx` has `'use client'`), just not in a bare test page. Added `'use client'` to the harness and the error disappeared, confirming it was a test-harness artifact, not a production defect.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds (same benign `DYNAMIC_SERVER_USAGE` notice as every prior phase); confirmed the final build has no leftover `/dev-preview` route
+- Playwright and the temporary preview route were both removed before committing — `git diff --stat` on `package.json`/`pnpm-lock.yaml` confirmed clean, no residual dev-dependency
+- Pushed to `main`, Vercel redeployed, confirmed `● Ready`; smoke-checked `/home`, all 6 space pages, and `/discussions/placements` on the live URL — all 307 (correct unauthenticated redirect) or 401, no 500s
+
+**Not verified — the same constraint as every phase so far:** the actual authenticated click-through (creating real posts with long content and embeds across each space, confirming the feed vs. detail distinction end to end) needs a real login I still can't complete myself. Confidence here is unusually high though, since this is the first fix in this project verified with actual rendered screenshots and a real headless browser rather than code inspection alone — the user's authenticated pass should mostly be confirming what's already been shown to work.
+
+---
+
 ## Fix — Delete post, embed rendering everywhere, composer height, pending badge
 
 **Status:** Complete, typechecked, built, deployed. Live click-through handed to the user.
