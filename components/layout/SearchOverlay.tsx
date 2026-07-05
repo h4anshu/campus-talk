@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { fetchJson } from '@/lib/api-client';
 import { ICON_MAP } from '@/lib/icon-map';
 import { slugify } from '@/lib/utils';
+import { PLATFORM_NAME } from '@/lib/constants';
 
 interface SearchResult {
   posts: any[];
@@ -67,7 +68,7 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
         showCloseButton={false}
         className="top-[15%] max-w-[560px] translate-y-0 gap-0 border-[0.5px] border-[var(--border-med)] bg-[var(--bg-elevated)] p-0"
       >
-        <DialogTitle className="sr-only">Search CampusVoice</DialogTitle>
+        <DialogTitle className="sr-only">Search {PLATFORM_NAME}</DialogTitle>
         <motion.div
           initial={{ opacity: 0, scale: 0.97, y: -6 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

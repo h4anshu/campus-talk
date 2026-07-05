@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  GraduationCap,
   MessageSquare,
   HelpCircle,
   Building2,
@@ -27,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useContactAdminStore } from '@/store/useContactAdminStore';
 import { scrollToId } from '@/lib/scroll';
+import { PLATFORM_NAME } from '@/lib/constants';
 
 interface LandingStats {
   students: number | null;
@@ -78,16 +78,14 @@ export default function Footer() {
   return (
     <footer className="relative overflow-hidden bg-[#0A0E1A] text-[var(--text-secondary)]">
       {/* Content: columns + stats, sits above the silhouette in normal flow */}
-      <div className="relative z-[2] max-w-7xl mx-auto px-6 sm:px-10 lg:px-20 pt-12 pb-10">
+      <div className="relative z-[2] max-w-7xl mx-auto px-6 sm:px-10 lg:px-20 pt-16 pb-10">
         {/* Main Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-8">
           {/* Logo & Description */}
           <div className="lg:col-span-1 flex flex-col gap-4">
             <div className="flex items-center gap-2 text-[var(--text-primary)]">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white">
-                <GraduationCap className="h-5 w-5" />
-              </div>
-              <span className="text-[18px] font-semibold tracking-tight">CampusTalk</span>
+              <img src="/logo.svg" alt={PLATFORM_NAME} className="h-10 w-auto" />
+              <span className="text-[18px] font-semibold tracking-tight">{PLATFORM_NAME}</span>
             </div>
             <p className="text-[12px] text-[var(--text-muted)] leading-relaxed">
               Your campus conversations start here. Ask questions, share knowledge and connect with students across colleges.
@@ -257,15 +255,16 @@ export default function Footer() {
       </div>
 
       {/* Silhouette zone: night-sky backdrop + campus illustration + bottom bar */}
-      <div className="relative w-full h-[280px] overflow-hidden">
+      <div className="relative w-full h-[300px] overflow-hidden">
         {/* Night sky gradient */}
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#080E2A,#060810)]" />
 
-        {/* Campus silhouette */}
+        {/* Campus silhouette — the artwork itself sits mid-canvas (not at the bottom edge
+            of its source file), so the crop must be centered around that band, not object-bottom */}
         <img
           src="/campus-silhouette.svg"
           alt="Campus Silhouette"
-          className="pointer-events-none absolute bottom-0 left-0 h-full w-full select-none object-cover object-bottom"
+          className="pointer-events-none absolute bottom-0 left-0 h-full w-full select-none object-cover object-[50%_64%]"
         />
 
         {/* Top fade blending content above into the silhouette */}
@@ -287,7 +286,7 @@ export default function Footer() {
 
             {/* Center: Copyright */}
             <div>
-              © 2026 CampusTalk. All rights reserved.
+              © 2026 {PLATFORM_NAME}. All rights reserved.
             </div>
 
             {/* Right: Legal links */}

@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSession, signOut } from 'next-auth/react';
 import {
-  GraduationCap,
   Search,
   MessageSquare,
   Bell,
@@ -88,9 +87,7 @@ export default function Navbar() {
         className="sticky top-0 z-50 flex h-[52px] items-center justify-between gap-4 border-b-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-6"
       >
         <Link href="/home" className="flex shrink-0 items-center gap-2.5">
-          <div className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-[var(--accent-fill)]">
-            <GraduationCap className="h-4 w-4 text-white" />
-          </div>
+          <img src="/logo.svg" alt={PLATFORM_NAME} className="h-8 w-auto" />
           <div className="hidden flex-col leading-none sm:flex">
             <span className="text-[13px] font-medium text-[var(--text-primary)]">
               {PLATFORM_NAME}
@@ -105,7 +102,7 @@ export default function Navbar() {
         >
           <Search className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
           <span className="flex-1 truncate text-[12px] text-[var(--text-muted)]">
-            Search CampusVoice...
+            Search Campus Thread...
           </span>
           <kbd className="hidden shrink-0 rounded border-[0.5px] border-[var(--border-med)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)] sm:block">
             Ctrl K

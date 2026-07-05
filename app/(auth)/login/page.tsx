@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { GraduationCap } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/constants';
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -43,9 +42,7 @@ function LoginCard() {
       className="relative z-10 w-full max-w-[400px] rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)] p-8"
     >
       <div className="flex flex-col items-center text-center">
-        <div className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] bg-[var(--accent-fill)]">
-          <GraduationCap className="h-5 w-5 text-white" />
-        </div>
+        <img src="/logo.svg" alt={PLATFORM_NAME} className="h-10 w-auto" />
         <h1 className="mt-4 text-[20px] font-medium text-[var(--text-primary)]">
           Welcome to {PLATFORM_NAME}
         </h1>

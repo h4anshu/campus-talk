@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { GraduationCap } from 'lucide-react';
 import { COLLEGE_NAME, PLATFORM_NAME } from '@/lib/constants';
 
 export default function LandingNav() {
@@ -27,9 +26,7 @@ export default function LandingNav() {
       }`}
     >
       <div className="flex items-center gap-2.5">
-        <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[8px] bg-[var(--accent-fill)]">
-          <GraduationCap className="h-4 w-4 text-white" />
-        </div>
+        <img src="/logo.svg" alt={PLATFORM_NAME} className="h-8 w-auto shrink-0" />
         <div className="flex flex-col leading-none">
           <span className="text-[13px] font-medium text-[var(--text-primary)]">{PLATFORM_NAME}</span>
           <span className="hidden text-[10px] text-[var(--text-muted)] sm:block">{COLLEGE_NAME}</span>

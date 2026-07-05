@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GraduationCap, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -50,9 +50,7 @@ export default function AdminLoginPage() {
         className="w-full max-w-[360px] rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-6"
       >
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[10px] bg-[var(--accent-fill)]">
-            <GraduationCap className="h-5 w-5 text-white" />
-          </div>
+          <img src="/logo.svg" alt={PLATFORM_NAME} className="h-10 w-auto" />
           <h1 className="text-[16px] font-medium text-[var(--text-primary)]">
             {PLATFORM_NAME} <span className="text-[var(--text-muted)]">Admin</span>
           </h1>

@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 import Providers from '@/components/shared/Providers';
 
 export const metadata: Metadata = {
-  title: 'CampusVoice — SITM College Forum',
+  title: 'Campus Thread — SITM College Forum',
   description: 'The official student forum for SITM College, Lucknow',
 };
 

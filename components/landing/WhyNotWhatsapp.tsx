@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { X, Check } from 'lucide-react';
+import { PLATFORM_NAME } from '@/lib/constants';
 
 const WHATSAPP_ISSUES = [
   'Messages scroll away and get lost',
@@ -62,7 +63,7 @@ export default function WhyNotWhatsapp() {
           transition={{ duration: 0.5 }}
           className="rounded-card border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] p-4"
         >
-          <div className="mb-3 text-[12px] font-medium text-[var(--success)]">CampusVoice</div>
+          <div className="mb-3 text-[12px] font-medium text-[var(--success)]">{PLATFORM_NAME}</div>
           <ul className="flex flex-col gap-2">
             {CAMPUSVOICE_BENEFITS.map((benefit) => (
               <li

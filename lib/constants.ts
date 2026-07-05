@@ -29,7 +29,7 @@ export type TopicKey = typeof TOPICS[number]['key'];
 export type SortOption = typeof SORT_OPTIONS[number];
 
 export const COLLEGE_NAME = 'SITM College, Lucknow';
-export const PLATFORM_NAME = 'CampusVoice';
+export const PLATFORM_NAME = 'Campus Thread';
 export const COLLEGE_EMAIL_DOMAIN = '@sitm.ac.in';
 
 // UI keys are kebab-case ('hostel-mess'); Prisma's TopicType/SpaceType enums

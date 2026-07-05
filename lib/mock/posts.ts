@@ -337,7 +337,7 @@ export const MOCK_POSTS: MockPost[] = [
   {
     id: 'post-15',
     title: 'Lost: Black HP laptop near library',
-    body: "Left my HP laptop (black, has a CampusVoice sticker on the lid) on a table near the library reading room yesterday evening. Please contact me if found — reward offered.",
+    body: "Left my HP laptop (black, has a Campus Thread sticker on the lid) on a table near the library reading room yesterday evening. Please contact me if found — reward offered.",
     type: 'SPACE',
     space: 'lost-found',
     status: 'APPROVED',
