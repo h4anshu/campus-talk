@@ -76,22 +76,9 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative overflow-hidden border-t-[0.5px] border-[var(--border)] text-[var(--text-secondary)]">
-      {/* Background gradient */}
-      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_bottom,#0C0E17,#060810)]" />
-
-      {/* Campus silhouette */}
-      <img
-        src="/campus-silhouette.svg"
-        alt="Campus Silhouette"
-        className="pointer-events-none absolute bottom-0 left-0 z-0 h-[220px] w-full select-none object-cover"
-      />
-
-      {/* Gradient overlay blending content into the silhouette */}
-      <div className="pointer-events-none absolute bottom-[220px] left-0 z-[1] h-[80px] w-full bg-[linear-gradient(to_bottom,transparent,#0C0E17)]" />
-
-      {/* Content: everything sits above the silhouette */}
-      <div className="relative z-[2] max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-[240px]">
+    <footer className="relative overflow-hidden bg-[#0A0E1A] text-[var(--text-secondary)]">
+      {/* Content: columns + stats, sits above the silhouette in normal flow */}
+      <div className="relative z-[2] max-w-7xl mx-auto px-6 sm:px-10 lg:px-20 pt-12 pb-10">
         {/* Main Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12">
           {/* Logo & Description */}
@@ -267,32 +254,50 @@ export default function Footer() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom bar */}
-        <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 pt-6 border-t-[0.5px] border-[rgba(255,255,255,0.12)] text-[11px] text-[rgba(230,232,240,0.85)]">
-          {/* Left: Taglines */}
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <span>Safe Community</span>
-            <span className="text-[rgba(230,232,240,0.4)] font-bold">•</span>
-            <span>Verified Students Only</span>
-            <span className="text-[rgba(230,232,240,0.4)] font-bold">•</span>
-            <span>College Exclusive</span>
-            <span className="text-[rgba(230,232,240,0.4)] font-bold">•</span>
-            <span>Free Forever</span>
-          </div>
+      {/* Silhouette zone: night-sky backdrop + campus illustration + bottom bar */}
+      <div className="relative w-full h-[280px] overflow-hidden">
+        {/* Night sky gradient */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#080E2A,#060810)]" />
 
-          {/* Center: Copyright */}
-          <div>
-            © 2026 CampusTalk. All rights reserved.
-          </div>
+        {/* Campus silhouette */}
+        <img
+          src="/campus-silhouette.svg"
+          alt="Campus Silhouette"
+          className="pointer-events-none absolute bottom-0 left-0 h-full w-full select-none object-cover object-bottom"
+        />
 
-          {/* Right: Legal links */}
-          <div className="flex items-center gap-2">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-white">Privacy Policy</button>
-            <span className="text-[rgba(230,232,240,0.4)] font-bold">•</span>
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-white">Terms of Service</button>
-            <span className="text-[rgba(230,232,240,0.4)] font-bold">•</span>
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-white">Code of Conduct</button>
+        {/* Top fade blending content above into the silhouette */}
+        <div className="pointer-events-none absolute top-0 left-0 w-full h-[60px] bg-[linear-gradient(to_bottom,#0A0E1A,transparent)]" />
+
+        {/* Bottom bar, anchored inside the silhouette zone */}
+        <div className="absolute bottom-0 left-0 right-0 z-[3] px-6 sm:px-10 lg:px-20 py-4">
+          <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 text-[11px] text-white/85">
+            {/* Left: Taglines */}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span>Safe Community</span>
+              <span className="text-white/40 font-bold">•</span>
+              <span>Verified Students Only</span>
+              <span className="text-white/40 font-bold">•</span>
+              <span>College Exclusive</span>
+              <span className="text-white/40 font-bold">•</span>
+              <span>Free Forever</span>
+            </div>
+
+            {/* Center: Copyright */}
+            <div>
+              © 2026 CampusTalk. All rights reserved.
+            </div>
+
+            {/* Right: Legal links */}
+            <div className="flex items-center gap-2">
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-white">Privacy Policy</button>
+              <span className="text-white/40 font-bold">•</span>
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-white">Terms of Service</button>
+              <span className="text-white/40 font-bold">•</span>
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-white">Code of Conduct</button>
+            </div>
           </div>
         </div>
       </div>
