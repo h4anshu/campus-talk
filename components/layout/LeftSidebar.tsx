@@ -11,10 +11,7 @@ import { useContactAdminStore } from '@/store/useContactAdminStore';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 
-const SPACE_UNREAD: Partial<Record<string, number>> = {
-  announcements: 2,
-  resources: 5,
-};
+import { useSpacesUnread } from '@/hooks/useSpacesUnread';
 
 function NavItem({
   href,
@@ -57,6 +54,7 @@ export default function LeftSidebar() {
   const user = session?.user;
   const profileHref = `/profile/${slugify(user?.name ?? '')}`;
   const { openDialog } = useContactAdminStore();
+  const { data: unreadCounts } = useSpacesUnread();
 
   return (
     <aside className="sticky top-[88px] hidden h-[calc(100vh-88px)] w-[200px] shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 lg:flex">
@@ -88,7 +86,7 @@ export default function LeftSidebar() {
               label={space.label}
               icon={space.icon}
               active={pathname === `/spaces/${space.key}`}
-              unread={SPACE_UNREAD[space.key]}
+              unread={unreadCounts?.[space.key]}
             />
           ))}
         </div>

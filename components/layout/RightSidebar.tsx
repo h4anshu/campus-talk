@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { TrendingUp, CalendarDays, LifeBuoy } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 import { MOCK_TRENDING, MOCK_EVENTS } from '@/lib/mock';
 import { useContactAdminStore } from '@/store/useContactAdminStore';
-import { fetchJson } from '@/lib/api-client';
+import { useCollegeStats } from '@/hooks/useCollegeStats';
 
 function formatNumber(num: number | undefined): string {
   if (num === undefined) return '...';
@@ -14,21 +13,9 @@ function formatNumber(num: number | undefined): string {
   return String(num);
 }
 
-interface StatsData {
-  students: number;
-  online: number;
-  posts: number;
-  answers: number;
-}
-
 export default function RightSidebar() {
   const { openDialog } = useContactAdminStore();
-
-  const { data: stats } = useQuery<StatsData>({
-    queryKey: ['collegeStats'],
-    queryFn: () => fetchJson<StatsData>('/api/college/stats'),
-    refetchInterval: 30 * 1000, // Refresh every 30 seconds
-  });
+  const { data: stats } = useCollegeStats();
 
   const communityStats = [
     { label: 'Students', value: formatNumber(stats?.students) },

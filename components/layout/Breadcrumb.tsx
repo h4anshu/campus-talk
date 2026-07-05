@@ -3,8 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { SPACES, TOPICS } from '@/lib/constants';
-
-const ONLINE_COUNT = 94;
+import { useCollegeStats } from '@/hooks/useCollegeStats';
 
 function labelFor(segment: string, parent?: string): string {
   if (parent === 'discussions') {
@@ -29,6 +28,8 @@ function labelFor(segment: string, parent?: string): string {
 export default function Breadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
+  const { data: stats } = useCollegeStats();
+  const onlineCount = stats?.online ?? '...';
 
   const crumbs = [{ label: 'Home', href: '/home' }];
   let acc = '';
@@ -57,7 +58,7 @@ export default function Breadcrumb() {
 
       <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]">
         <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-        {ONLINE_COUNT} online
+        {onlineCount} online
       </div>
     </div>
   );

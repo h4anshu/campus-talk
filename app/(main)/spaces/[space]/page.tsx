@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import type { ComponentType } from 'react';
+import { type ComponentType, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { SPACES, type SpaceKey } from '@/lib/constants';
 import type { MockPost } from '@/lib/mock/posts';
 import { usePosts } from '@/hooks/usePosts';
@@ -30,6 +31,15 @@ interface SpacePageProps {
 export default function SpacePage({ params }: SpacePageProps) {
   const space = SPACES.find((s) => s.key === params.space);
   const { data: posts, isLoading, isError } = usePosts({ space: params.space });
+  const queryClient = useQueryClient();
+  const spaceKey = space?.key;
+
+  useEffect(() => {
+    if (spaceKey) {
+      window.localStorage.setItem(`space_visited_${spaceKey}`, new Date().toISOString());
+      queryClient.invalidateQueries({ queryKey: ['spacesUnread'] });
+    }
+  }, [spaceKey, queryClient]);
 
   if (!space) {
     return (
