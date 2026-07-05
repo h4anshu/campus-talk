@@ -25,7 +25,7 @@ export default function RightSidebar() {
   ];
 
   return (
-    <aside className="sticky top-[88px] hidden h-[calc(100vh-88px)] w-[180px] shrink-0 flex-col gap-6 overflow-y-auto border-l-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 xl:flex">
+    <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-[180px] shrink-0 flex-col gap-6 overflow-y-auto border-l-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 xl:flex">
       <div>
         <div className="flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           <TrendingUp className="h-3 w-3" />
@@ -66,8 +66,14 @@ export default function RightSidebar() {
       </div>
 
       <div>
-        <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
-          Community
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+            Community
+          </span>
+          <span className="flex items-center gap-1 text-[9px] text-[var(--text-muted)] font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)] animate-pulse" />
+            {stats?.online ?? '...'} online
+          </span>
         </div>
         <div className="mt-2 grid grid-cols-2 gap-1.5">
           {communityStats.map((stat) => (

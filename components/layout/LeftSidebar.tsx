@@ -56,8 +56,45 @@ export default function LeftSidebar() {
   const { openDialog } = useContactAdminStore();
   const { data: unreadCounts } = useSpacesUnread();
 
+  const segments = pathname.split('/').filter(Boolean);
+  const lastSegment = segments[segments.length - 1] ?? 'home';
+  const parentSegment = segments[segments.length - 2];
+
+  function labelFor(segment: string, parent?: string): string {
+    if (parent === 'post') {
+      return 'Post Details';
+    }
+    if (parent === 'profile') {
+      return 'Profile View';
+    }
+    if (parent === 'discussions') {
+      return TOPICS.find((t) => t.key === segment)?.label ?? segment;
+    }
+    if (parent === 'spaces') {
+      return SPACES.find((s) => s.key === segment)?.label ?? segment;
+    }
+    const known: Record<string, string> = {
+      home: 'Home',
+      discussions: 'Discussions',
+      spaces: 'Spaces',
+      post: 'Post Details',
+      profile: 'Profile',
+      saved: 'Saved Posts',
+      tickets: 'Support Tickets',
+      settings: 'Settings',
+    };
+    return known[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
+  }
+
+  const pageTitle = labelFor(lastSegment, parentSegment);
+
   return (
-    <aside className="sticky top-[88px] hidden h-[calc(100vh-88px)] w-[200px] shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 lg:flex">
+    <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-[200px] shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 lg:flex">
+      <div className="mb-4 border-b-[0.5px] border-[var(--border)] pb-3 px-1.5 pt-1">
+        <span className="text-[9px] uppercase font-medium tracking-wider text-[var(--text-muted)]">Current View</span>
+        <h1 className="text-[14px] font-semibold text-[var(--text-primary)] mt-0.5">{pageTitle}</h1>
+      </div>
+
       <Link
         href={profileHref}
         className="flex items-center gap-2.5 rounded px-1.5 py-2 transition-colors hover:bg-[var(--bg-panel)]"
