@@ -66,14 +66,8 @@ export default function RightSidebar() {
       </div>
 
       <div>
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
-            Community
-          </span>
-          <span className="flex items-center gap-1 text-[9px] text-[var(--text-muted)] font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)] animate-pulse" />
-            {stats?.online ?? '...'} online
-          </span>
+        <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+          Community
         </div>
         <div className="mt-2 grid grid-cols-2 gap-1.5">
           {communityStats.map((stat) => (
@@ -85,6 +79,24 @@ export default function RightSidebar() {
               <div className="text-[10px] text-[var(--text-muted)]">{stat.label}</div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] p-3 flex flex-col gap-1.5 items-center text-center">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-[10px] font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+            Live Pulse
+          </span>
+        </div>
+        <div className="text-[16px] font-bold text-[var(--text-primary)] mt-0.5">
+          {stats?.online ?? '0'} online now
+        </div>
+        <div className="text-[9px] text-[var(--text-muted)]">
+          Realtime active community members
         </div>
       </div>
 
