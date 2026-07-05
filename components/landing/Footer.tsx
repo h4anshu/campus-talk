@@ -213,10 +213,10 @@ export default function Footer() {
             <img
               src="/campus-silhouette.png"
               alt="Campus Silhouette Background"
-              className="w-full h-auto object-cover opacity-45 select-none pointer-events-none"
-              style={{ mixBlendMode: 'screen', filter: 'invert(1) hue-rotate(200deg) brightness(0.8) contrast(1.2)' }}
+              className="w-full h-auto object-cover opacity-85 select-none pointer-events-none"
             />
           </div>
+
 
           {/* Stats items on top of background */}
           <div className="relative z-10 w-full grid grid-cols-2 gap-8 sm:grid-cols-4">
