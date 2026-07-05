@@ -207,9 +207,14 @@ export default function Footer() {
         </div>
 
         {/* Metrics & Silhouette Overlay Container */}
-        <div className="relative border-y-[0.5px] border-[var(--border)] min-h-[360px] sm:min-h-[440px] md:min-h-[500px] flex flex-col justify-between pt-12 pb-6 overflow-hidden mt-8 select-none">
-          {/* Background Silhouette */}
-          <div className="absolute inset-0 z-0 pointer-events-none flex items-end justify-center">
+        <div className="relative border-y-[0.5px] border-[var(--border)] min-h-[380px] md:min-h-0 flex flex-col justify-between pt-12 pb-6 md:py-0 overflow-hidden mt-8 select-none w-full">
+          {/* Desktop: Image is in normal flow, defining parent height. Mobile: Image is absolute positioned background. */}
+          <img
+            src="/campus-silhouette.png"
+            alt="Campus Silhouette"
+            className="hidden md:block w-full h-auto opacity-85 select-none pointer-events-none"
+          />
+          <div className="md:hidden absolute inset-0 z-0 pointer-events-none flex items-end justify-center">
             <img
               src="/campus-silhouette.png"
               alt="Campus Silhouette Background"
@@ -218,7 +223,7 @@ export default function Footer() {
           </div>
 
           {/* Stats items on top of background */}
-          <div className="relative z-10 w-full grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <div className="relative z-10 w-full grid grid-cols-2 gap-8 sm:grid-cols-4 md:absolute md:top-8 md:left-0 md:right-0 px-6 md:px-12">
             <div className="flex items-center justify-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
                 <Users className="h-6 w-6" />
@@ -266,7 +271,7 @@ export default function Footer() {
           </div>
 
           {/* Bottom Metadata Bar inside the silhouette base */}
-          <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 pt-6 border-t-[0.5px] border-[rgba(255,255,255,0.06)] text-[11px] text-[var(--text-muted)] relative z-10">
+          <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 pt-6 border-t-[0.5px] border-[rgba(255,255,255,0.06)] text-[11px] text-[var(--text-muted)] relative z-10 md:absolute md:bottom-4 md:left-0 md:right-0 px-6 md:px-12">
             {/* Left: Taglines */}
             <div className="flex flex-wrap items-center justify-center gap-2">
               <span>Safe Community</span>
