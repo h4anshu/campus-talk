@@ -77,11 +77,21 @@ export default function Footer() {
 
   return (
     <footer className="relative overflow-hidden border-t-[0.5px] border-[var(--border)] text-[var(--text-secondary)]">
-      {/* Layer 1: background gradient */}
+      {/* Background gradient */}
       <div className="absolute inset-0 z-0 bg-[linear-gradient(to_bottom,#0C0E17,#060810)]" />
 
-      {/* Layer 2: main content (columns + stats) */}
-      <div className="relative z-[2] max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-[180px] sm:pb-[200px] md:pb-[220px]">
+      {/* Campus silhouette */}
+      <img
+        src="/campus-silhouette.svg"
+        alt="Campus Silhouette"
+        className="pointer-events-none absolute bottom-0 left-0 z-0 h-[220px] w-full select-none object-cover"
+      />
+
+      {/* Gradient overlay blending content into the silhouette */}
+      <div className="pointer-events-none absolute bottom-[220px] left-0 z-[1] h-[80px] w-full bg-[linear-gradient(to_bottom,transparent,#0C0E17)]" />
+
+      {/* Content: everything sits above the silhouette */}
+      <div className="relative z-[2] max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-[240px]">
         {/* Main Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12">
           {/* Logo & Description */}
@@ -211,66 +221,54 @@ export default function Footer() {
         </div>
 
         {/* Stats bar */}
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 pt-10 border-t-[0.5px] border-[var(--border)]">
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
-              <Users className="h-6 w-6" />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 py-6 border-t-[0.5px] border-[var(--border)]">
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <Users className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+              <span className="text-[22px] font-semibold text-[var(--text-primary)] leading-none">
                 {formatNumber(stats.students, '12K+')}
               </span>
-              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Students</span>
+              <span className="text-[12px] text-[var(--text-muted)] mt-1 font-medium">Students</span>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
-              <MessageSquare className="h-6 w-6" />
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <MessageSquare className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+              <span className="text-[22px] font-semibold text-[var(--text-primary)] leading-none">
                 {formatNumber(stats.discussions, '35K+')}
               </span>
-              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Discussions</span>
+              <span className="text-[12px] text-[var(--text-muted)] mt-1 font-medium">Discussions</span>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
-              <Building2 className="h-6 w-6" />
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <Building2 className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+              <span className="text-[22px] font-semibold text-[var(--text-primary)] leading-none">
                 {formatNumber(stats.colleges, '150+')}
               </span>
-              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Colleges</span>
+              <span className="text-[12px] text-[var(--text-muted)] mt-1 font-medium">Colleges</span>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
-              <Zap className="h-6 w-6 animate-pulse" />
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <Zap className="h-5 w-5 animate-pulse" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+              <span className="text-[22px] font-semibold text-[var(--text-primary)] leading-none">
                 {formatNumber(stats.dailyPosts, '2.8K+')}
               </span>
-              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Daily Posts</span>
+              <span className="text-[12px] text-[var(--text-muted)] mt-1 font-medium">Daily Posts</span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Layer 3: campus silhouette */}
-      <div className="absolute bottom-0 left-0 z-[1] h-[180px] w-full select-none sm:h-[200px] md:h-[220px]">
-        <img
-          src="/campus-silhouette.png"
-          alt="Campus Silhouette"
-          className="h-full w-full select-none object-cover object-bottom pointer-events-none"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#0C0E17_0%,transparent_40%)] pointer-events-none" />
-      </div>
-
-      {/* Layer 4: bottom bar, sits inside the silhouette zone */}
-      <div className="relative z-[3] max-w-7xl mx-auto px-6 lg:px-8 pb-6">
+        {/* Bottom bar */}
         <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 pt-6 border-t-[0.5px] border-[rgba(255,255,255,0.12)] text-[11px] text-[rgba(230,232,240,0.85)]">
           {/* Left: Taglines */}
           <div className="flex flex-wrap items-center justify-center gap-2">
