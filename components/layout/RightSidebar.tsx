@@ -25,7 +25,7 @@ export default function RightSidebar() {
   ];
 
   return (
-    <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-[180px] shrink-0 flex-col gap-6 overflow-y-auto border-l-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 xl:flex">
+    <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-[180px] shrink-0 flex-col gap-3.5 overflow-y-auto border-l-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 xl:flex">
       <div>
         <div className="flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           <TrendingUp className="h-3 w-3" />
@@ -82,22 +82,17 @@ export default function RightSidebar() {
         </div>
       </div>
 
-      <div className="rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] p-3 flex flex-col gap-1.5 items-center text-center">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
+      <div className="rounded border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2.5 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
           </span>
-          <span className="text-[10px] font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
-            Live Pulse
-          </span>
+          <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Live Pulse</span>
         </div>
-        <div className="text-[16px] font-bold text-[var(--text-primary)] mt-0.5">
-          {stats?.online ?? '0'} online now
-        </div>
-        <div className="text-[9px] text-[var(--text-muted)]">
-          Realtime active community members
-        </div>
+        <span className="text-[10px] font-bold text-[var(--text-primary)]">
+          {stats?.online ?? '0'} online
+        </span>
       </div>
 
       <button
