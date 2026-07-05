@@ -207,7 +207,7 @@ export default function Footer() {
         </div>
 
         {/* Metrics & Silhouette Overlay Container */}
-        <div className="relative border-y-[0.5px] border-[var(--border)] min-h-[320px] sm:min-h-[400px] md:min-h-[460px] flex items-start pt-12 sm:pt-16 overflow-hidden mt-8 select-none">
+        <div className="relative border-t-[0.5px] border-[var(--border)] min-h-[360px] sm:min-h-[440px] md:min-h-[500px] flex flex-col justify-between pt-12 pb-6 overflow-hidden mt-8 select-none">
           {/* Background Silhouette */}
           <div className="absolute inset-0 z-0 pointer-events-none flex items-end justify-center">
             <img
@@ -216,7 +216,6 @@ export default function Footer() {
               className="w-full h-auto object-cover opacity-85 select-none pointer-events-none"
             />
           </div>
-
 
           {/* Stats items on top of background */}
           <div className="relative z-10 w-full grid grid-cols-2 gap-8 sm:grid-cols-4">
@@ -265,33 +264,33 @@ export default function Footer() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Metadata Bar */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 pt-6 border-t-[0.5px] border-[var(--border)] text-[11px] text-[var(--text-muted)]">
-          {/* Left: Taglines */}
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <span>Safe Community</span>
-            <span className="text-[var(--border-strong)] font-bold">•</span>
-            <span>Student First</span>
-            <span className="text-[var(--border-strong)] font-bold">•</span>
-            <span>Respect & Be Kind</span>
-            <span className="text-[var(--border-strong)] font-bold">•</span>
-            <span>Learn Together</span>
-          </div>
+          {/* Bottom Metadata Bar inside the silhouette base */}
+          <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 pt-6 border-t-[0.5px] border-[rgba(255,255,255,0.06)] text-[11px] text-[var(--text-muted)] relative z-10">
+            {/* Left: Taglines */}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span>Safe Community</span>
+              <span className="text-[var(--border-strong)] font-bold">•</span>
+              <span>Student First</span>
+              <span className="text-[var(--border-strong)] font-bold">•</span>
+              <span>Respect & Be Kind</span>
+              <span className="text-[var(--border-strong)] font-bold">•</span>
+              <span>Learn Together</span>
+            </div>
 
-          {/* Center: Copyright */}
-          <div>
-            © 2026 CampusTalk. All rights reserved.
-          </div>
+            {/* Center: Copyright */}
+            <div>
+              © 2026 CampusTalk. All rights reserved.
+            </div>
 
-          {/* Right: Legal links */}
-          <div className="flex items-center gap-2">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-[var(--text-secondary)]">Privacy Policy</button>
-            <span className="text-[var(--border-strong)] font-bold">•</span>
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-[var(--text-secondary)]">Terms of Service</button>
-            <span className="text-[var(--border-strong)] font-bold">•</span>
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-[var(--text-secondary)]">Code of Conduct</button>
+            {/* Right: Legal links */}
+            <div className="flex items-center gap-2">
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-[var(--text-secondary)]">Privacy Policy</button>
+              <span className="text-[var(--border-strong)] font-bold">•</span>
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-[var(--text-secondary)]">Terms of Service</button>
+              <span className="text-[var(--border-strong)] font-bold">•</span>
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="transition-colors hover:text-[var(--text-secondary)]">Code of Conduct</button>
+            </div>
           </div>
         </div>
       </div>
