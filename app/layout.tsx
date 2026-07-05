@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/sonner';
 import Providers from '@/components/shared/Providers';
 
 export const metadata: Metadata = {
-  title: 'Campus Thread — SITM College Forum',
-  description: 'The official student forum for SITM College, Lucknow',
+  title: 'Campus Thread — BBD Campus Forum',
+  description: 'The official student forum for BBD Campus',
 };
 
 export default function RootLayout({

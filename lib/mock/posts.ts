@@ -229,7 +229,7 @@ export const MOCK_POSTS: MockPost[] = [
   {
     id: 'post-10',
     title: 'Tech Fest 2025 — Registrations Open',
-    body: "SITM's annual Tech Fest returns with hackathons, robotics, coding contests, and a startup pitch stage. Registration is open to all years and departments. Prizes worth ₹2 lakh across events.",
+    body: "BBD Campus's annual Tech Fest returns with hackathons, robotics, coding contests, and a startup pitch stage. Registration is open to all years and departments. Prizes worth ₹2 lakh across events.",
     type: 'SPACE',
     space: 'events',
     status: 'APPROVED',

@@ -28,7 +28,7 @@ export type SpaceKey = typeof SPACES[number]['key'];
 export type TopicKey = typeof TOPICS[number]['key'];
 export type SortOption = typeof SORT_OPTIONS[number];
 
-export const COLLEGE_NAME = 'SITM College, Lucknow';
+export const COLLEGE_NAME = 'BBD Campus';
 export const PLATFORM_NAME = 'Campus Thread';
 export const COLLEGE_EMAIL_DOMAIN = '@sitm.ac.in';
 
