@@ -111,7 +111,16 @@ export default function LeftSidebar() {
         </div>
       </Link>
 
-      <div className="mt-5">
+      <div className="mt-3 flex flex-col gap-0.5 border-b-[0.5px] border-[var(--border)] pb-3">
+        <NavItem
+          href="/home"
+          label="Home"
+          icon="home"
+          active={pathname === '/home' || pathname === '/'}
+        />
+      </div>
+
+      <div className="mt-4">
         <div className="px-2.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           Spaces
         </div>
