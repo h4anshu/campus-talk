@@ -207,19 +207,19 @@ export default function Footer() {
         </div>
 
         {/* Metrics & Silhouette Overlay Container */}
-        <div className="relative border-y-[0.5px] border-[var(--border)] py-16 overflow-hidden mt-8 select-none">
+        <div className="relative border-y-[0.5px] border-[var(--border)] min-h-[320px] sm:min-h-[400px] md:min-h-[460px] flex items-start pt-12 sm:pt-16 overflow-hidden mt-8 select-none">
           {/* Background Silhouette */}
           <div className="absolute inset-0 z-0 pointer-events-none flex items-end justify-center">
             <img
               src="/campus-silhouette.png"
               alt="Campus Silhouette Background"
-              className="w-full h-auto object-cover opacity-35 select-none pointer-events-none"
+              className="w-full h-auto object-cover opacity-45 select-none pointer-events-none"
               style={{ mixBlendMode: 'screen', filter: 'invert(1) hue-rotate(200deg) brightness(0.8) contrast(1.2)' }}
             />
           </div>
 
           {/* Stats items on top of background */}
-          <div className="relative z-10 grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <div className="relative z-10 w-full grid grid-cols-2 gap-8 sm:grid-cols-4">
             <div className="flex items-center justify-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330]/90 backdrop-blur-sm border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
                 <Users className="h-6 w-6" />
