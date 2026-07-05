@@ -7,13 +7,13 @@
 :root {
   /* Background layers */
   --bg-page:     #0C0E17;
-  --bg-surface:  #12151F;
+  --bg-surface:     #161929;    /* was #12151F, better card separation */
   --bg-elevated: #191D2C;
   --bg-panel:    #1F2438;
 
   /* Borders */
-  --border:        rgba(255, 255, 255, 0.08);
-  --border-med:    rgba(255, 255, 255, 0.12);
+  --border:         rgba(255,255,255,0.13);  /* was 0.08, now visible */
+  --border-med:     rgba(255,255,255,0.18);  /* was 0.12 */
   --border-strong: rgba(255, 255, 255, 0.22);
 
   /* Blue accent — only accent color in the entire project */
@@ -23,9 +23,9 @@
   --accent-border: rgba(77, 142, 245, 0.22);
 
   /* Text */
-  --text-primary:   #E6E8F0;
-  --text-secondary: #7E8398;
-  --text-muted:     #444860;
+  --text-primary:   #F0F2FA;    /* was #E6E8F0, thoda brighter */
+  --text-secondary: #9EA3B8;    /* was #7E8398, much more readable */
+  --text-muted:     #6B7190;    /* was #444860, was too dark */
 
   /* Status */
   --success:        #1DB874;
