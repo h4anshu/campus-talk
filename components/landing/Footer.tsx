@@ -207,44 +207,60 @@ export default function Footer() {
         </div>
 
         {/* Metrics Row */}
-        <div className="grid grid-cols-2 gap-6 border-y-[0.5px] border-[var(--border)] py-10 sm:grid-cols-4">
-          <div className="flex flex-col items-center text-center">
-            <Users className="h-6 w-6 text-[var(--accent)] mb-2" />
-            <div className="text-[22px] font-bold text-[var(--text-primary)]">
-              {formatNumber(stats.students, '12K+')}
+        <div className="grid grid-cols-2 gap-8 border-y-[0.5px] border-[var(--border)] py-8 sm:grid-cols-4">
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330] border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <Users className="h-6 w-6" />
             </div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Students</div>
+            <div className="flex flex-col">
+              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+                {formatNumber(stats.students, '12K+')}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Students</span>
+            </div>
           </div>
-          <div className="flex flex-col items-center text-center">
-            <MessageSquare className="h-6 w-6 text-[var(--accent)] mb-2" />
-            <div className="text-[22px] font-bold text-[var(--text-primary)]">
-              {formatNumber(stats.discussions, '35K+')}
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330] border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <MessageSquare className="h-6 w-6" />
             </div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Discussions</div>
+            <div className="flex flex-col">
+              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+                {formatNumber(stats.discussions, '35K+')}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Discussions</span>
+            </div>
           </div>
-          <div className="flex flex-col items-center text-center">
-            <Building2 className="h-6 w-6 text-[var(--accent)] mb-2" />
-            <div className="text-[22px] font-bold text-[var(--text-primary)]">
-              {formatNumber(stats.colleges, '150+')}
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330] border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <Building2 className="h-6 w-6" />
             </div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Colleges</div>
+            <div className="flex flex-col">
+              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+                {formatNumber(stats.colleges, '150+')}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Colleges</span>
+            </div>
           </div>
-          <div className="flex flex-col items-center text-center">
-            <Zap className="h-6 w-6 text-[var(--accent)] mb-2 animate-pulse" />
-            <div className="text-[22px] font-bold text-[var(--text-primary)]">
-              {formatNumber(stats.dailyPosts, '2.8K+')}
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0e1330] border border-[rgba(77,142,245,0.15)] text-[#4D8EF5] shrink-0">
+              <Zap className="h-6 w-6 animate-pulse" />
             </div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Daily Posts</div>
+            <div className="flex flex-col">
+              <span className="text-[20px] font-bold text-[var(--text-primary)] leading-none">
+                {formatNumber(stats.dailyPosts, '2.8K+')}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">Daily Posts</span>
+            </div>
           </div>
         </div>
 
         {/* Silhouette Image Banner Overlay */}
-        <div className="relative w-full overflow-hidden my-8 select-none pointer-events-none">
+        <div className="relative w-full overflow-hidden my-6 select-none pointer-events-none">
           <img
             src="/campus-silhouette.png"
             alt="Campus Silhouette"
-            className="w-full h-auto object-cover opacity-35"
-            style={{ mixBlendMode: 'screen', filter: 'invert(1) brightness(0.6) contrast(1.2)' }}
+            className="w-full h-auto object-cover opacity-50"
+            style={{ mixBlendMode: 'screen', filter: 'invert(1) hue-rotate(200deg) brightness(0.8) contrast(1.2)' }}
           />
         </div>
 
