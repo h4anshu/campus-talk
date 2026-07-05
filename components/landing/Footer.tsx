@@ -207,7 +207,7 @@ export default function Footer() {
         </div>
 
         {/* Metrics & Silhouette Overlay Container */}
-        <div className="relative border-y-[0.5px] border-[var(--border)] min-h-[360px] sm:min-h-[440px] md:min-h-[500px] flex flex-col justify-between pt-12 pb-6 overflow-hidden mt-8 select-none">
+        <div className="relative border-y-[0.5px] border-[var(--border)] min-h-[260px] sm:min-h-[300px] md:min-h-[340px] flex flex-col justify-between pt-8 pb-4 overflow-hidden mt-8 select-none">
           {/* Background Silhouette */}
           <div className="absolute inset-0 z-0 pointer-events-none flex items-end justify-center">
             <img
@@ -266,7 +266,7 @@ export default function Footer() {
           </div>
 
           {/* Bottom Metadata Bar inside the silhouette base */}
-          <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 pt-6 border-t-[0.5px] border-[rgba(255,255,255,0.06)] text-[11px] text-[var(--text-muted)] relative z-10">
+          <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 pt-4 border-t-[0.5px] border-[rgba(255,255,255,0.06)] text-[11px] text-[var(--text-muted)] relative z-10">
             {/* Left: Taglines */}
             <div className="flex flex-wrap items-center justify-center gap-2">
               <span>Safe Community</span>
