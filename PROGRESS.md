@@ -4,6 +4,27 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — audit.md items 1-3, then an iterative hero-illustration debugging chain
+
+**Status:** Complete, typechecked, built, deployed. Five separate deploys in this round — the hero illustration took four iterations to actually get right, each driven by a real screenshot showing the previous fix hadn't fully solved it.
+
+**Items 1-2 (straightforward, one pass each):** `Navbar.tsx` search button lacked `min-w-0` so it couldn't shrink below its own content width, causing ~80px horizontal overflow at ≤420px on every authed page — added `min-w-0` to the button and its truncating span, tightened mobile padding/gap. `WhyNotWhatsapp.tsx`'s off-screen x-axis entrance animation had no `overflow-x` clip, adding 6px of page scroll at 375px — added `overflow-hidden` to the section. Both confirmed fixed via CDP-measured `scrollWidth === clientWidth`.
+
+**Item 3 (hero tablet crop) needed four rounds, not one:**
+1. **First pass:** `object-cover` on the 1254×1254 square source inside a percentage-width column was cropping to as little as 44.6% of source width at 768px (side students cut off). Fixed by hiding the illustration entirely below `lg` (single-column, matching mobile) instead of trying to make `cover` behave at every width.
+2. **User reported it "still looked the same, not fixed."** Investigation (comparing the deployed page against a fresh headless render, then against the raw 1254×1254 source with the fade overlay toggled on/off) found the *actual* bug: still `object-cover`, not yet switched to `contain` — this pass switched it, added `object-contain` + a matching `bg-[#0C0E17]` on the `<img>` so contain's letterbox blends into the page.
+3. **User pushed back with "analyze the image carefully"** — measured the real production DOM (`getBoundingClientRect`) and proved the crop was gone (100% of source shown, confirmed via a no-fade-vs-with-fade screenshot diff) but the *pre-existing* left fade gradient (44% width, tuned for the old edge-to-edge `cover` image) was now washing out real content `contain` had newly revealed — the plant/coffee cup (~4-20% of column width) and the left student's face (~17-40%). Narrowed the fade to 13%, verified the plant/coffee/face all became visible again without reintroducing a hard seam.
+4. **User asked "is that true?"** about a specific observation — image touching the top/bottom edges with zero gap, letterbox only left/right. Measured exact pixel values (`leftGap=rightGap=48px`, `topGap=bottomGap=0px` — confirmed symmetric, not the asymmetric look it read as, because only the left side had a fade drawing attention to it) and asked the user to pick the desired look via `AskUserQuestion`; they chose "visible inset on all 4 sides." Added `p-12` padding to the wrapper.
+5. **That inset introduced a new, different bug:** the `bg-[#0C0E17]` flat color painted on the `<img>` covered only the image's own box, not the new padding area outside it — so the padding showed the hero's ambient-glow gradient underneath while the image sat on a flat rectangle, reading as a separately-pasted box with an odd border. Removed the flat background and all 3 fade-overlay divs entirely; replaced them with a CSS `mask-image` (two intersecting linear gradients) directly on the `<img>` so its own edges fade to transparent and whatever's actually behind it (page bg + glow) shows through naturally — no separate colored element at all.
+
+**Method used throughout:** a small custom Chrome DevTools Protocol driver (`scratchpad/cdp/drive.js` + purpose-built eval scripts) to read *rendered* computed styles/`getBoundingClientRect` off both the local build and the live production URL, not just source-code review — this is what caught rounds 2-4 above, none of which would have been visible from reading the JSX alone.
+
+**Verified (final state):** zero TS errors, clean build every round; `scrollWidth === clientWidth` at 375px on `/landing` and `/home` (was +80px and +6px); illustration shows all three faces + plant + coffee cup + books fully, with a soft natural blend into the page background at 1440/1920px and no visible box/seam; illustration cleanly `display:none` below `lg`, left column full-width there.
+
+**Deployed:** five commits (`5dad174`, `403fd0e`, `cf3866a`, `416d934`, `9dd4c3d`), each pushed to `main` and confirmed `● Ready` on Vercel before starting the next.
+
+---
+
 ## Full UI/UX audit → `audit.md` (findings only, no fixes)
 
 **Status:** Complete. Output written to `audit.md` at repo root. No source changed.
