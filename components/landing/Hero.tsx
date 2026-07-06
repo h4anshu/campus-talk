@@ -84,12 +84,12 @@ export default function Hero() {
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_-10%,rgba(29,78,216,0.18)_0%,transparent_55%)]" />
 
-      {/* Right column — illustration bleeds to top/right/bottom edges (hidden below lg to avoid tablet crop) */}
-      <div className="absolute inset-y-0 right-0 hidden lg:block lg:w-1/2">
+      {/* Right column — illustration shown uncropped via object-contain (hidden below lg to avoid tablet crop) */}
+      <div className="absolute inset-y-0 right-0 hidden overflow-hidden lg:block lg:w-1/2">
         <img
           src="/hero-illustration.png"
           alt="Three students studying together at a laptop with the college building at night"
-          className="h-full w-full object-cover object-top"
+          className="h-full w-full bg-[#0C0E17] object-contain object-top"
         />
         {/* Edge fades so the illustration bleeds into the hero background with no visible box */}
         <div
