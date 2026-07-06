@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Landing Navbar Design</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/webfont/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#080A12;font-family:system-ui,sans-serif;padding:20px;display:flex;flex-direction:column;gap:24px;}
+.label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#444860;margin-bottom:8px;}
+
+/* NAVBAR */
+.nav{display:flex;align-items:center;height:64px;padding:0 32px;background:rgba(12,14,23,0.85);backdrop-filter:blur(12px);border:0.5px solid rgba(255,255,255,0.08);border-radius:12px;position:relative;}
+.nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:pointer;text-decoration:none;}
+.logo-img{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#1D4ED8,#4D8EF5);display:flex;align-items:center;justify-content:center;}
+.logo-name{font-size:15px;font-weight:600;color:#F0F2FA;line-height:1.2;display:block;}
+.logo-sub{font-size:10px;color:#6B7190;display:block;}
+.nav-links{display:flex;align-items:center;gap:2px;position:absolute;left:50%;transform:translateX(-50%);}
+.nav-link{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;color:#9EA3B8;cursor:pointer;text-decoration:none;}
+.nav-link:hover{color:#F0F2FA;background:rgba(255,255,255,0.06);}
+.nav-link.active{color:#4D8EF5;}
+.nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.btn-login{padding:8px 18px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.15);background:transparent;color:#C8CCE0;font-size:13px;font-weight:500;cursor:pointer;}
+.btn-join{display:flex;align-items:center;gap:6px;padding:8px 20px;border-radius:8px;background:linear-gradient(135deg,#1D4ED8,#2563EB);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;box-shadow:0 0 20px rgba(37,99,235,0.3);}
+
+/* DROPDOWN */
+.dd-wrap{position:relative;}
+.dd-trigger{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;color:#9EA3B8;cursor:pointer;}
+.dd-trigger.open{color:#4D8EF5;background:rgba(77,142,245,0.08);}
+.dropdown{position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);background:#12151F;border:0.5px solid rgba(255,255,255,0.10);border-radius:12px;padding:8px;width:268px;box-shadow:0 16px 40px rgba(0,0,0,0.5);}
+.dd-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;}
+.dd-item:hover{background:rgba(255,255,255,0.05);}
+.dd-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+.dd-title{font-size:12px;font-weight:500;color:#E8EAF0;}
+.dd-sub{font-size:10px;color:#6B7190;margin-top:1px;}
+
+/* MOBILE */
+.mob-wrap{border:0.5px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;max-width:390px;}
+.mob-nav{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px;background:rgba(12,14,23,0.90);}
+.hamburger{display:flex;flex-direction:column;gap:4px;cursor:pointer;padding:4px;}
+.ham-line{height:1.5px;background:#9EA3B8;border-radius:1px;}
+.mob-sheet{background:#12151F;padding:8px 0;}
+.mob-link{display:flex;align-items:center;gap:12px;padding:13px 20px;font-size:14px;color:#9EA3B8;cursor:pointer;}
+.mob-link:hover{background:rgba(255,255,255,0.04);color:#F0F2FA;}
+.mob-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px;border-top:0.5px solid rgba(255,255,255,0.07);margin-top:4px;}
+.mob-btn-l{padding:11px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.15);background:transparent;color:#C8CCE0;font-size:13px;font-weight:500;text-align:center;cursor:pointer;}
+.mob-btn-j{padding:11px;border-radius:8px;background:#2563EB;color:#fff;font-size:13px;font-weight:600;text-align:center;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div>
+  <div class="label">Desktop — default</div>
+  <div class="nav">
+    <a class="nav-logo">
+      <div class="logo-img"><i class="ti ti-school" style="color:#fff;font-size:18px;"></i></div>
+      <div><span class="logo-name">Campus Thread</span><span class="logo-sub">BBD Campus</span></div>
+    </a>
+    <div class="nav-links">
+      <div class="dd-wrap">
+        <div class="dd-trigger"><i class="ti ti-layout-grid"></i> Spaces <i class="ti ti-chevron-down" style="font-size:11px;color:#6B7190;"></i></div>
+      </div>
+      <a class="nav-link" href="#"><i class="ti ti-messages"></i> Discussions</a>
+      <a class="nav-link" href="#"><i class="ti ti-books"></i> Resources</a>
+      <a class="nav-link" href="#"><i class="ti ti-calendar-event"></i> Events</a>
+      <a class="nav-link" href="#"><i class="ti ti-help-circle"></i> How it works</a>
+    </div>
+    <div class="nav-right">
+      <button class="btn-login">Log in</button>
+      <button class="btn-join">Join free <i class="ti ti-arrow-right" style="font-size:12px;"></i></button>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="label">Desktop — Spaces dropdown open</div>
+  <div class="nav">
+    <a class="nav-logo">
+      <div class="logo-img"><i class="ti ti-school" style="color:#fff;font-size:18px;"></i></div>
+      <div><span class="logo-name">Campus Thread</span><span class="logo-sub">BBD Campus</span></div>
+    </a>
+    <div class="nav-links">
+      <div class="dd-wrap">
+        <div class="dd-trigger open"><i class="ti ti-layout-grid"></i> Spaces <i class="ti ti-chevron-up" style="font-size:11px;color:#4D8EF5;"></i></div>
+        <div class="dropdown">
+          <div class="dd-item"><div class="dd-icon" style="background:rgba(124,58,237,0.15);"><i class="ti ti-speakerphone" style="color:#7C3AED;"></i></div><div><div class="dd-title">Announcements</div><div class="dd-sub">Official college notices</div></div></div>
+          <div class="dd-item"><div class="dd-icon" style="background:rgba(37,99,235,0.15);"><i class="ti ti-calendar-event" style="color:#2563EB;"></i></div><div><div class="dd-title">Events</div><div class="dd-sub">Fests, workshops, seminars</div></div></div>
+          <div class="dd-item"><div class="dd-icon" style="background:rgba(13,148,136,0.15);"><i class="ti ti-books" style="color:#0D9488;"></i></div><div><div class="dd-title">Resources</div><div class="dd-sub">Notes, PYQs, study material</div></div></div>
+          <div class="dd-item"><div class="dd-icon" style="background:rgba(220,38,38,0.15);"><i class="ti ti-map-search" style="color:#DC2626;"></i></div><div><div class="dd-title">Lost & Found</div><div class="dd-sub">Report or find lost items</div></div></div>
+          <div class="dd-item"><div class="dd-icon" style="background:rgba(217,119,6,0.15);"><i class="ti ti-users" style="color:#D97706;"></i></div><div><div class="dd-title">Collaboration</div><div class="dd-sub">Find teammates for projects</div></div></div>
+          <div class="dd-item"><div class="dd-icon" style="background:rgba(219,39,119,0.15);"><i class="ti ti-message-dots" style="color:#DB2777;"></i></div><div><div class="dd-title">Confession</div><div class="dd-sub">Share anonymously, safely</div></div></div>
+        </div>
+      </div>
+      <a class="nav-link" href="#"><i class="ti ti-messages"></i> Discussions</a>
+      <a class="nav-link active" href="#"><i class="ti ti-books"></i> Resources</a>
+      <a class="nav-link" href="#"><i class="ti ti-calendar-event"></i> Events</a>
+      <a class="nav-link" href="#"><i class="ti ti-help-circle"></i> How it works</a>
+    </div>
+    <div class="nav-right">
+      <button class="btn-login">Log in</button>
+      <button class="btn-join">Join free <i class="ti ti-arrow-right" style="font-size:12px;"></i></button>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="label">Mobile — hamburger menu open (390px)</div>
+  <div class="mob-wrap">
+    <div class="mob-nav">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="logo-img" style="width:30px;height:30px;border-radius:7px;"><i class="ti ti-school" style="color:#fff;font-size:14px;"></i></div>
+        <div><span style="font-size:13px;font-weight:600;color:#F0F2FA;display:block;">Campus Thread</span><span style="font-size:10px;color:#6B7190;">BBD Campus</span></div>
+      </div>
+      <div class="hamburger">
+        <div class="ham-line" style="width:18px;"></div>
+        <div class="ham-line" style="width:14px;margin-left:4px;"></div>
+        <div class="ham-line" style="width:18px;"></div>
+      </div>
+    </div>
+    <div class="mob-sheet">
+      <div class="mob-link"><i class="ti ti-layout-grid" style="font-size:16px;"></i> Spaces</div>
+      <div class="mob-link"><i class="ti ti-messages" style="font-size:16px;"></i> Discussions</div>
+      <div class="mob-link"><i class="ti ti-books" style="font-size:16px;"></i> Resources</div>
+      <div class="mob-link"><i class="ti ti-calendar-event" style="font-size:16px;"></i> Events</div>
+      <div class="mob-link"><i class="ti ti-help-circle" style="font-size:16px;"></i> How it works</div>
+      <div class="mob-btns">
+        <div class="mob-btn-l">Log in</div>
+        <div class="mob-btn-j">Join free →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

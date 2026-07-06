@@ -4,6 +4,24 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Full UI/UX audit → `audit.md` (findings only, no fixes)
+
+**Status:** Complete. Output written to `audit.md` at repo root. No source changed.
+
+**Method:** Verified findings against **rendered DOM + computed styles** via a Chrome DevTools Protocol driver (`scratchpad/cdp/`) at 375/768/1024/1440/1920px — not source guesses — plus WCAG contrast math on the actual theme values and a full source pass.
+
+**Headline results:**
+- **Hero root cause resolved (confirmed):** computed styles show centering (`gapAbove==gapBelow` at every viewport) and `object-fit/object-position` on the correct `<img>` element with no competing/overridden CSS. Prior "repeatedly broken" reports were the earlier `object-position:bottom` + `min-height` combo, already fixed. Remaining real Hero issue: `object-cover` on the square source over-crops at tablet widths (44.6% of width shown at 768px).
+- **🔴 Navbar overflows ~80px at ≤420px** on every authed page — search `<button>` lacks `min-w-0`, so it can't truncate (violates the 375px hard rule).
+- **🔴 6px page scroll at 375px** from `WhyNotWhatsapp` off-screen x-transform in a section without `overflow-x` clip.
+- **🟠 `--text-muted #6B7190` fails WCAG AA everywhere** (3.2–4.0), used 153×, incl. post body previews; **58** sub-11px font uses violate the project's own 11px floor.
+- **🟠 Home feed has no max-width** while space/discussion pages use `max-w-[720px]` — inconsistent card widths.
+- **🟡** 2 hardcoded `emerald-500` (RightSidebar), hex literals duplicating theme vars, inconsistent hover-lift/entrance animations between landing and app.
+
+`audit.md` contains per-component severity-tagged findings with exact file:line refs and a 10-step prioritized implementation plan with a measurable definition of done.
+
+---
+
 ## Redesign — Reddit-style full-width media block (replaces icon-only feed indicators)
 
 **Status:** Complete, typechecked, built, visually + numerically verified, deployed.

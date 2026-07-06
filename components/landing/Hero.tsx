@@ -2,7 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { motion, type Variants } from 'framer-motion';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail, Play } from 'lucide-react';
+import {
+  HiOutlineChatBubbleLeftRight,
+  HiOutlineCalendarDays,
+  HiOutlineBookOpen,
+  HiOutlineBriefcase,
+  HiOutlineShieldCheck,
+  HiOutlineNoSymbol,
+  HiOutlineCheckBadge,
+} from 'react-icons/hi2';
 import { scrollToId } from '@/lib/scroll';
 
 const leftContainer: Variants = {
@@ -15,41 +24,139 @@ const leftItem: Variants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
 };
 
-const rightContainer: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.15, delayChildren: 0.2 } },
-};
+interface FloatingCard {
+  title: string;
+  subtitle: string;
+  icon: typeof HiOutlineChatBubbleLeftRight;
+  color: string;
+  /** Absolute-position utility classes within the illustration container. */
+  position: string;
+  delay: number;
+}
 
-const rightItem: Variants = {
-  hidden: { opacity: 0, x: 20 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
-};
+// Four real product cards overlaid on the illustration.
+const FLOATING_CARDS: FloatingCard[] = [
+  {
+    title: 'Discussion',
+    subtitle: '12 new answers',
+    icon: HiOutlineChatBubbleLeftRight,
+    color: '#7C3AED',
+    position: 'left-[6%] top-[12%]',
+    delay: 0,
+  },
+  {
+    title: 'Events',
+    subtitle: 'Tech Fest 2025 · 48 going',
+    icon: HiOutlineCalendarDays,
+    color: '#2563EB',
+    position: 'right-[5%] top-[7%]',
+    delay: 0.5,
+  },
+  {
+    title: 'Resources',
+    subtitle: '540 files shared',
+    icon: HiOutlineBookOpen,
+    color: '#0D9488',
+    position: 'left-[4%] bottom-[18%]',
+    delay: 1,
+  },
+  {
+    title: 'Placements',
+    subtitle: '3 new opportunities',
+    icon: HiOutlineBriefcase,
+    color: '#DC2626',
+    position: 'right-[7%] bottom-[10%]',
+    delay: 1.5,
+  },
+];
+
+const TRUST_BADGES = [
+  { label: 'Verified students', icon: HiOutlineShieldCheck, color: 'var(--success)' },
+  { label: 'No ads', icon: HiOutlineNoSymbol, color: 'var(--text-muted)' },
+  { label: 'Free forever', icon: HiOutlineCheckBadge, color: 'var(--accent)' },
+];
 
 export default function Hero() {
   const router = useRouter();
 
   return (
-    <section className="relative overflow-hidden bg-[#0D1020] px-6 py-16 md:px-10">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-20%,rgba(29,78,216,0.15)_0%,transparent_60%)]" />
+    <section className="relative flex items-center overflow-hidden bg-[#0C0E17] py-16 md:h-[calc(100vh-60px)] md:py-0">
+      {/* Ambient glow */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_-10%,rgba(29,78,216,0.18)_0%,transparent_55%)]" />
 
-      <div className="relative z-10 mx-auto flex max-w-[1200px] flex-col items-center gap-10 sm:flex-row sm:items-start sm:gap-10 lg:gap-16">
+      {/* Right column — illustration bleeds to top/right/bottom edges (hidden on mobile) */}
+      <div className="absolute inset-y-0 right-0 hidden w-[56%] md:block lg:w-[52%]">
+        <img
+          src="/hero-illustration.png"
+          alt="Three students studying together at a laptop with the college building at night"
+          className="h-full w-full object-cover object-top"
+        />
+        {/* Edge fades so the illustration bleeds into the hero background with no visible box */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(to right, #0C0E17 0%, rgba(12,14,23,0.55) 18%, transparent 44%)',
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[14%]"
+          style={{ background: 'linear-gradient(to bottom, #0C0E17, transparent)' }}
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[16%]"
+          style={{ background: 'linear-gradient(to top, #0C0E17, transparent)' }}
+        />
+
+        {FLOATING_CARDS.map(({ title, subtitle, icon: Icon, color, position, delay }) => (
+          <motion.div
+            key={title}
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay }}
+            className={`absolute z-10 flex items-center gap-3 ${position}`}
+            style={{
+              minWidth: '160px',
+              background: 'rgba(13, 17, 40, 0.75)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(77, 142, 245, 0.20)',
+              borderRadius: '14px',
+              padding: '12px 16px',
+            }}
+          >
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px]"
+              style={{ backgroundColor: `${color}24`, color }}
+            >
+              <Icon className="h-5 w-5" />
+            </span>
+            <span className="flex flex-col leading-tight">
+              <span className="text-[14px] font-semibold text-white">{title}</span>
+              <span className="text-[12px] text-[var(--text-muted)]">{subtitle}</span>
+            </span>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Left column — text content, vertically centered against the full hero height */}
+      <div className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col justify-center self-stretch px-6 md:pl-[5vw] md:pr-8">
         <motion.div
           variants={leftContainer}
           initial="hidden"
           animate="visible"
-          className="flex w-full flex-1 flex-col items-center text-center sm:items-start sm:text-left"
+          className="flex w-full flex-col items-center text-center md:w-[52%] md:items-start md:text-left"
         >
           <motion.div
             variants={leftItem}
-            className="inline-flex w-fit items-center gap-1.5 rounded-[20px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-3 py-1.5 text-[11px] text-[var(--accent)]"
+            className="inline-flex w-fit items-center gap-2 rounded-[20px] border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 py-2 text-[14px] text-[var(--accent)]"
           >
-            <Lock className="h-3 w-3" />
+            <Lock className="h-3.5 w-3.5" />
             Only for BBD Campus students
           </motion.div>
 
           <motion.h1
             variants={leftItem}
-            className="mt-4 text-[clamp(28px,4vw,42px)] font-medium leading-tight text-[var(--text-primary)]"
+            className="mt-5 text-[clamp(42px,5vw,68px)] font-bold leading-[1.1] tracking-tight text-[var(--text-primary)]"
           >
             Your college.
             <br />
@@ -58,94 +165,40 @@ export default function Hero() {
 
           <motion.p
             variants={leftItem}
-            className="mt-3 max-w-[380px] text-[13px] leading-[1.75] text-[var(--text-secondary)]"
+            className="mt-5 max-w-[480px] text-[18px] leading-[1.7] text-[var(--text-secondary)]"
           >
             Ask academic questions, share notes, find project teammates, report lost items, and
             stay updated — all in one place built exclusively for your campus.
           </motion.p>
 
-          <motion.div
-            variants={leftItem}
-            className="mt-6 flex flex-col gap-3 sm:flex-row"
-          >
+          <motion.div variants={leftItem} className="mt-8 flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => router.push('/login')}
-              className="flex items-center justify-center gap-2 rounded bg-[var(--accent-fill)] px-5 py-2.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+              className="flex items-center justify-center gap-2 rounded-[10px] bg-[var(--accent-fill)] px-7 py-3.5 text-[16px] font-medium text-white transition-opacity hover:opacity-90"
             >
-              <Mail className="h-4 w-4" />
+              <Mail className="h-[18px] w-[18px]" />
               Join with college email
             </button>
             <button
               onClick={() => scrollToId('how-it-works')}
-              className="flex items-center justify-center rounded border-[0.5px] border-[var(--border-med)] bg-transparent px-4 py-2.5 text-[13px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              className="flex items-center justify-center gap-2 rounded-[10px] border-[0.5px] border-[var(--border-med)] bg-transparent px-7 py-3.5 text-[16px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
             >
+              <Play className="h-4 w-4" />
               See how it works
             </button>
           </motion.div>
 
-          <motion.p variants={leftItem} className="mt-3.5 text-[11px] text-[var(--text-muted)]">
-            Verified students only · No ads · Free forever
-          </motion.p>
-        </motion.div>
-
-        <motion.div
-          variants={rightContainer}
-          initial="hidden"
-          animate="visible"
-          className="hidden w-[180px] shrink-0 flex-col gap-2 sm:flex lg:w-[230px]"
-        >
+          {/* Three trust badges */}
           <motion.div
-            variants={rightItem}
-            className="rounded-[10px] border-[0.5px] border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-[13px] py-[11px]"
+            variants={leftItem}
+            className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-start"
           >
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-              Placements · 47 votes
-            </div>
-            <div className="mt-1.5 text-[12px] font-medium leading-snug text-white">
-              How to get placed at a startup with no internship?
-            </div>
-            <div className="mt-2 flex items-center gap-2 text-[10px]">
-              <span className="text-[var(--text-muted)]">23 answers</span>
-              <span className="text-[var(--success)]">Answered</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            variants={rightItem}
-            className="rounded-[10px] border-[0.5px] border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-[13px] py-[11px]"
-          >
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-              Events · In 3 days
-            </div>
-            <div className="mt-1.5 text-[12px] font-medium leading-snug text-white">
-              Tech Fest 2025 — Register by Friday
-            </div>
-            <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
-              <span>48 going</span>
-              <span>Main Auditorium</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            variants={rightItem}
-            className="rounded-[10px] border-[0.5px] border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-[13px] py-[11px]"
-          >
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-              Collaboration · 2/4 slots
-            </div>
-            <div className="mt-1.5 text-[12px] font-medium leading-snug text-white">
-              Teammates needed for HackIndia 2025
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {['Python', 'ML', 'UI/UX'].map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-[4px] bg-[var(--bg-panel)] px-1.5 py-0.5 text-[10px] text-[var(--text-secondary)]"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
+            {TRUST_BADGES.map(({ label, icon: Icon, color }) => (
+              <div key={label} className="flex items-center gap-2 text-[14px] text-[var(--text-muted)]">
+                <Icon className="h-4 w-4" style={{ color }} />
+                {label}
+              </div>
+            ))}
           </motion.div>
         </motion.div>
       </div>
