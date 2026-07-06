@@ -85,29 +85,22 @@ export default function Hero() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_-10%,rgba(29,78,216,0.18)_0%,transparent_55%)]" />
 
       {/* Right column — illustration shown uncropped via object-contain (hidden below lg to avoid tablet crop).
-          p-12 gives a visible inset on all 4 sides (framed look) instead of the
-          image bleeding flush to the section's top/bottom edges. */}
-      <div className="absolute inset-y-0 right-0 hidden overflow-hidden p-12 lg:block lg:w-1/2">
+          No padding/flat backdrop here — a soft edge-mask on the image itself
+          fades all 4 sides to transparent so it blends into the page's own
+          background/ambient-glow instead of sitting on a separately-colored box. */}
+      <div className="absolute inset-y-0 right-0 hidden overflow-hidden p-10 lg:block lg:w-1/2">
         <img
           src="/hero-illustration.png"
           alt="Three students studying together at a laptop with the college building at night"
-          className="h-full w-full bg-[#0C0E17] object-contain object-top"
-        />
-        {/* Soft edge fades — just enough to blend the image into the inset padding
-            without washing out real subjects (plant/coffee, students' faces) */}
-        <div
-          className="pointer-events-none absolute inset-0"
+          className="h-full w-full object-contain object-top"
           style={{
-            background: 'linear-gradient(to right, #0C0E17 0%, transparent 10%)',
+            maskImage:
+              'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+            maskComposite: 'intersect',
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+            WebkitMaskComposite: 'source-in',
           }}
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[8%]"
-          style={{ background: 'linear-gradient(to bottom, #0C0E17, transparent)' }}
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[10%]"
-          style={{ background: 'linear-gradient(to top, #0C0E17, transparent)' }}
         />
 
         {FLOATING_CARDS.map(({ title, subtitle, icon: Icon, color, position, delay }) => (
