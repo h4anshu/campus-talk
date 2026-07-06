@@ -39,7 +39,7 @@ export default function WhyNotWhatsapp() {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section className="px-6 py-14 md:px-10">
+    <section className="overflow-hidden px-6 py-14 md:px-10">
       <div className="mx-auto max-w-[1200px]">
         <h2 className="text-[20px] font-semibold text-[var(--text-primary)]">
           Why not just use WhatsApp groups?

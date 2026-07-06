@@ -84,7 +84,7 @@ export default function Navbar() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="sticky top-0 z-50 flex h-[52px] items-center justify-between gap-4 border-b-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-6"
+        className="sticky top-0 z-50 flex h-[52px] items-center justify-between gap-2 border-b-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 sm:gap-4 sm:px-6"
       >
         <Link href="/home" className="flex shrink-0 items-center gap-2.5">
           <img src="/logo.svg" alt={PLATFORM_NAME} className="h-8 w-auto" />
@@ -98,10 +98,10 @@ export default function Navbar() {
 
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex w-full max-w-[420px] items-center gap-2 rounded border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-3 py-1.5 text-left transition-colors hover:border-[var(--border-med)]"
+          className="flex min-w-0 w-full max-w-[420px] items-center gap-2 rounded border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-3 py-1.5 text-left transition-colors hover:border-[var(--border-med)]"
         >
           <Search className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
-          <span className="flex-1 truncate text-[12px] text-[var(--text-muted)]">
+          <span className="min-w-0 flex-1 truncate text-[12px] text-[var(--text-muted)]">
             Search Campus Thread...
           </span>
           <kbd className="hidden shrink-0 rounded border-[0.5px] border-[var(--border-med)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)] sm:block">

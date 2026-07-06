@@ -84,8 +84,8 @@ export default function Hero() {
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_-10%,rgba(29,78,216,0.18)_0%,transparent_55%)]" />
 
-      {/* Right column — illustration bleeds to top/right/bottom edges (hidden on mobile) */}
-      <div className="absolute inset-y-0 right-0 hidden w-[56%] md:block lg:w-[52%]">
+      {/* Right column — illustration bleeds to top/right/bottom edges (hidden below lg to avoid tablet crop) */}
+      <div className="absolute inset-y-0 right-0 hidden lg:block lg:w-1/2">
         <img
           src="/hero-illustration.png"
           alt="Three students studying together at a laptop with the college building at night"
@@ -139,12 +139,12 @@ export default function Hero() {
       </div>
 
       {/* Left column — text content, vertically centered against the full hero height */}
-      <div className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col justify-center self-stretch px-6 md:pl-[5vw] md:pr-8">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col justify-center self-stretch px-6 lg:pl-[5vw] lg:pr-8">
         <motion.div
           variants={leftContainer}
           initial="hidden"
           animate="visible"
-          className="flex w-full flex-col items-center text-center md:w-[52%] md:items-start md:text-left"
+          className="flex w-full flex-col items-center text-center lg:w-1/2 lg:items-start lg:text-left"
         >
           <motion.div
             variants={leftItem}
