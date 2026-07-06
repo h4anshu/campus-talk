@@ -91,12 +91,14 @@ export default function Hero() {
           alt="Three students studying together at a laptop with the college building at night"
           className="h-full w-full bg-[#0C0E17] object-contain object-top"
         />
-        {/* Edge fades so the illustration bleeds into the hero background with no visible box */}
+        {/* Left edge fade — just enough to soften the letterbox seam; kept narrow
+            (13%) so it doesn't wash out real subjects (plant/coffee ~4-20%,
+            left student's face ~17-40% of column width) now that object-contain
+            centers a smaller, already letterbox-matched image here */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            background:
-              'linear-gradient(to right, #0C0E17 0%, rgba(12,14,23,0.55) 18%, transparent 44%)',
+            background: 'linear-gradient(to right, #0C0E17 0%, transparent 13%)',
           }}
         />
         <div
