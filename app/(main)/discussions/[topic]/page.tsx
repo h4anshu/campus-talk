@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { TOPICS, type TopicKey } from '@/lib/constants';
 import { usePosts } from '@/hooks/usePosts';
 import Feed from '@/components/feed/Feed';
+import { SectionBanner } from '@/components/shared/SectionBanner';
 
 interface TopicPageProps {
   params: { topic: string };
@@ -27,6 +28,10 @@ export default function TopicPage({ params }: TopicPageProps) {
 
   const count = posts?.length ?? 0;
 
+  // The Discussions "Events" topic shares its param (`events`) with the Spaces
+  // "Events" space, so its banner metadata is keyed `events-discussion`.
+  const bannerSlug = topic.key === 'events' ? 'events-discussion' : topic.key;
+
   return (
     <div>
       <div className="px-4 pt-5 sm:px-6">
@@ -34,6 +39,7 @@ export default function TopicPage({ params }: TopicPageProps) {
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
           {count} post{count === 1 ? '' : 's'} in this topic
         </p>
+        <SectionBanner slug={bannerSlug} title={topic.label} className="mt-4 mb-0" />
       </div>
       <Feed topic={topicParam as TopicKey} />
     </div>

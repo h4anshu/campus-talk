@@ -4,6 +4,30 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Feature — Section intro banners on all space and discussion pages
+
+**Status:** Complete, typechecked, built, headless-verified across all 15 sections.
+
+**Two real mismatches found between the task's supplied `SECTION_META` and the actual codebase, fixed before writing any code:**
+1. **Slug typo:** the task used `'lost-and-found'`; the real space key (`lib/constants.ts` `SPACES`) is `'lost-found'`. Using the task's key verbatim would have made that banner silently `return null` forever — checked `SPACES`/`TOPICS` first, as the task itself asked, and used the real key.
+2. **A genuine key collision the task's own snippet didn't resolve:** the Spaces "Events" space and the Discussions "Events" topic both use the route param `events` (confirmed in `SPACES`/`TOPICS`), but the task's flat `Record<string, ...>` had two entries both effectively keyed `events` — the second (discussion) description would have silently overwritten the first (space) one in the object literal, so *both* pages would've shown the Spaces description. Kept the Spaces one at `events` and added the Discussions one under its own key, `events-discussion`; the discussion page remaps `topic.key === 'events' → 'events-discussion'` when picking which banner to render, so the two now render their own distinct copy (confirmed in the screenshot: the Spaces Events card reads "Mark 'I'm going'...", the Discussions Events card reads "Discuss ongoing or past campus events... different from the admin-only Events space").
+
+**Icon system doesn't match the task's snippet either — adapted rather than followed literally.** The reference `SectionBanner` used `<i className="ti ti-*">` (a Tabler icon webfont), but this codebase has no Tabler dependency anywhere — `lib/icon-map.tsx` proves the actual convention is `lucide-react` icons resolved through a local string→component map. Introducing a Tabler webfont just for this one component would add an external font dependency the rest of the app doesn't have and silently render nothing (empty `<i>` tags, no font loaded). Built `SECTION_ICONS` inside `SectionBanner.tsx` the same way `ICON_MAP` already works, resolving each `SECTION_META` icon string to its lucide equivalent (e.g. `'eye-off'` → `EyeOff`, `'map-pin'` → `MapPin`, `'clipboard-list'` → `ClipboardList`) instead of adding a second icon system to the project.
+
+**Wiring:** `app/(main)/spaces/[space]/page.tsx` — banner sits right above the card list (inside the `mt-4` wrapper, above the loading/error/empty/`StaggeredList` branches), passed `space.key`/`space.label` straight from the existing `SPACES` lookup, not hardcoded. `app/(main)/discussions/[topic]/page.tsx` — banner sits under the topic heading/count line, same pattern, with the `events → events-discussion` remap described above.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — compiles, all 32 routes
+- Both real pages (`/spaces/*`, `/discussions/*`) require auth and 307-redirect in this environment (same standing constraint as every phase), so verified the actual rendering via a temporary `/dev-preview` harness (deleted before finishing; `puppeteer` temp-installed then removed; lockfile/`package.json`/`pnpm-workspace.yaml` restored; `.next` cleared and rebuilt clean) that renders `SectionBanner` for all 6 `SPACES` keys + all 9 `TOPICS` keys (with the `events`→`events-discussion` remap applied exactly as the real discussion page does it) — a headless script asserted, per banner: the icon renders, its color matches the section's `SECTION_META.color` exactly, the title text matches, and the description is present and non-trivial (>20 chars). **All 15 banners passed**, including confirming the two "Events" banners render their distinct descriptions rather than colliding.
+- Screenshots at both 1280px and 375px confirm the visual design (tinted icon tile + title + description, one card per section) and **zero horizontal overflow** at 375px across all 15 stacked banners
+
+**Not verified — same standing constraint as every phase:** the real authenticated `/spaces/resources`, `/spaces/confession`, `/discussions/placements`, `/discussions/coding` pages need a live login this environment lacks. Confidence is high regardless — both pages pass the exact same `slug`/`title` values through to the same `SectionBanner` proven correct in the harness for every one of the 15 keys, including the two most load-bearing edge cases (the fixed `lost-found` typo and the `events`/`events-discussion` collision).
+
+**Deploy:** pushed to `main`; no manual `vercel --prod` per the standing "push to GitHub only" direction (no git→Vercel auto-deploy webhook on this project — see the Batch 2A entry).
+
+---
+
 ## Feature — Edit-profile modal on profile page; removed Settings from navbar
 
 **Status:** Complete, typechecked, built, screenshot-verified.

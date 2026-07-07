@@ -19,6 +19,125 @@ export const TOPICS = [
   { key: 'general',      label: 'General',       icon: 'world'            },
 ] as const;
 
+// Section intro-banner metadata. Keys match the actual route params used by
+// `/spaces/[space]` (SPACES keys) and `/discussions/[topic]` (TOPICS keys).
+// The Discussions "Events" topic shares the param `events` with the Spaces
+// "Events" space, so it's keyed here as `events-discussion` and the discussion
+// page remaps `events` → `events-discussion` when picking its banner.
+// `icon` values are resolved to lucide-react components in SectionBanner.
+export const SECTION_META: Record<
+  string,
+  { icon: string; color: string; borderColor: string; description: string }
+> = {
+  // Spaces
+  announcements: {
+    icon: 'speakerphone',
+    color: '#4D8EF5',
+    borderColor: 'rgba(77,142,245,0.2)',
+    description:
+      'Official notices from BBD Campus admin — exam schedules, fee deadlines, college events, and important updates. Read-only for students.',
+  },
+  events: {
+    icon: 'calendar-event',
+    color: '#1DB874',
+    borderColor: 'rgba(29,184,116,0.2)',
+    description:
+      "Hackathons, fests, seminars, cultural nights, and workshops happening on campus. Mark \"I'm going\" to let others know you're attending.",
+  },
+  resources: {
+    icon: 'books',
+    color: '#4D8EF5',
+    borderColor: 'rgba(77,142,245,0.2)',
+    description:
+      'Share notes, PYQs, assignments, and Drive links with your batch. Posts go live after admin approval — keep it useful, not spammy.',
+  },
+  'lost-found': {
+    icon: 'map-pin',
+    color: '#D97706',
+    borderColor: 'rgba(217,119,6,0.2)',
+    description:
+      'Lost something on campus? Post here. Found something? Help it reach its owner. Mark your post resolved once the item is returned.',
+  },
+  collaboration: {
+    icon: 'users',
+    color: '#1DB874',
+    borderColor: 'rgba(29,184,116,0.2)',
+    description:
+      'Find teammates for projects, hackathons, startups, or research. Post your idea, list the skills you need, and fill your slots.',
+  },
+  confession: {
+    icon: 'eye-off',
+    color: '#DC3545',
+    borderColor: 'rgba(220,53,69,0.18)',
+    description:
+      "Share what you can't say out loud — anonymously. Rants, regrets, crushes, campus truths. Your identity stays hidden. Be real, not cruel.",
+  },
+  // Discussions
+  academics: {
+    icon: 'school',
+    color: '#4D8EF5',
+    borderColor: 'rgba(77,142,245,0.2)',
+    description:
+      'Doubts, syllabus questions, subject tips, and study strategies. Ask anything academic — seniors and batchmates are here to help.',
+  },
+  assignment: {
+    icon: 'clipboard-list',
+    color: '#D97706',
+    borderColor: 'rgba(217,119,6,0.2)',
+    description:
+      'Stuck on an assignment? Post your question here. Discuss approaches, share references, and help each other submit on time.',
+  },
+  placements: {
+    icon: 'briefcase',
+    color: '#1DB874',
+    borderColor: 'rgba(29,184,116,0.2)',
+    description:
+      'Interview experiences, company-wise prep, offer updates, and placement drive discussions. Share what helped you crack it.',
+  },
+  internship: {
+    icon: 'building-factory',
+    color: '#4D8EF5',
+    borderColor: 'rgba(77,142,245,0.2)',
+    description:
+      'Finding internships, stipend questions, WFH vs on-site experiences, and referral requests. Learn from those who have been there.',
+  },
+  coding: {
+    icon: 'code',
+    color: '#1DB874',
+    borderColor: 'rgba(29,184,116,0.2)',
+    description:
+      'DSA doubts, competitive programming, debugging help, and language-specific questions. Paste your code, explain the problem, get help.',
+  },
+  projects: {
+    icon: 'device-laptop',
+    color: '#D97706',
+    borderColor: 'rgba(217,119,6,0.2)',
+    description:
+      'Mini projects, final year projects, tech stack advice, and demo feedback. Show what you are building and get input from peers.',
+  },
+  'hostel-mess': {
+    icon: 'home',
+    color: '#DC3545',
+    borderColor: 'rgba(220,53,69,0.18)',
+    description:
+      'Room issues, mess food feedback, warden complaints, and hostel life discussions. A space for boarders to talk freely.',
+  },
+  'events-discussion': {
+    icon: 'confetti',
+    color: '#1DB874',
+    borderColor: 'rgba(29,184,116,0.2)',
+    description:
+      'Discuss ongoing or past campus events — your experience, highlights, or what could have been better. Different from the admin-only Events space.',
+  },
+  general: {
+    icon: 'messages',
+    color: '#4D8EF5',
+    borderColor: 'rgba(77,142,245,0.2)',
+    description:
+      'Anything that does not fit elsewhere — campus life, random thoughts, recommendations, or just venting. Keep it civil.',
+  },
+};
+
 export const SORT_OPTIONS = ['Hot', 'New', 'Top', 'Rising'] as const;
 
 export const SPACE_KEYS = SPACES.map(s => s.key);

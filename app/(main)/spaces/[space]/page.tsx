@@ -14,6 +14,7 @@ import CollaborationCard from '@/components/spaces/CollaborationCard';
 import ConfessionCard from '@/components/spaces/ConfessionCard';
 import EmptyState from '@/components/shared/EmptyState';
 import { StaggeredList, StaggeredItem } from '@/components/shared/StaggeredList';
+import { SectionBanner } from '@/components/shared/SectionBanner';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SPACE_CARD_MAP: Record<SpaceKey, ComponentType<{ post: MockPost }>> = {
@@ -64,6 +65,7 @@ export default function SpacePage({ params }: SpacePageProps) {
       </p>
 
       <div className="mt-4">
+        <SectionBanner slug={space.key} title={space.label} />
         {isLoading ? (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 3 }).map((_, i) => (
