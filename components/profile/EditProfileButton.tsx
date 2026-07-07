@@ -11,6 +11,7 @@ interface EditProfileButtonProps {
     bio?: string | null;
     year?: number | null;
     dept?: string | null;
+    banner?: string | null;
   };
 }
 

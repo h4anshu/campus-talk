@@ -3,7 +3,6 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { MOCK_POSTS } from '@/lib/mock';
 import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
-import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
 import { slugify, getInitials, getAvatarColor, optimizeCloudinaryUrl } from '@/lib/utils';
 import { serializePost, netVoteScore, POST_INCLUDE, type PostForSerialization } from '@/lib/serializers';
 import { getReputationTier } from '@/lib/reputation';

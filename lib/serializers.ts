@@ -73,31 +73,35 @@ export function serializePost(post: PostForSerialization, viewerId: string): Moc
     thumbnailUrl: m.thumbnailUrl ?? undefined,
   })) || [];
 
-  if (media.length === 0 && post.body) {
-    const imgMatches = post.body.match(/<img[^>]+src="([^">]+)"/g);
-    if (imgMatches) {
-      const fallbackImages = imgMatches.map(img => {
-        const srcMatch = img.match(/src="([^">]+)"/);
-        return {
-          type: 'image' as MockPostMedia['type'],
-          url: srcMatch ? srcMatch[1] : '',
-        };
-      }).filter(m => m.url);
-      media = [...media, ...fallbackImages];
-    }
+  const imgMatches = post.body ? post.body.match(/<img[^>]+src=["']([^"'>]+)["']/gi) : null;
+  if (imgMatches) {
+    const fallbackImages = imgMatches.map(img => {
+      const srcMatch = img.match(/src=["']([^"'>]+)["']/i);
+      return {
+        type: 'image' as MockPostMedia['type'],
+        url: srcMatch ? srcMatch[1] : '',
+        providerId: undefined,
+        thumbnailUrl: undefined,
+      };
+    }).filter(m => m.url);
     
-    const bodyEmbeds = extractEmbedsFromHtml(post.body);
-    if (bodyEmbeds.length > 0) {
-      media = [
-        ...media,
-        ...bodyEmbeds.map(e => ({
-          type: e.type as MockPostMedia['type'],
-          url: e.url,
-          providerId: e.providerId,
-          thumbnailUrl: e.thumbnailUrl,
-        }))
-      ];
-    }
+    // Only add fallback images that aren't already in the media array
+    const existingUrls = new Set(media.map(m => m.url));
+    const newImages = fallbackImages.filter(img => !existingUrls.has(img.url));
+    media = [...media, ...newImages];
+  }  
+
+  const bodyEmbeds = post.body ? extractEmbedsFromHtml(post.body) : [];
+  if (bodyEmbeds.length > 0) {
+    media = [
+      ...media,
+      ...bodyEmbeds.map(e => ({
+        type: e.type as MockPostMedia['type'],
+        url: e.url,
+        providerId: e.providerId,
+        thumbnailUrl: e.thumbnailUrl,
+      }))
+    ];
   }
 
   return {
