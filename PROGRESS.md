@@ -4,6 +4,26 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — Replace vote arrows with thumbs up/down icons
+
+**Status:** Complete, typechecked, built, verified with a real (not just static) optimistic-update click test.
+
+**`VoteBlock.tsx`:** swapped `ChevronUp`/`ChevronDown` for `ThumbsUp`/`ThumbsDown` (lucide, not the task's `<i className="ti ti-thumb-up">` — same reasoning as every prior icon task this session: no Tabler webfont exists anywhere in this codebase). Active states now match the spec exactly: liked → accent icon + `rgba(77,142,245,0.12)` pill background + `6px` radius; disliked → danger icon + `rgba(220,53,69,0.10)` pill background; neutral → `text-secondary` icon, no background. Icon size raised to the spec's `17px` (was `16px`/`h-4`). Vote count color: liked → accent, disliked → danger — genuinely new behavior; previously *any* vote (up or down) turned the count blue, so downvoting now visibly reads as red instead of the same blue as upvoting.
+
+**One deviation from the task's literal text, flagged:** the spec's "Neutral" bullet says "Vote count color `var(--accent)`" — read literally that would make the count permanently blue even with no vote at all, which contradicts both CLAUDE.md §4 ("blue accent... used for interactive elements only... vote arrows *when voted*") and the pre-existing code's own logic (`userVote ? accent : text-secondary`). Treated this as a copy-paste artifact from the "Liked" bullet above it and kept neutral count at `text-secondary` instead. If blue-always-on-count was actually intended, it's a one-line revert.
+
+**`CommentItem.tsx`:** only ever had a single upvote button (no downvote) — replaced just that one `ChevronUp` with `ThumbsUp` at the spec's `15px` size, matching the same liked/neutral color+pill-background rule (no "disliked" variant needed, per the task's own instruction not to add missing buttons).
+
+**Both files' now-unused chevron imports removed** (`ChevronUp`/`ChevronDown` from `VoteBlock.tsx`, `ChevronUp` from `CommentItem.tsx`); nothing else in either file referenced them.
+
+**Verified with a genuine optimistic-update test, not just static styling:** `npx tsc --noEmit` zero errors, `next build` succeeds (32 routes). Static three-state check (neutral/liked/disliked rendered as three separate `VoteBlock` instances) confirmed every computed color/background matches the spec's hex values exactly. Then, since the real click→optimistic-flip mechanism lives in the pre-existing (untouched) `useVote`/`useCommentVote` hooks and needs a live TanStack Query cache to observe, built a temporary `/dev-preview` harness that seeds the query cache and renders the real `VoteBlock`/`CommentItem` wired to it — intercepted the vote API calls to delay their inevitable-in-this-sandbox 401 by 2s (this environment has no session, so every vote call fails; without the delay, the optimistic update and its rollback both completed within milliseconds and were invisible to any poll). With the delay: clicking thumbs-up showed the icon flip to accent blue, a blue pill background, and the count increment (10→11) *before* the 401 settled; after the delayed rollback, it correctly returned to neutral; clicking thumbs-down then showed the icon flip to danger red, a red pill background, and the count decrement (10→9). The comment vote button showed the identical flip (gray/no-bg → accent blue/tinted-bg, count 3→4). This is a live confirmation of the actual click interaction, not an inference from reading the code. Harness, `puppeteer` (temp dependency), and all resulting lockfile/`package.json`/`pnpm-workspace.yaml` churn were removed/restored before finishing; `.next` cleared and rebuilt clean.
+
+**Not verified — same standing constraint as every phase:** an authenticated click on a real deployed post (where the vote call succeeds with 200 instead of failing 401) needs a live login this environment lacks. Confidence is very high regardless — the harness exercised the exact same optimistic-update code path a real successful vote would take, just with the terminal state reached via a deliberately delayed failure instead of a real success.
+
+**Deploy:** pushed to `main`; no manual `vercel --prod` per the standing "push to GitHub only" direction.
+
+---
+
 ## Fix — Update Resources section description
 
 **Status:** Complete, typechecked. Single-string change.

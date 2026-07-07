@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronUp, ChevronDown, EyeOff, Pin } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, EyeOff, Pin } from 'lucide-react';
 import { useVote } from '@/hooks/useVote';
 
 interface VoteBlockProps {
@@ -34,32 +34,34 @@ export default function VoteBlock({ postId, voteCount, userVote = null, variant 
     vote(direction);
   };
 
+  const isUp = userVote === 'up';
+  const isDown = userVote === 'down';
+  const countColor = isUp ? 'var(--accent)' : isDown ? 'var(--danger)' : 'var(--text-secondary)';
+
   return (
     <div className="flex w-8 flex-col items-center gap-0.5 pt-1">
       <button
         onClick={(e) => toggle(e, 'up')}
-        className={`rounded p-0.5 transition-colors hover:bg-[var(--bg-panel)] ${
-          userVote === 'up' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+        className={`flex items-center justify-center rounded-[6px] px-[6px] py-[4px] transition-colors ${
+          isUp ? '' : 'hover:bg-[var(--bg-panel)]'
         }`}
-        aria-label="Upvote"
+        style={{ color: isUp ? 'var(--accent)' : 'var(--text-secondary)', backgroundColor: isUp ? 'rgba(77,142,245,0.12)' : 'transparent' }}
+        aria-label="Like"
       >
-        <ChevronUp className="h-4 w-4" />
+        <ThumbsUp className="h-[17px] w-[17px]" />
       </button>
-      <span
-        className={`text-[12px] font-medium ${
-          userVote ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'
-        }`}
-      >
+      <span className="text-[12px] font-medium" style={{ color: countColor }}>
         {voteCount}
       </span>
       <button
         onClick={(e) => toggle(e, 'down')}
-        className={`rounded p-0.5 transition-colors hover:bg-[var(--bg-panel)] ${
-          userVote === 'down' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+        className={`flex items-center justify-center rounded-[6px] px-[6px] py-[4px] transition-colors ${
+          isDown ? '' : 'hover:bg-[var(--bg-panel)]'
         }`}
-        aria-label="Downvote"
+        style={{ color: isDown ? 'var(--danger)' : 'var(--text-secondary)', backgroundColor: isDown ? 'rgba(220,53,69,0.10)' : 'transparent' }}
+        aria-label="Dislike"
       >
-        <ChevronDown className="h-4 w-4" />
+        <ThumbsDown className="h-[17px] w-[17px]" />
       </button>
     </div>
   );

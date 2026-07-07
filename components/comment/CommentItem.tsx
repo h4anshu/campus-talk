@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp, Reply as ReplyIcon } from 'lucide-react';
+import { ThumbsUp, Reply as ReplyIcon } from 'lucide-react';
 import type { MockComment } from '@/lib/mock/comments';
 import { useCommentVote } from '@/hooks/useVote';
 import { useCreateComment } from '@/hooks/useComments';
@@ -99,11 +99,15 @@ export default function CommentItem({ comment, depth, postId, postAuthorName }: 
               <div className="mt-1.5 flex items-center gap-3">
                 <button
                   onClick={() => vote('up')}
-                  className={`flex items-center gap-1 text-[11px] transition-colors ${
-                    comment.userVote === 'up' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                  className={`flex items-center gap-1 rounded-[6px] px-[6px] py-[4px] text-[11px] transition-colors ${
+                    comment.userVote === 'up' ? '' : 'hover:bg-[var(--bg-panel)] hover:text-[var(--text-secondary)]'
                   }`}
+                  style={{
+                    color: comment.userVote === 'up' ? 'var(--accent)' : 'var(--text-muted)',
+                    backgroundColor: comment.userVote === 'up' ? 'rgba(77,142,245,0.12)' : 'transparent',
+                  }}
                 >
-                  <ChevronUp className="h-3.5 w-3.5" />
+                  <ThumbsUp className="h-[15px] w-[15px]" />
                   {comment.voteCount}
                 </button>
 
