@@ -2,6 +2,26 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## [astro-main] Fix — MongoDB Caching, API Fallback & Credential Cleanup
+
+**Status:** Completed, deployed, and live on `astro-dun-kappa.vercel.app`.
+
+**Key work done:**
+1. **Root Cause Diagnosis:** Identified that the Panchang page was failing because Credential 1 (`a6a5a36a-...`) had 0 credits remaining. Credential 2 (`01b01af5-...`) was fully working.
+2. **API Fallback Bug Fixed:** Found a bug in `app/api/hora/route.ts` where the fallback (failover to the next credential) was silently broken. The error was masked as a generic string (`"Failed to fetch hora/choghadiya"`) so the credit-balance keyword check never matched and fallback never triggered. Fixed it to throw the raw API error text so the fallback works correctly.
+3. **MongoDB Caching Installed:** Installed `mongodb` driver, created `lib/mongodb.ts` for connection pooling, and updated both `app/api/panchang/route.ts` and `app/api/hora/route.ts` to implement a 2-layer cache (L1: Next.js `unstable_cache`, L2: MongoDB). Data is fetched from Prokerala **once per date+location**, saved to MongoDB, and served from DB forever after.
+4. **Cron Pre-fetcher:** Created `app/api/cron/prefetch/route.ts` to nightly auto-fetch and cache data for major Indian cities. Configured `vercel.json` to run this cron at 2 AM daily.
+5. **MongoDB Atlas Setup:** Guided user through creating a free MongoDB Atlas M0 cluster, configuring IP access list (`0.0.0.0/0` for Vercel), and retrieving the connection string.
+6. **Environment Variables:** Uploaded `MONGODB_URI` to Vercel production via CLI (`vercel env add`). Updated `.env.local` locally with the real connection string.
+7. **DB Pre-population:** Ran `populate_mongo.js` locally to manually seed today's and tomorrow's Panchang + Hora/Choghadiya data for Lucknow directly into MongoDB, bypassing rate limit errors on first load.
+8. **Credential Cleanup:** Removed the exhausted Credential 1 from both `.env.local` and Vercel production env (`vercel env update --yes`). Re-deployed to apply clean credential config.
+
+**Deployments:** 3 total production deployments (`c67d036`, `HsxeggNFpW1G9xV5Ni5zt4qwwxTd`, final clean cred deploy) — all `● Ready`.
+
+**Current state:** Site loads Panchang from MongoDB (zero API calls for cached dates). Nightly cron pre-caches tomorrow's data. Working Prokerala credential only used on cache miss (new date or new location — extremely rare).
+
+---
+
 ## Closed out — Collaboration Post Features (Schema, API, UI)
 
 **Status:** Completed, verified, typechecked, and deployed.
