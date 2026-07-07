@@ -4,6 +4,31 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — audit.md items 4-7 (Batch 2A: contrast, font floor, feed width)
+
+**Status:** Complete, typechecked, built, pushed to `main`. Findings were pre-verified in `audit.md`, so this was a precise-fix pass rather than a fresh investigation.
+
+**A11Y-1 — `--text-muted` contrast.** Raised `globals.css:28` from `#6B7190` to `#868CAB` (a prior round had already moved it once from `#444860`, but it still measured 3.2-4.0, below AA). Computed contrast against all 4 Blueprint background layers now ranges 4.64-5.82. Swapped the 6 worst reading-text offenders — the `line-clamp-2` body preview in `PostCard`/`EventCard`/`AnnouncementCard`/`ResourceCard`/`LostFoundCard` and `EmptyState`'s description — from `text-muted` to `text-secondary`, leaving muted on meta labels/timestamps/captions untouched per the audit's own distinction between reading text and non-reading text.
+
+**A11Y-3 — 11px floor.** Found 60 sub-11px sites (`text-[9px]`/`text-[10px]`), not audit's estimated 58 — raised all but 4 to `text-[11px]`. The 4 left alone are genuine count/initials badges sitting inside a small solid-fill circle or pill (`Navbar`'s two notification-count badges on `--danger`, `LeftSidebar`'s unread-count pill, `SearchOverlay`'s people-search avatar initials) — exactly the exception the audit carved out, verified individually by reading surrounding JSX rather than blanket-replacing.
+
+**A11Y-2 — pill/text contrast.** `LeftSidebar`'s unread-count pill background switched from `--accent` (3.23 ratio, fails) to `--accent-fill` (6.70, passes) — font size on that one pill deliberately left at 10px since it's the same count-badge exception as above. Navbar's "Log out" text switched from `--danger` (3.85 on card bg) to a one-off brighter `#F26571` (5.03-6.30 across all 4 surfaces) — `--danger` itself untouched in `globals.css` since it's used correctly elsewhere as small icon/border accents, not large text.
+
+**LAYOUT-1 — feed width.** `Feed.tsx` wrapped `CreatePostBar` + the card list in `mx-auto w-full max-w-[720px]`, matching the pattern already proven on `spaces/[space]` and `discussions/[topic]`. `SortBar` stays full-width per the audit's explicit instruction, left outside the wrapper.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors (ran via `pnpm exec` after `pnpm install`, since `node_modules` wasn't present at session start)
+- `next build` — succeeds, all 32 routes generate; same benign `DYNAMIC_SERVER_USAGE` cosmetic notices as every prior phase
+- Contrast math (WCAG relative luminance, computed directly, not eyeballed): `#868CAB` and `#F26571` both clear 4.5:1 on all 4 background layers; `#1D4ED8` clears 4.5:1 for white pill text
+- Headless Chrome (`puppeteer` temporarily installed, then removed — `git diff --stat` on `package.json`/`pnpm-lock.yaml` confirmed clean afterward) at 375px on `/landing`: `scrollWidth === clientWidth`, zero overflow, zero console errors besides the pre-existing local-env NextAuth 500s (missing `.env` secrets in this sandbox, unrelated to this change)
+- Grepped the full `components/`+`app/` tree post-fix to confirm exactly 4 sub-11px sites remain, all deliberate exceptions
+
+**Not verified — same constraint as every phase so far:** the actual authenticated visual check (PostCard measuring ~720px on a real logged-in `/home`, body-preview text visibly lighter) needs a real login this environment doesn't have. High confidence regardless, since `Feed.tsx`'s new wrapper is the identical Tailwind class already confirmed rendering correctly on the space/discussion pages, and the color/font changes are pure CSS-variable/class swaps with no logic touched.
+
+**Deploy note:** pushed to `main` (`54726b2`). Checked this project's Vercel deploy history for the first time this session — found no GitHub→Vercel auto-deploy webhook configured; every prior "pushed to main, Vercel redeployed, confirmed Ready" in this log was actually backed by a separate manual `vercel --prod` CLI run, not a git-triggered build. Flagged this to the user rather than silently running a production deploy; they confirmed pushing to `main` is sufficient for this round, so no manual `vercel --prod` was run.
+
+---
+
 ## Fix — audit.md items 1-3, then an iterative hero-illustration debugging chain
 
 **Status:** Complete, typechecked, built, deployed. Five separate deploys in this round — the hero illustration took four iterations to actually get right, each driven by a real screenshot showing the previous fix hadn't fully solved it.
