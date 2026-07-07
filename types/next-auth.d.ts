@@ -10,6 +10,7 @@ declare module 'next-auth' {
       year: number | null;
       dept: string | null;
       bio: string | null;
+      banner: string | null;
     } & DefaultSession['user'];
   }
 }

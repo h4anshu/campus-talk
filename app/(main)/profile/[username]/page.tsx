@@ -3,7 +3,8 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { MOCK_POSTS } from '@/lib/mock';
 import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
-import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
+import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
+import { slugify, getInitials, getAvatarColor, optimizeCloudinaryUrl } from '@/lib/utils';
 import { serializePost, netVoteScore, POST_INCLUDE, type PostForSerialization } from '@/lib/serializers';
 import { getReputationTier } from '@/lib/reputation';
 import type { MockPost } from '@/lib/mock/posts';
@@ -44,6 +45,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         bio: dbUser.bio,
         reputation: dbUser.reputation,
         image: dbUser.image,
+        banner: dbUser.banner,
       }
     : matchingPost
       ? {
@@ -55,6 +57,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           bio: null as string | null,
           reputation: undefined as number | undefined,
           image: null as string | null,
+          banner: null as string | null,
         }
       : null;
 
@@ -138,7 +141,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   return (
     <div className="mx-auto max-w-[720px] pb-8">
       <div className="relative h-[120px] overflow-hidden border-b-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-20%,rgba(29,78,216,0.15)_0%,transparent_60%)]" />
+        {profile.banner ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img 
+            src={optimizeCloudinaryUrl(profile.banner)} 
+            alt="Profile Banner" 
+            className="absolute inset-0 h-full w-full object-cover object-center" 
+          />
+        ) : (
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-20%,rgba(29,78,216,0.15)_0%,transparent_60%)]" />
+        )}
       </div>
 
       <div className="px-4 sm:px-6">
@@ -158,6 +170,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 bio: dbUser.bio,
                 year: dbUser.year,
                 dept: dbUser.dept,
+                banner: dbUser.banner,
               }}
             />
           )}

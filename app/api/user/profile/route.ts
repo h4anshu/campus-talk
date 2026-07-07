@@ -8,6 +8,7 @@ const updateProfileSchema = z.object({
   year: z.number().int().min(1).max(4).optional().nullable(),
   dept: z.string().max(50).optional().nullable(),
   image: z.string().url().optional().nullable(),
+  banner: z.string().url().optional().nullable(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -23,6 +24,7 @@ export async function PATCH(req: NextRequest) {
         year: data.year,
         dept: data.dept,
         image: data.image,
+        banner: data.banner,
       },
     });
 

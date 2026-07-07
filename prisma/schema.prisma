@@ -75,6 +75,7 @@ model User {
   name      String
   email     String   @unique
   image     String?
+  banner    String?
   // Nullable: unknown until the student completes onboarding after their
   // first Google sign-in (the NextAuth Prisma adapter creates the row
   // with only id/name/email/image, so these can't be required).

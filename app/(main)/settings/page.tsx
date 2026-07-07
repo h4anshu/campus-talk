@@ -24,6 +24,7 @@ interface UpdateProfileResponse {
     year: number | null;
     dept: string | null;
     image: string | null;
+    banner: string | null;
   };
 }
 
@@ -36,8 +37,10 @@ export default function SettingsPage() {
   const [year, setYear] = useState<number | null>(null);
   const [dept, setDept] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const [banner, setBanner] = useState<string | null>(null);
 
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Sync state with session values
@@ -47,6 +50,7 @@ export default function SettingsPage() {
       setYear(session.user.year ?? null);
       setDept(session.user.dept ?? '');
       setImage(session.user.image ?? null);
+      setBanner(session.user.banner ?? null);
     }
   }, [session]);
 
@@ -91,6 +95,41 @@ export default function SettingsPage() {
     }
   };
 
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setUploadingBanner(true);
+    try {
+      const sig = await fetchJson<SignatureResponse>('/api/upload/signature', { method: 'POST' });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sig.apiKey);
+      formData.append('timestamp', String(sig.timestamp));
+      formData.append('signature', sig.signature);
+      formData.append('folder', sig.folder);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Cloudinary upload failed');
+      const data = (await res.json()) as { secure_url: string };
+
+      setBanner(data.secure_url);
+      toast.success('Banner uploaded successfully!');
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload banner');
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -103,6 +142,7 @@ export default function SettingsPage() {
           year: year || null,
           dept: dept.trim() || null,
           image: image || null,
+          banner: banner || null,
         }),
       });
 
@@ -115,6 +155,7 @@ export default function SettingsPage() {
           year: response.user.year,
           dept: response.user.dept,
           image: response.user.image,
+          banner: response.user.banner,
         },
       });
 
@@ -171,6 +212,43 @@ export default function SettingsPage() {
               />
               <p className="text-[11px] text-[var(--text-muted)]">
                 Recommended: Square image, PNG or JPG. Max 5MB.
+              </p>
+            </div>
+          </div>
+          
+          <h2 className="mt-8 text-[14px] font-medium text-[var(--text-primary)]">
+            Banner Image
+          </h2>
+          <div className="mt-4 flex flex-col gap-4">
+            {banner && (
+              <div className="h-[120px] w-full overflow-hidden rounded-[8px] border border-[var(--border)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={banner} alt="Banner" className="h-full w-full object-cover" />
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={uploadingBanner || saving}
+                onClick={() => bannerInputRef.current?.click()}
+                className="flex items-center justify-center gap-2 rounded bg-[var(--bg-panel)] border border-[var(--border-med)] px-3.5 py-2 text-[12px] font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--bg-page)] disabled:opacity-45"
+              >
+                {uploadingBanner ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Upload className="h-3.5 w-3.5" />
+                )}
+                {banner ? 'Change Banner' : 'Upload Banner'}
+              </button>
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleBannerUpload}
+              />
+              <p className="text-[11px] text-[var(--text-muted)] text-center">
+                Recommended: Wide image (e.g., 1440x240). It will be auto-adjusted to fit.
               </p>
             </div>
           </div>
@@ -252,7 +330,7 @@ export default function SettingsPage() {
           </button>
           <button
             type="submit"
-            disabled={saving || uploading}
+            disabled={saving || uploading || uploadingBanner}
             className="flex items-center gap-1.5 rounded bg-[var(--accent-fill)] px-5 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

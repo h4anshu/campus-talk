@@ -46,6 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.year = dbUser.year;
       session.user.dept = dbUser.dept;
       session.user.bio = dbUser.bio;
+      session.user.banner = dbUser.banner;
       return session;
     },
   },

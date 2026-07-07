@@ -1,11 +1,32 @@
 'use client';
 
-import { useState } from 'react';
-import { Pencil, Lock, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Pencil, Lock, Loader2, Upload } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { fetchJson } from '@/lib/api-client';
 
 const BIO_MAX = 160;
+
+interface SignatureResponse {
+  signature: string;
+  timestamp: number;
+  apiKey: string;
+  cloudName: string;
+  folder: string;
+}
+
+interface UpdateProfileResponse {
+  user: {
+    id: string;
+    bio: string | null;
+    year: number | null;
+    dept: string | null;
+    image: string | null;
+    banner: string | null;
+  };
+}
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -16,6 +37,7 @@ interface EditProfileDialogProps {
     bio?: string | null;
     year?: number | null;
     dept?: string | null;
+    banner?: string | null;
   };
 }
 
@@ -24,11 +46,18 @@ export default function EditProfileDialog({ open, onOpenChange, user }: EditProf
   const initialBio = user.bio ?? '';
   const initialYear = user.year ?? null;
   const initialDept = user.dept ?? '';
+  const initialBanner = user.banner ?? null;
+
+  const router = useRouter();
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(initialName);
   const [bio, setBio] = useState(initialBio);
   const [year, setYear] = useState<number | null>(initialYear);
   const [dept, setDept] = useState(initialDept);
+  const [banner, setBanner] = useState<string | null>(initialBanner);
+  
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -36,6 +65,7 @@ export default function EditProfileDialog({ open, onOpenChange, user }: EditProf
     setBio(initialBio);
     setYear(initialYear);
     setDept(initialDept);
+    setBanner(initialBanner);
   }
 
   function handleClose() {
@@ -44,18 +74,67 @@ export default function EditProfileDialog({ open, onOpenChange, user }: EditProf
   }
 
   const dirty =
-    name !== initialName || bio !== initialBio || year !== initialYear || dept !== initialDept;
+    name !== initialName || bio !== initialBio || year !== initialYear || dept !== initialDept || banner !== initialBanner;
   const canSave = dirty && name.trim().length > 0;
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setUploadingBanner(true);
+    try {
+      const sig = await fetchJson<SignatureResponse>('/api/upload/signature', { method: 'POST' });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sig.apiKey);
+      formData.append('timestamp', String(sig.timestamp));
+      formData.append('signature', sig.signature);
+      formData.append('folder', sig.folder);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Cloudinary upload failed');
+      const data = (await res.json()) as { secure_url: string };
+
+      setBanner(data.secure_url);
+      toast.success('Banner uploaded successfully!');
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload banner');
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
 
   async function handleSubmit() {
     if (!canSave) return;
     setSaving(true);
-    // No backend endpoint yet — optimistic UX, same placeholder pattern as
-    // ReportPostDialog. Wire to PATCH /api/users/me in a later phase.
-    await new Promise((r) => setTimeout(r, 600));
-    setSaving(false);
-    handleClose();
-    toast.success('Profile updated');
+    try {
+      await fetchJson<UpdateProfileResponse>('/api/user/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          bio: bio.trim() || null,
+          year: year || null,
+          dept: dept.trim() || null,
+          banner: banner || null,
+          // Note: name update is not supported by /api/user/profile yet.
+          // image update is possible but this dialog only handles banner so far.
+        }),
+      });
+
+      toast.success('Profile updated');
+      handleClose();
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -76,6 +155,37 @@ export default function EditProfileDialog({ open, onOpenChange, user }: EditProf
         </DialogTitle>
 
         <div className="flex flex-col gap-4 px-5 py-4">
+          {/* Banner Upload */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">Profile Banner</label>
+            {banner && (
+              <div className="h-[100px] w-full overflow-hidden rounded-[4px] border border-[var(--border)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={banner} alt="Banner" className="h-full w-full object-cover" />
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={uploadingBanner || saving}
+              onClick={() => bannerInputRef.current?.click()}
+              className="mt-1 flex items-center justify-center gap-2 rounded border border-[var(--border-med)] bg-[var(--bg-panel)] px-3.5 py-2 text-[12px] font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--bg-page)] disabled:opacity-45"
+            >
+              {uploadingBanner ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
+              {banner ? 'Change Banner' : 'Upload Banner'}
+            </button>
+            <input
+              ref={bannerInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleBannerUpload}
+            />
+          </div>
+
           {/* Display name */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-medium text-[var(--text-secondary)]">Display name</label>
@@ -159,7 +269,7 @@ export default function EditProfileDialog({ open, onOpenChange, user }: EditProf
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!canSave || saving}
+            disabled={!canSave || saving || uploadingBanner}
             className="flex items-center gap-1.5 rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving && <Loader2 className="h-3 w-3 animate-spin" />}
