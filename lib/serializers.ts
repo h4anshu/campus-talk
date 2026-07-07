@@ -3,6 +3,7 @@ import { getInitials, getAvatarColor } from '@/lib/utils';
 import { enumToKey } from '@/lib/constants';
 import type { MockPost, MockAuthor, MockPostMedia } from '@/lib/mock/posts';
 import type { MockComment, MockCommentAuthor } from '@/lib/mock/comments';
+import { extractEmbedsFromHtml } from '@/lib/embed';
 
 type AuthorLite = Pick<User, 'id' | 'name' | 'image' | 'year' | 'dept'>;
 
@@ -65,6 +66,40 @@ export function serializePost(post: PostForSerialization, viewerId: string): Moc
   const voteCount = netVoteScore(post.votes);
   const commentCount = post._count.comments;
 
+  let media = post.media?.map((m) => ({
+    type: m.type as MockPostMedia['type'],
+    url: m.url,
+    providerId: m.providerId ?? undefined,
+    thumbnailUrl: m.thumbnailUrl ?? undefined,
+  })) || [];
+
+  if (media.length === 0 && post.body) {
+    const imgMatches = post.body.match(/<img[^>]+src="([^">]+)"/g);
+    if (imgMatches) {
+      const fallbackImages = imgMatches.map(img => {
+        const srcMatch = img.match(/src="([^">]+)"/);
+        return {
+          type: 'image' as MockPostMedia['type'],
+          url: srcMatch ? srcMatch[1] : '',
+        };
+      }).filter(m => m.url);
+      media = [...media, ...fallbackImages];
+    }
+    
+    const bodyEmbeds = extractEmbedsFromHtml(post.body);
+    if (bodyEmbeds.length > 0) {
+      media = [
+        ...media,
+        ...bodyEmbeds.map(e => ({
+          type: e.type as MockPostMedia['type'],
+          url: e.url,
+          providerId: e.providerId,
+          thumbnailUrl: e.thumbnailUrl,
+        }))
+      ];
+    }
+  }
+
   return {
     id: post.id,
     title: post.title,
@@ -88,12 +123,7 @@ export function serializePost(post: PostForSerialization, viewerId: string): Moc
     isSaved: (post.savedBy?.length ?? 0) > 0,
     viewerIsAuthor: post.authorId === viewerId,
     priority: (post.priority as MockPost['priority']) ?? undefined,
-    media: post.media?.map((m) => ({
-      type: m.type as MockPostMedia['type'],
-      url: m.url,
-      providerId: m.providerId,
-      thumbnailUrl: m.thumbnailUrl,
-    })),
+    media,
   };
 }
 

@@ -20,16 +20,24 @@ export async function POST(req: NextRequest) {
     const post = await prisma.post.findUnique({ where: { id: data.postId }, select: { authorId: true } });
     if (!post) throw new ApiError('Post not found', 404);
 
-    if (admin) {
+    let authorized = false;
+
+    // Check if they own it as a regular student
+    const session = await getSessionOrThrow().catch(() => null);
+    if (session && post.authorId === session.user.id) {
+      authorized = true;
+    }
+
+    // Check if they own it as the Admin Office
+    if (!authorized && admin) {
       const adminOffice = await getOrCreateAdminOfficeUser();
-      if (post.authorId !== adminOffice.id) {
-        throw new ApiError('You can only attach media to your own posts', 403);
+      if (post.authorId === adminOffice.id) {
+        authorized = true;
       }
-    } else {
-      const session = await getSessionOrThrow();
-      if (post.authorId !== session.user.id) {
-        throw new ApiError('You can only attach media to your own posts', 403);
-      }
+    }
+
+    if (!authorized) {
+      throw new ApiError('You can only attach media to your own posts', 403);
     }
 
     const media = await prisma.media.create({
