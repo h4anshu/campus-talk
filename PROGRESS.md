@@ -2,6 +2,18 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Closed out — Show Images on Feed Cards
+
+**Status:** Completed, verified, typechecked, and deployed.
+
+**Key work done:**
+1. **Refined MediaBlock Component**: Updated `components/shared/MediaBlock.tsx` with named export, custom `maxHeight` control, and YouTube click-to-play state toggle.
+2. **Main Feed Integration**: Configured `components/post/PostCard.tsx` to display images directly on the feed card.
+3. **Space Cards Integration**: Wired `MediaBlock` across all spaces cards (Announcement, Event, Resource, Lost & Found, and Collaboration). Kept Confessions text-only.
+4. **Verification & Deployment**: Completed typescript typechecking and Next.js production compilation, and successfully deployed to Vercel.
+
+---
+
 ## Closed out — Notifications Overhaul & Realtime Sync
 
 **Status:** Completed, verified, typechecked, and deployed.
