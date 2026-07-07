@@ -4,6 +4,30 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — audit.md items 8-9 (Batch 2B: theme hygiene + animation consistency)
+
+**Status:** Complete, typechecked, built, pushed to `main`. Pre-verified findings, so a precise-fix pass rather than a fresh investigation.
+
+**THEME-1 — emerald violation.** `RightSidebar`'s "Live Pulse" dot (both the `animate-ping` layer and the solid dot) used raw `bg-emerald-500`, the only remaining non-theme palette color flagged by the audit. Swapped both to `bg-[var(--success)]` (#1DB874). Visually near-identical; now theme-compliant per CLAUDE.md §4.
+
+**THEME-2 — hex literals → tokens.** `#161929` (in `SpacesSection`/`TopicsSection`/`WhyNotWhatsapp` card backgrounds) and `#0C0E17` (in `Hero`'s section bg) were raw literals duplicating theme tokens. Checked `globals.css` first: a prior round had already moved `--bg-surface` from `#12151F` to `#161929`, so the landing literals happened to still match the current token exactly — meaning these swaps to `bg-[var(--bg-surface)]`/`bg-[var(--bg-page)]` are a genuine no-op visually, purely removing the single-source-of-truth drift risk. (The task's verification note mentioning `#12151F` referenced the stale CLAUDE.md value; actual current token is `#161929`.) Left the per-icon/space gradient hexes (`#8B5CF6`, `#7C3AED`, etc.) untouched — those are intentional design tokens, not theme variables, exactly as the audit and task both specify. Hero's Batch-1 mask gradients use transparent stops, not the page hex, so nothing else there to change. Grep confirms `#161929`/`#0C0E17` now exist only as the `globals.css` variable definitions.
+
+**ANIM-2 — shared staggered entrance.** New `components/shared/StaggeredList.tsx` exporting `StaggeredList` (container variant, `staggerChildren: 0.06`) + `StaggeredItem` (`opacity/y:10→0`, `duration 0.22 ease easeOut`), typed as framer `Variants` for strict-mode safety. `Feed` refactored off its inline per-card `motion.div` stagger onto it; `spaces/[space]/page.tsx` — which rendered cards bare with no entrance — now wraps its list in the same components. Result: `/home` and every `/spaces/*` share one identical arrival animation. Added an optional `className` to `StaggeredList` (beyond the task's given signature) because wrapping the mapped cards makes the wrapper the flex child — without a passthrough class the existing `flex flex-col gap-3` inter-card spacing would collapse; both consumers pass that class. Skeleton/empty branches kept their own flex container so their layout is unchanged.
+
+**ANIM-3 — one count-up.** `StatsBar` had its own hand-rolled `framer animate()` count-up duplicating the shared `CountUp` component. Rewired it onto `CountUp`, mapping each stat to props that reproduce the exact final output: `800+`→`to={800} suffix="+"`, `3.2k`→`to={3200} compact`, `540`→`to={540}`, `94`→`to={94}`, all at `duration={1.5}` to keep the original timing. Dropped StatsBar's now-unnecessary container-level `useRef`/`useInView`/`inView`-prop plumbing since `CountUp` self-triggers per-element on scroll-into-view (all four sit in one row, so they still fire together). One inherent nuance of consolidating: the `3.2k` stat's *intermediate* frames now show CountUp's integer-then-"k" progression rather than the old continuous `X.Xk` decimals — final value identical, still a smooth count-up.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds, all 32 routes; `/landing` bundle 25.1 kB (was 25.2) from removing StatsBar's duplicate anim logic; same benign `DYNAMIC_SERVER_USAGE` cosmetic notices as every prior phase
+- Headless Chrome on `/landing` (`puppeteer` temporarily installed then removed; `pnpm-workspace.yaml`/lockfile/`package.json` restored to HEAD afterward — confirmed clean): 22 elements now compute to `rgb(22,25,41)` = `--bg-surface`, **0** left at the old `rgb(18,21,31)`; StatsBar polled live counting up `451+ → 715+ → 781+ → 797+ → 800+` and settling on exactly `800+ / 3.2k / 540 / 94` (identical to before); no page-body horizontal overflow at 1280px; zero console errors
+- THEME-1's Live Pulse dot lives in the authed `RightSidebar` (not reachable on `/landing` headless) — confirmed by grep + source; a trivial class swap with no logic
+
+**Not verified — same standing constraint:** the actual authenticated visual of the new staggered entrance on `/home` and `/spaces/*` (both redirect to `/landing` unauthenticated) needs a real login this environment lacks. Confidence high — it's a mechanical refactor, both consumers pass tsc/build, and the animation values come straight from the shared component now proven rendering on the public pages that already use `CountUp`/framer.
+
+**Deploy:** pushed to `main` (`976fa76`); no manual `vercel --prod` per the user's standing "push to GitHub only" direction from Batch 2A (this project has no git→Vercel auto-deploy webhook — see that entry).
+
+---
+
 ## Fix — audit.md items 4-7 (Batch 2A: contrast, font floor, feed width)
 
 **Status:** Complete, typechecked, built, pushed to `main`. Findings were pre-verified in `audit.md`, so this was a precise-fix pass rather than a fresh investigation.
