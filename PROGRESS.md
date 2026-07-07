@@ -4,6 +4,29 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Removal — All "online users" / presence indicators from the UI
+
+**Status:** Complete, typechecked, built, screenshot-verified. UI-only, no backend touched.
+
+Grepped the whole `components/`+`app/` tree for `online|Online|presence|userCount|onlineCount|activeUsers` first. The CLAUDE.md-described "breadcrumb sub-bar with online user count" and the audit's guessed "LeftSidebar online dot" **turned out not to exist** — no breadcrumb sub-bar was ever built (the main layout is just Navbar + sidebars + main), and LeftSidebar's profile avatar never passed `online`. So the actual set of live presence indicators was three:
+
+1. **RightSidebar "Online" community stat** — removed the `{ label: 'Online', value: formatNumber(stats?.online) }` cell from the Community grid (now Students / Posts / Answers, 3 cells in the 2-col grid — confirmed visually fine, not a broken gap).
+2. **RightSidebar "Live Pulse" widget** — removed the whole block (green animated ping dot + "Live Pulse" label + `{stats?.online} online`). Its only data was the online count, so the entire widget went, not just the number.
+3. **Navbar avatar green presence dot** — removed the `online` prop from the one `<Avatar>` call that set it, then cleaned up the now-dead `online?: boolean` prop + its render block in the shared `Avatar.tsx` (it had exactly one caller, so the prop was fully dead after).
+
+**Judgment call, flagged:** the green avatar dot is described in CLAUDE.md §8 ("Avatar … + green online dot") as part of the design, but it's unambiguously a *presence indicator* and the task said remove *every* "realtime online user count **or presence indicator**." I treated the explicit removal directive as superseding the older §8 spec for this one element and removed it. It's a self-contained change — trivially revertible (re-add the `online` prop + the one `online` usage) if the dot was meant to stay.
+
+**Left untouched, as instructed:** `app/api/college/stats/route.ts` still computes and returns `online` (lastActiveAt-in-last-5-min count) — the task said UI-only, don't touch backend/Supabase. The `useCollegeStats` hook is unchanged too; only its `stats.online` *consumption* was removed (per the task's "remove the display, not the hook" rule). `stats` is still consumed for students/posts/answers, so the hook call stays. Net effect: the API keeps returning `online`, nothing renders it.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — compiles successfully, all 32 routes (the build-time "Failed to fetch landing stats" line is the pre-existing no-DB-in-build-sandbox prerender notice, not from this change)
+- Headless Chrome screenshot at 1440px via a temporary `/dev-preview` harness rendering the real `Navbar` + `RightSidebar` (both are authed components; harness deleted before finishing, `puppeteer` installed then removed, lockfile/`package.json`/`pnpm-workspace.yaml` restored to HEAD, `.next` cleared and rebuilt clean): confirmed the navbar avatar has **no** green dot (`greenDotCount: 0` computed), the Community grid shows exactly Students/Posts/Answers with **no** "Online" cell, and there is **no** "Live Pulse" widget — the sidebar goes straight from Community to the Contact-admin button
+
+**Not verified — same standing constraint:** the fully-authenticated live sidebar with real stat numbers (harness renders it unauthenticated, so values show "…") needs a real login this environment lacks. Structure/layout confirmed by the screenshot regardless.
+
+---
+
 ## Feature — Report Post modal
 
 **Status:** Complete, typechecked, built, headless-verified.
