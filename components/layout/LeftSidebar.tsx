@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LifeBuoy, Settings } from 'lucide-react';
+import { LifeBuoy, Settings, Trophy } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { SPACES, TOPICS } from '@/lib/constants';
 import { ICON_MAP } from '@/lib/icon-map';
@@ -118,6 +118,17 @@ export default function LeftSidebar() {
           icon="home"
           active={pathname === '/home' || pathname === '/'}
         />
+        <Link
+          href="/leaderboard"
+          className={`flex items-center gap-2.5 rounded px-2.5 py-1.5 text-[13px] transition-colors ${
+            pathname === '/leaderboard'
+              ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
+              : 'text-[var(--text-muted)] hover:bg-[var(--bg-panel)] hover:text-[var(--text-secondary)]'
+          }`}
+        >
+          <Trophy className={`h-4 w-4 shrink-0 ${pathname === '/leaderboard' ? '' : 'text-[#D97706]'}`} />
+          <span className="flex-1 truncate">Leaderboard</span>
+        </Link>
       </div>
 
       <div className="mt-4">

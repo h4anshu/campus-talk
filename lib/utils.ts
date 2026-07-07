@@ -31,6 +31,10 @@ export function getAvatarColor(seed: string | null | undefined) {
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length]
 }
 
+export function getYearSuffix(year: number): string {
+  return year === 1 ? 'st' : year === 2 ? 'nd' : year === 3 ? 'rd' : 'th';
+}
+
 // Post bodies are stored as sanitized HTML (from the Tiptap editor). This is
 // a plain display-formatting strip for truncated previews — not a security
 // boundary, the server already sanitized the content before it was saved.

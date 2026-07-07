@@ -6,7 +6,7 @@ import type { NextRequest } from 'next/server';
 // NextAuth session this middleware checks for below. Its own gating happens
 // server-side in app/admin/(protected)/layout.tsx.
 const protectedRoutes = ['/home', '/discussions', '/spaces',
-  '/post', '/profile', '/saved', '/tickets'];
+  '/post', '/profile', '/saved', '/tickets', '/leaderboard'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -38,5 +38,6 @@ export const config = {
     '/profile/:path*',
     '/saved/:path*',
     '/tickets/:path*',
+    '/leaderboard/:path*',
   ]
 };
