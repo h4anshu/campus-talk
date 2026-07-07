@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 // This codebase renders icons with lucide-react (see lib/icon-map.tsx), not a
 // Tabler webfont — so the SECTION_META `icon` strings are resolved to lucide
 // components here rather than emitted as `ti ti-*` classes.
-const SECTION_ICONS: Record<string, LucideIcon> = {
+export const SECTION_ICONS: Record<string, LucideIcon> = {
   speakerphone: Megaphone,
   'calendar-event': CalendarClock,
   books: BookOpen,

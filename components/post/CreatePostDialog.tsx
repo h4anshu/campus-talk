@@ -3,14 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
 import { useCreatePost } from '@/hooks/useCreatePost';
-import { TOPICS, type TopicKey } from '@/lib/constants';
+import { TOPICS, SECTION_META, type TopicKey } from '@/lib/constants';
+import { SECTION_ICONS } from '@/components/shared/SectionBanner';
 import { fetchJson } from '@/lib/api-client';
 import { extractEmbedsFromHtml } from '@/lib/embed';
 
@@ -34,7 +35,7 @@ type DraftState = 'idle' | 'saving' | 'saved';
 export default function CreatePostDialog() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { open, closeDialog } = useCreatePostStore();
+  const { open, context, closeDialog, clearContext } = useCreatePostStore();
   const { mutateAsync: createPostAsync, isPending } = useCreatePost();
   const [destination, setDestination] = useState<(typeof DESTINATIONS)[number]['key']>('discussion');
   const [topic, setTopic] = useState<TopicKey | null>(null);
@@ -43,6 +44,16 @@ export default function CreatePostDialog() {
   const [draftState, setDraftState] = useState<DraftState>('idle');
   const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasContext = context.type !== null;
+
+  // The Discussions "Events" topic shares its route param (`events`) with
+  // the Spaces "Events" space, so SECTION_META keys the discussion one
+  // separately as `events-discussion` — mirrors the same remap done in
+  // discussions/[topic]/page.tsx when picking its own SectionBanner.
+  const styleSlug = context.type === 'discussion' && context.slug === 'events' ? 'events-discussion' : context.slug;
+  const sectionMeta = styleSlug ? SECTION_META[styleSlug] : undefined;
+  const SectionIcon = sectionMeta ? SECTION_ICONS[sectionMeta.icon] : undefined;
 
   const markDirty = () => {
     setDraftState('saving');
@@ -63,15 +74,28 @@ export default function CreatePostDialog() {
     setBody('');
     setDraftState('idle');
     setPendingMedia([]);
+    clearContext();
   };
 
-  const canPost = title.trim().length >= 5 && (destination !== 'discussion' || !!topic) && !isPending;
+  const canPost =
+    title.trim().length >= 5 && !isPending && (hasContext || destination !== 'discussion' || !!topic);
+
+  const submitLabel = !hasContext
+    ? 'Post'
+    : context.requiresApproval && context.isAnonymous
+      ? 'Submit anonymously'
+      : context.requiresApproval
+        ? 'Submit for review'
+        : 'Post';
 
   const handlePost = async () => {
     if (!canPost) return;
 
-    const payload =
-      destination === 'discussion'
+    const payload = hasContext
+      ? context.type === 'discussion'
+        ? { title, body, type: 'DISCUSSION' as const, topic: context.slug!, tags: [], anonymous: false }
+        : { title, body, type: 'SPACE' as const, space: context.slug!, tags: [], anonymous: context.isAnonymous }
+      : destination === 'discussion'
         ? { title, body, type: 'DISCUSSION' as const, topic: topic!, tags: [], anonymous: false }
         : {
             title,
@@ -148,7 +172,10 @@ export default function CreatePostDialog() {
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        if (!v) closeDialog();
+        if (!v) {
+          closeDialog();
+          clearContext();
+        }
       }}
     >
       <DialogContent
@@ -165,42 +192,69 @@ export default function CreatePostDialog() {
             Create a post
           </DialogTitle>
 
+          {hasContext && sectionMeta && (
+            <div
+              className="mx-5 mt-4 flex shrink-0 items-center gap-2 rounded-[8px] border px-3 py-[9px] text-[12px]"
+              style={{ background: `${sectionMeta.color}12`, borderColor: sectionMeta.borderColor }}
+            >
+              {SectionIcon && (
+                <SectionIcon
+                  className="h-[15px] w-[15px] shrink-0"
+                  style={{ color: sectionMeta.color }}
+                  aria-hidden="true"
+                />
+              )}
+              <span style={{ color: 'var(--text-secondary)' }}>
+                Posting in <span style={{ color: sectionMeta.color, fontWeight: 500 }}>{context.label}</span>
+                {context.isAnonymous
+                  ? ' — your identity will be completely hidden.'
+                  : context.requiresApproval
+                    ? ' — your post will appear here after admin approval.'
+                    : ' — your post will be visible to everyone instantly.'}
+              </span>
+            </div>
+          )}
+
           {/* This is the ONLY part that scrolls — DialogContent is capped at
               85vh above, so no matter how tall the embed/description gets,
               the dialog itself never grows past the viewport. */}
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-            <div className="flex flex-wrap gap-1.5">
-              {DESTINATIONS.map((d) => (
-                <button
-                  key={d.key}
-                  onClick={() => setDestination(d.key)}
-                  className={`rounded-full border-[0.5px] px-3 py-1.5 text-[12px] font-medium transition-colors ${
-                    destination === d.key
-                      ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
-                      : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)] hover:text-[var(--text-secondary)]'
-                  }`}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
+            {!hasContext && (
+              <>
+                <div className="flex flex-wrap gap-1.5">
+                  {DESTINATIONS.map((d) => (
+                    <button
+                      key={d.key}
+                      onClick={() => setDestination(d.key)}
+                      className={`rounded-full border-[0.5px] px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                        destination === d.key
+                          ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                          : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)] hover:text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
 
-            {destination === 'discussion' && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {TOPICS.map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={() => setTopic(t.key)}
-                    className={`rounded-full border-[0.5px] px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                      topic === t.key
-                        ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
-                        : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)] hover:text-[var(--text-secondary)]'
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
+                {destination === 'discussion' && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {TOPICS.map((t) => (
+                      <button
+                        key={t.key}
+                        onClick={() => setTopic(t.key)}
+                        className={`rounded-full border-[0.5px] px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                          topic === t.key
+                            ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                            : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-med)] hover:text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
             <input
@@ -222,9 +276,31 @@ export default function CreatePostDialog() {
                 onImageUploaded={(url, publicId) =>
                   setPendingMedia((prev) => [...prev, { type: 'image', url, providerId: publicId }])
                 }
-                placeholder={`Write your ${DESTINATIONS.find((d) => d.key === destination)?.label.toLowerCase()} post...`}
+                placeholder={`Write your ${(hasContext ? context.label : DESTINATIONS.find((d) => d.key === destination)?.label)?.toLowerCase()} post...`}
               />
             </div>
+
+            {hasContext && context.requiresApproval && (
+              <div
+                className="mt-3 flex items-center gap-2 rounded-[8px] border px-3 py-[9px] text-[12px]"
+                style={{ background: 'rgba(217,119,6,0.07)', borderColor: 'rgba(217,119,6,0.2)' }}
+              >
+                <Clock className="h-[15px] w-[15px] shrink-0" style={{ color: '#D97706' }} aria-hidden="true" />
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {context.isAnonymous ? (
+                    <>
+                      Confessions need <span style={{ color: '#D97706', fontWeight: 500 }}>admin approval</span>{' '}
+                      before going live. Your identity stays hidden throughout.
+                    </>
+                  ) : (
+                    <>
+                      This post needs <span style={{ color: '#D97706', fontWeight: 500 }}>admin approval</span>{' '}
+                      before it&apos;s visible to others. You&apos;ll be notified once reviewed.
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex shrink-0 items-center justify-between border-t-[0.5px] border-[var(--border)] px-5 py-3">
@@ -259,7 +335,7 @@ export default function CreatePostDialog() {
                 className="flex items-center gap-1.5 rounded bg-[var(--accent-fill)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
-                Post
+                {submitLabel}
               </button>
             </div>
           </div>

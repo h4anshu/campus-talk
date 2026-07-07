@@ -15,6 +15,8 @@ import ConfessionCard from '@/components/spaces/ConfessionCard';
 import EmptyState from '@/components/shared/EmptyState';
 import { StaggeredList, StaggeredItem } from '@/components/shared/StaggeredList';
 import { SectionBanner } from '@/components/shared/SectionBanner';
+import CreatePostBar from '@/components/feed/CreatePostBar';
+import { useCreatePostStore } from '@/store/useCreatePostStore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SPACE_CARD_MAP: Record<SpaceKey, ComponentType<{ post: MockPost }>> = {
@@ -34,6 +36,7 @@ export default function SpacePage({ params }: SpacePageProps) {
   const space = SPACES.find((s) => s.key === params.space);
   const { data: posts, isLoading, isError } = usePosts({ space: params.space });
   const queryClient = useQueryClient();
+  const openWithContext = useCreatePostStore((s) => s.openWithContext);
   const spaceKey = space?.key;
 
   useEffect(() => {
@@ -66,6 +69,24 @@ export default function SpacePage({ params }: SpacePageProps) {
 
       <div className="mt-4">
         <SectionBanner slug={space.key} title={space.label} />
+        {/* Announcements/Events are admin-only — no student-facing create
+            trigger for those two, matching CreatePostDialog's DESTINATIONS
+            list, which has never included them. */}
+        {!space.adminOnly && (
+          <div className="mb-4">
+            <CreatePostBar
+              onClickOverride={() =>
+                openWithContext({
+                  type: 'space',
+                  slug: space.key,
+                  label: space.label,
+                  requiresApproval: !space.adminOnly,
+                  isAnonymous: space.key === 'confession',
+                })
+              }
+            />
+          </div>
+        )}
         {isLoading ? (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 3 }).map((_, i) => (
