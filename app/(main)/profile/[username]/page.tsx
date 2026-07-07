@@ -9,6 +9,7 @@ import type { MockPost } from '@/lib/mock/posts';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
 import ProfileTabs, { type ProfileAnswer } from '@/components/profile/ProfileTabs';
+import EditProfileButton from '@/components/profile/EditProfileButton';
 
 interface ProfilePageProps {
   params: { username: string };
@@ -135,7 +136,20 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           </div>
         </div>
 
-        <h1 className="mt-3 text-[18px] font-medium text-[var(--text-primary)]">{profile.name}</h1>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <h1 className="text-[18px] font-medium text-[var(--text-primary)]">{profile.name}</h1>
+          {isOwnProfile && dbUser && (
+            <EditProfileButton
+              user={{
+                name: dbUser.name,
+                email: dbUser.email,
+                bio: dbUser.bio,
+                year: dbUser.year,
+                dept: dbUser.dept,
+              }}
+            />
+          )}
+        </div>
         <div className="mt-1 flex items-center gap-1.5">
           <YearBadge year={profile.year} />
           {profile.dept && <span className="text-[12px] text-[var(--text-muted)]">{profile.dept}</span>}

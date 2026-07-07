@@ -4,6 +4,31 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Feature — Edit-profile modal on profile page; removed Settings from navbar
+
+**Status:** Complete, typechecked, built, screenshot-verified.
+
+**Removed "Settings" from the navbar avatar dropdown** (`Navbar.tsx`) — deleted the `DropdownMenuItem` and its now-unused `Settings` lucide import (it had exactly one use). Kept the `DropdownMenuSeparator` that preceded it; it now cleanly divides "Admin messages" from the destructive "Log out" action rather than dangling. The `/settings` route/page itself is untouched and still reachable directly — only the dropdown entry was removed, since profile editing now lives on the profile page.
+
+**Added an "Edit profile" button + modal to the own-profile page.** The profile page (`app/(main)/profile/[username]/page.tsx`) is a Server Component (`await auth()` + Prisma reads), so the button+modal couldn't hold `useState` there directly. Made a small client island `components/profile/EditProfileButton.tsx` (owns the `open` state, renders the styled button + the controlled dialog) and dropped it into the name row, gated on `isOwnProfile && dbUser` so it never renders on other people's profiles. Wrapped the `<h1>` name and the button in a `flex items-center justify-between` row so the button sits right-aligned on the same line as the name, per the task.
+
+**`components/profile/EditProfileDialog.tsx`** — editable: Display name (text), Bio (textarea, 160-char cap with a live `{n}/160` counter pinned bottom-right inside the field), Year (native `<select>`, 1st–4th, matching the existing settings-page select pattern), Department (text). Read-only: Email — rendered in a `bg-[var(--bg-page)]`, `opacity-50` row with a `Lock` icon and a "Linked to your Google account" caption. Save is disabled until the form is dirty (each field compared against its initial value, nulls normalized) *and* the name is non-empty; Cancel/close resets all fields to their initial values so reopening is clean.
+
+**Matched the codebase's dialog conventions over the task's snippet** (same call I made for `ReportPostDialog`): the snippet imported `DialogHeader`, but every existing dialog (`ConfirmDialog`, `ContactAdminDialog`, `ReportPostDialog`) uses a flat `DialogTitle` with its own border/padding on a `p-0` `bg-[var(--bg-elevated)]` `DialogContent`, `bg-[var(--bg-panel)]` inputs, and identical Cancel/accent-fill footer buttons — followed that so it's indistinguishable from the app's other modals. Also loosened the snippet's `dept?: string` prop type to `dept?: string | null` because the Prisma `User.dept` is nullable (as are `bio`/`year`).
+
+**No backend wired, per the task** — submit does a 600ms fake delay + `toast.success('Profile updated')` + close, same placeholder pattern as `ReportPostDialog`. **Worth flagging for the later phase:** a real `PATCH /api/user/profile` endpoint *already exists* (the `/settings` page uses it), but it only accepts `bio/year/dept/image` — **not `name`** — so it can't fully back this dialog as-is; wiring it up will need that route extended to handle `name` (the task named a future `/api/users/me`). Left as a deliberate placeholder rather than half-wiring it and silently dropping name edits.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors (Prisma `User` field types line up exactly: `name`/`email` non-null, `bio`/`year`/`dept` nullable → dialog prop types)
+- `next build` — compiles, all 32 routes (the build-time "Failed to fetch landing stats" line is the pre-existing no-DB-in-sandbox prerender notice, not from this change)
+- Headless Chrome against a temporary `/dev-preview` harness rendering the real `EditProfileButton` with sample user data (harness deleted before finishing; `puppeteer` temp-installed then removed; `pnpm-lock.yaml`/`package.json`/`pnpm-workspace.yaml` restored to HEAD; `.next` cleared and rebuilt clean): confirmed the button renders; opening pre-fills all four editable fields + shows the email row & "Linked to your Google account"; bio counter reads `31/160` and ticks to `33/160` on typing; Save is disabled with no edits, enables once the name is changed; Submit shows the "Profile updated" toast and closes; reopening resets the name back to its original value with Save disabled again. Screenshot confirmed the full Blueprint-themed layout.
+
+**Not verified — same standing constraint:** the real authenticated profile page (own vs. other-user, button visibility gate, real DB-backed field values) needs a live login this environment lacks. The `isOwnProfile && dbUser` gate is a pure server-side conditional, so the "hidden on others' profiles" behavior is structurally guaranteed, but wasn't exercised through a real session.
+
+**Deploy:** pushed to `main`; no manual `vercel --prod` per the standing "push to GitHub only" direction (this project has no git→Vercel auto-deploy webhook — see the Batch 2A entry).
+
+---
+
 ## Removal — All "online users" / presence indicators from the UI
 
 **Status:** Complete, typechecked, built, screenshot-verified. UI-only, no backend touched.

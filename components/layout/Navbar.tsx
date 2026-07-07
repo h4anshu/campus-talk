@@ -16,7 +16,6 @@ import {
   FileText,
   Bookmark,
   ShieldQuestion,
-  Settings,
   LogOut,
 } from 'lucide-react';
 import {
@@ -227,9 +226,6 @@ export default function Navbar() {
                 )}
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[var(--border)]" />
-              <DropdownMenuItem className="gap-2 text-[13px]" onClick={() => router.push('/settings')}>
-                <Settings className="h-4 w-4" /> Settings
-              </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2 text-[13px] text-[#F26571] focus:text-[#F26571]"
                 onClick={() => signOut({ callbackUrl: '/landing' })}
