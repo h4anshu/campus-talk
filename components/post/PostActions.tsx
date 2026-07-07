@@ -13,6 +13,7 @@ import {
 import { useSavePost } from '@/hooks/useSavePost';
 import { useDeletePost } from '@/hooks/useDeletePost';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import ReportPostDialog from '@/components/shared/ReportPostDialog';
 
 interface PostActionsProps {
   postId: string;
@@ -35,6 +36,7 @@ export default function PostActions({
   const { mutate: toggleSaved } = useSavePost(postId);
   const { mutate: deletePost, isPending: deleting } = useDeletePost(postId);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
@@ -106,8 +108,14 @@ export default function PostActions({
           className="w-[160px] border-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-primary)]"
           onClick={stop}
         >
-          <DropdownMenuItem className="gap-2 text-[12px]" onClick={() => toast('Post reported')}>
-            <Flag className="h-3.5 w-3.5" /> Report
+          <DropdownMenuItem
+            className="gap-2 text-[12px] text-[var(--danger)] focus:text-[var(--danger)]"
+            onClick={(e) => {
+              stop(e);
+              setReportOpen(true);
+            }}
+          >
+            <Flag className="h-3.5 w-3.5" /> Report post
           </DropdownMenuItem>
           <DropdownMenuItem className="gap-2 text-[12px]" onClick={() => toast('Post hidden')}>
             <EyeOff className="h-3.5 w-3.5" /> Hide post
@@ -137,6 +145,8 @@ export default function PostActions({
           onConfirm={handleDelete}
         />
       )}
+
+      <ReportPostDialog open={reportOpen} onOpenChange={setReportOpen} postId={postId} />
     </div>
   );
 }

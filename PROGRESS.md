@@ -4,6 +4,28 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Feature — Report Post modal
+
+**Status:** Complete, typechecked, built, headless-verified.
+
+Replaced the `PostActions` "···" menu's Report item — previously a bare `toast('Post reported')` no-op — with a real modal. New `components/shared/ReportPostDialog.tsx`: 5 selectable reasons (spam, harassment, inappropriate, off-topic, other) with a custom radio-row list, an "Other" reason revealing a required textarea, and a submit button gated on a valid selection.
+
+**Restyled the task's supplied reference implementation onto this codebase's actual conventions instead of using it verbatim** — the given snippet used ad-hoc inline `style={{...}}` for the selected/unselected reason-row colors and one-off `rgba(77,142,245,0.06 / 0.5)` values that don't match any defined token. CLAUDE.md §12 bans inline styles for anything but dynamic values and bans new colors without instruction, so rebuilt the same interaction using the theme's existing `--accent-dim`/`--accent-border` tokens and Tailwind classes instead. Also matched the file structure every other dialog in the app already uses (`ConfirmDialog`, `ContactAdminDialog`, `CreatePostDialog`: flat `DialogTitle` with its own border/padding, no `DialogHeader` wrapper; `bg-[var(--bg-elevated)]` + `border-[var(--border-med)]` on `DialogContent`; identical Cancel/primary button classes; `onOpenChange={(v) => { if (!v) handleClose() }}` so ESC/overlay-click also resets form state) rather than the slightly different structure in the reference snippet — same behavior, but now indistinguishable from the app's other modals instead of introducing a second dialog "dialect."
+
+**Wired into `PostActions.tsx`:** added `reportOpen` state and a `<ReportPostDialog>` render alongside the existing `ConfirmDialog`. The Report item now calls `stop(e)` before opening (matching the Delete item's existing pattern, since these cards are wrapped in a card-level `router.push` click handler) and got `text-[var(--danger)]` to match Delete's styling, per the task's explicit instruction — flagging, not fixing, that `--danger` text is a known ~3.85:1 contrast miss on `bg-elevated` (Batch 2A only brightened this exact pattern for Navbar's "Log out"; out of scope to also patch here without being asked).
+
+No backend endpoint exists yet (none was requested) — submit does a 600ms fake delay then a success toast, same placeholder pattern used elsewhere in the app pre-backend. `postId` is threaded through unused for when a real `/api/reports` endpoint gets built.
+
+**Verified:**
+- `npx tsc --noEmit` — zero errors
+- `next build` — succeeds, all 32 routes
+- Headless Chrome against a temporary `/dev-preview` route (deleted before finishing; `puppeteer` installed as a temp devDependency then removed, `pnpm-lock.yaml`/`package.json`/`pnpm-workspace.yaml` confirmed clean afterward) rendering `ReportPostDialog` directly: selecting a reason enables Submit; selecting "Other" reveals the textarea and keeps Submit disabled until text is entered; typing enables it; Submit shows the success toast and closes the dialog; reopening after Cancel confirms all state (selection + textarea) resets; no horizontal overflow at 1280px
+- Deleting the temp route left stale entries in `.next`'s generated route types that `tsc` flagged — cleared `.next` and re-ran both `tsc` and `next build` clean, confirming the 32-route count matches pre-session state exactly
+
+**Not verified — same standing constraint as every phase:** the actual authenticated click-through (opening the real menu on a live post card, not the isolated dev-preview harness) needs a real login this environment doesn't have.
+
+---
+
 ## Fix — audit.md items 8-9 (Batch 2B: theme hygiene + animation consistency)
 
 **Status:** Complete, typechecked, built, pushed to `main`. Pre-verified findings, so a precise-fix pass rather than a fresh investigation.
