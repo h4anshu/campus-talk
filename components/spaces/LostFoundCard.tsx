@@ -10,7 +10,7 @@ import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
 import TagPill from '@/components/shared/TagPill';
 import MediaBadge from '@/components/shared/MediaBadge';
-import MediaBlock from '@/components/shared/MediaBlock';
+import { MediaBlock } from '@/components/shared/MediaBlock';
 
 const STATUS_STYLES: Record<string, string> = {
   LOST: 'border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]',
@@ -58,7 +58,13 @@ export default function LostFoundCard({ post }: LostFoundCardProps) {
           {stripHtmlTags(post.body)}
         </p>
 
-        <MediaBlock media={post.media} variant="feed" />
+        {post.media && post.media.length > 0 && (
+          <MediaBlock
+            media={post.media}
+            maxHeight={260}
+            className="mt-2 rounded-[8px] overflow-hidden"
+          />
+        )}
 
         {post.location && (
           <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-secondary)]">

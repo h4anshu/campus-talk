@@ -9,7 +9,7 @@ import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
 import TagPill from '@/components/shared/TagPill';
 import MediaBadge from '@/components/shared/MediaBadge';
-import MediaBlock from '@/components/shared/MediaBlock';
+import { MediaBlock } from '@/components/shared/MediaBlock';
 
 const PRIORITY_STYLES: Record<string, string> = {
   Critical: 'border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]',
@@ -60,7 +60,13 @@ export default function AnnouncementCard({ post }: AnnouncementCardProps) {
         {stripHtmlTags(post.body)}
       </p>
 
-      <MediaBlock media={post.media} variant="feed" />
+      {post.media && post.media.length > 0 && (
+        <MediaBlock
+          media={post.media}
+          maxHeight={260}
+          className="mt-2 rounded-[8px] overflow-hidden"
+        />
+      )}
 
       {post.tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">

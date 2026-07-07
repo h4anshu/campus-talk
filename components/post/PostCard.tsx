@@ -11,7 +11,7 @@ import PostActions from '@/components/post/PostActions';
 import ReactionButtons from '@/components/post/ReactionButtons';
 import CollabSlotBar from '@/components/post/CollabSlotBar';
 import TagPill from '@/components/shared/TagPill';
-import MediaBlock from '@/components/shared/MediaBlock';
+import { MediaBlock } from '@/components/shared/MediaBlock';
 
 interface PostCardProps {
   post: MockPost;
@@ -55,7 +55,13 @@ export default function PostCard({ post }: PostCardProps) {
           {stripHtmlTags(post.body)}
         </p>
 
-        <MediaBlock media={post.media} variant="feed" />
+        {post.media && post.media.length > 0 && (
+          <MediaBlock
+            media={post.media}
+            maxHeight={280}
+            className="mt-2 rounded-[8px] overflow-hidden"
+          />
+        )}
 
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

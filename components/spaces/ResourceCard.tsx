@@ -18,7 +18,7 @@ import { stripHtmlTags } from '@/lib/utils';
 import PostMeta from '@/components/post/PostMeta';
 import PostActions from '@/components/post/PostActions';
 import TagPill from '@/components/shared/TagPill';
-import MediaBlock from '@/components/shared/MediaBlock';
+import { MediaBlock } from '@/components/shared/MediaBlock';
 
 const FILE_ICONS: Record<string, LucideIcon> = {
   pdf: FileText,
@@ -88,7 +88,13 @@ export default function ResourceCard({ post }: ResourceCardProps) {
           {stripHtmlTags(post.body)}
         </p>
 
-        <MediaBlock media={post.media} variant="feed" />
+        {post.media && post.media.length > 0 && (
+          <MediaBlock
+            media={post.media}
+            maxHeight={260}
+            className="mt-2 rounded-[8px] overflow-hidden"
+          />
+        )}
 
         {post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

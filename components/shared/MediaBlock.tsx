@@ -1,92 +1,96 @@
 'use client';
 
 import { useState } from 'react';
-import { Play } from 'lucide-react';
-import type { MockPost } from '@/lib/mock/posts';
+
+interface MediaItem {
+  type: string;
+  url: string;
+  thumbnailUrl?: string | null;
+  providerId?: string | null;
+}
 
 interface MediaBlockProps {
-  media?: MockPost['media'];
-  /** feed cards cap at 340px; the post detail page gets more room (500px). */
-  variant?: 'feed' | 'detail';
+  media?: MediaItem[];
+  maxHeight?: number;
+  className?: string;
 }
 
-/**
- * Modern-Reddit-style hero media: full card width, never cropped or
- * stretched. The height is capped (340/500px) and floored (140px, so a
- * short/wide image doesn't look tiny) but otherwise follows the image's own
- * aspect ratio — object-contain scales the actual pixels to fit inside
- * that box, letterboxing on whichever axis has slack against the
- * background color rather than cropping (cover) or distorting (fill).
- * Drive links deliberately don't get this treatment — they're not a
- * visual asset, so the compact file-icon card elsewhere is enough.
- */
-export default function MediaBlock({ media, variant = 'feed' }: MediaBlockProps) {
-  const [playing, setPlaying] = useState(false);
-
-  if (!media || media.length === 0) return null;
-
-  const image = media.find((m) => m.type === 'image');
+export function MediaBlock({ media = [], maxHeight = 280, className = '' }: MediaBlockProps) {
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const images = media.filter((m) => m.type === 'image');
   const youtube = media.find((m) => m.type === 'youtube');
-  const maxHeightClass = variant === 'detail' ? 'max-h-[500px]' : 'max-h-[340px]';
 
-  if (image) {
-    return (
-      <div className="mt-2 flex w-full items-center justify-center overflow-hidden rounded-[9px] border-[0.5px] border-[var(--border)] bg-[var(--bg-page)]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image.url}
-          alt=""
-          className={`w-full min-h-[140px] ${maxHeightClass} object-contain`}
-        />
-      </div>
-    );
-  }
+  if (images.length === 0 && !youtube) return null;
 
-  if (youtube?.providerId) {
-    if (playing) {
-      return (
+  return (
+    <div className={className}>
+      {images.length > 0 && (
         <div
-          className={`mt-2 w-full overflow-hidden rounded-[9px] border-[0.5px] border-[var(--border)] ${maxHeightClass}`}
+          className="relative w-full rounded-[8px] overflow-hidden border-[0.5px] border-[var(--border)]"
+          style={{ background: 'var(--bg-page)', maxHeight }}
         >
-          <div className="relative aspect-video w-full max-w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={images[0].url}
+            alt=""
+            className="w-full"
+            style={{ objectFit: 'contain', maxHeight, display: 'block' }}
+          />
+          {images.length > 1 && (
+            <div
+              className="absolute bottom-2 right-2 text-[11px] px-2 py-[2px] rounded-[4px]"
+              style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}
+            >
+              +{images.length - 1} more
+            </div>
+          )}
+        </div>
+      )}
+      {!images.length && youtube && (
+        <div
+          className="relative w-full rounded-[8px] overflow-hidden border-[0.5px] border-[var(--border)]"
+          style={{ background: '#000', maxHeight }}
+        >
+          {playingId === youtube.providerId ? (
             <iframe
               src={`https://www.youtube.com/embed/${youtube.providerId}?autoplay=1`}
-              title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              className="w-full"
+              style={{ height: Math.min(maxHeight, 220), border: 0 }}
+              allow="autoplay; encrypted-media"
               allowFullScreen
-              className="absolute inset-0 h-full w-full"
             />
-          </div>
+          ) : (
+            <div
+              className="relative w-full cursor-pointer"
+              style={{ height: Math.min(maxHeight, 220) }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setPlayingId(youtube.providerId ?? null);
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={youtube.thumbnailUrl ?? `https://img.youtube.com/vi/${youtube.providerId}/hqdefault.jpg`}
+                alt="Video thumbnail"
+                className="w-full h-full"
+                style={{ objectFit: 'cover' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.7)' }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      );
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setPlaying(true);
-        }}
-        aria-label="Play video"
-        className="relative mt-2 flex w-full items-center justify-center overflow-hidden rounded-[9px] border-[0.5px] border-[var(--border)] bg-[var(--bg-page)]"
-      >
-        {youtube.thumbnailUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={youtube.thumbnailUrl}
-            alt="YouTube video thumbnail"
-            className={`w-full min-h-[140px] ${maxHeightClass} object-contain`}
-          />
-        )}
-        <span className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/60">
-            <Play className="h-5 w-5 fill-white text-white" />
-          </span>
-        </span>
-      </button>
-    );
-  }
-
-  return null;
+      )}
+    </div>
+  );
 }
+
+export default MediaBlock;
