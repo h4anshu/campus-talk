@@ -10,6 +10,7 @@ interface CommentComposerProps {
   onCancel?: () => void;
   placeholder?: string;
   submitLabel?: string;
+  locked?: boolean;
 }
 
 export default function CommentComposer({
@@ -17,11 +18,13 @@ export default function CommentComposer({
   onCancel,
   placeholder = 'Write a reply...',
   submitLabel = 'Reply',
+  locked = false,
 }: CommentComposerProps) {
   const { data: session } = useSession();
   const [value, setValue] = useState('');
 
   const submit = () => {
+    if (locked) return;
     const trimmed = value.trim();
     if (!trimmed) return;
     onSubmit(trimmed);
@@ -29,29 +32,32 @@ export default function CommentComposer({
   };
 
   return (
-    <div className="mt-2 flex gap-2">
+    <div className={`mt-2 flex gap-2 ${locked ? 'opacity-50' : ''}`}>
       <Avatar initials={getInitials(session?.user?.name)} color={getAvatarColor(session?.user?.id)} size={24} />
       <div className="flex-1">
         <textarea
-          autoFocus
+          autoFocus={!locked}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
           rows={2}
-          className="w-full resize-none rounded border-[0.5px] border-[var(--border-med)] bg-[var(--bg-panel)] px-2.5 py-2 text-[12px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
+          disabled={locked}
+          className={`w-full resize-none rounded border-[0.5px] border-[var(--border-med)] bg-[var(--bg-panel)] px-2.5 py-2 text-[12px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] ${locked ? 'cursor-not-allowed' : ''}`}
         />
         <div className="mt-1.5 flex justify-end gap-2">
           {onCancel && (
             <button
               onClick={onCancel}
-              className="rounded px-2.5 py-1 text-[11px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+              disabled={locked}
+              className="rounded px-2.5 py-1 text-[11px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)] disabled:cursor-not-allowed"
             >
               Cancel
             </button>
           )}
           <button
             onClick={submit}
-            className="rounded bg-[var(--accent-fill)] px-3 py-1 text-[11px] font-medium text-white transition-opacity hover:opacity-90"
+            disabled={locked}
+            className="rounded bg-[var(--accent-fill)] px-3 py-1 text-[11px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed"
           >
             {submitLabel}
           </button>

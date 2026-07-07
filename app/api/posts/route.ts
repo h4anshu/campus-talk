@@ -87,6 +87,13 @@ export async function POST(req: NextRequest) {
           space: data.type === 'SPACE' ? (keyToEnum(data.space!) as SpaceType) : null,
           anonymous: data.anonymous ?? false,
           status,
+          collabTotalSlots: data.space === 'collaboration' ? (data.collabTotalSlots ?? null) : null,
+          collabFilledSlots: data.space === 'collaboration' ? 0 : null,
+          collabSkills: data.space === 'collaboration' ? (data.collabSkills ?? []) : [],
+          collabProjectType: data.space === 'collaboration' ? (data.collabProjectType ?? null) : null,
+          collabDeadline: (data.space === 'collaboration' && data.collabDeadline) ? new Date(data.collabDeadline) : null,
+          collabContact: data.space === 'collaboration' ? (data.collabContact ?? null) : null,
+          collabIsClosed: false,
           authorId: session.user.id,
           collegeId: session.user.collegeId,
           tags: {

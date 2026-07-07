@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Check, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
@@ -45,6 +46,15 @@ export default function CreatePostDialog() {
   const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Collaboration state
+  const [collabProjectType, setCollabProjectType] = useState<string>('');
+  const [collabTotalSlots, setCollabTotalSlots] = useState<string>('');
+  const [collabSkills, setCollabSkills] = useState<string[]>([]);
+  const [skillInput, setSkillInput] = useState('');
+  const [collabDeadline, setCollabDeadline] = useState<string>('');
+  const [collabContactType, setCollabContactType] = useState<string>('WhatsApp');
+  const [collabContactValue, setCollabContactValue] = useState<string>('');
+
   const hasContext = context.type !== null;
 
   // The Discussions "Events" topic shares its route param (`events`) with
@@ -74,6 +84,13 @@ export default function CreatePostDialog() {
     setBody('');
     setDraftState('idle');
     setPendingMedia([]);
+    setCollabProjectType('');
+    setCollabTotalSlots('');
+    setCollabSkills([]);
+    setSkillInput('');
+    setCollabDeadline('');
+    setCollabContactType('WhatsApp');
+    setCollabContactValue('');
     clearContext();
   };
 
@@ -91,6 +108,14 @@ export default function CreatePostDialog() {
   const handlePost = async () => {
     if (!canPost) return;
 
+    const resolvedSpace = hasContext ? context.slug : destination;
+    const isCollaboration = resolvedSpace === 'collaboration';
+
+    if (isCollaboration && !collabTotalSlots) {
+      toast.error('Please select how many teammates you need.');
+      return;
+    }
+
     const payload = hasContext
       ? context.type === 'discussion'
         ? { title, body, type: 'DISCUSSION' as const, topic: context.slug!, tags: [], anonymous: false }
@@ -105,6 +130,16 @@ export default function CreatePostDialog() {
             tags: [],
             anonymous: destination === 'confession',
           };
+
+    if (isCollaboration) {
+      Object.assign(payload, {
+        collabTotalSlots: parseInt(collabTotalSlots, 10),
+        collabSkills,
+        collabProjectType: collabProjectType || null,
+        collabDeadline: collabDeadline ? new Date(collabDeadline).toISOString() : null,
+        collabContact: collabContactValue ? `${collabContactType}: ${collabContactValue}` : null,
+      });
+    }
 
     let post;
     try {
@@ -266,6 +301,132 @@ export default function CreatePostDialog() {
               placeholder="Give your post a clear title..."
               className="mt-4 w-full border-b-[0.5px] border-[var(--border)] bg-transparent pb-2.5 text-[15px] font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
             />
+
+            {(hasContext ? context.slug : destination) === 'collaboration' && (
+              <div className="mt-4 flex flex-col gap-4 border-b-[0.5px] border-[var(--border)] pb-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-[var(--text-secondary)]">Project type</label>
+                    <Select value={collabProjectType} onValueChange={setCollabProjectType}>
+                      <SelectTrigger className="h-[34px] w-full border-[var(--border)] bg-[var(--bg-panel)] text-[12px] text-[var(--text-primary)]">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Hackathon', 'Research paper', 'College project', 'Startup idea', 'Open source'].map((type) => (
+                          <SelectItem key={type} value={type} className="text-[12px]">{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-[var(--text-secondary)]">Team slots needed</label>
+                    <Select value={collabTotalSlots} onValueChange={setCollabTotalSlots}>
+                      <SelectTrigger className="h-[34px] w-full border-[var(--border)] bg-[var(--bg-panel)] text-[12px] text-[var(--text-primary)]">
+                        <SelectValue placeholder="How many people?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5, 6].map((num) => (
+                          <SelectItem key={num} value={num.toString()} className="text-[12px]">{num}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 flex items-center justify-between text-[11px] font-medium text-[var(--text-secondary)]">
+                    <span>Skills you're looking for</span>
+                    <span className="text-[var(--text-muted)]">{collabSkills.length}/8</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={skillInput}
+                      onChange={(e) => setSkillInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = skillInput.trim();
+                          if (val && val.length <= 20 && collabSkills.length < 8 && !collabSkills.includes(val)) {
+                            setCollabSkills([...collabSkills, val]);
+                            setSkillInput('');
+                          }
+                        }
+                      }}
+                      placeholder="e.g. React, UI/UX"
+                      className="h-[34px] flex-1 rounded-[8px] border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2.5 text-[12px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const val = skillInput.trim();
+                        if (val && val.length <= 20 && collabSkills.length < 8 && !collabSkills.includes(val)) {
+                          setCollabSkills([...collabSkills, val]);
+                          setSkillInput('');
+                        }
+                      }}
+                      disabled={!skillInput.trim() || collabSkills.length >= 8}
+                      className="h-[34px] rounded-[8px] bg-[var(--accent-fill)] px-3 text-[11px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {collabSkills.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {collabSkills.map((skill) => (
+                        <div key={skill} className="flex items-center gap-1 rounded-full border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[11px] text-[var(--accent)]">
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => setCollabSkills(collabSkills.filter((s) => s !== skill))}
+                            className="text-[var(--accent)] hover:text-red-500"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-[var(--text-secondary)]">Join deadline</label>
+                    <input
+                      type="date"
+                      value={collabDeadline}
+                      onChange={(e) => setCollabDeadline(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="h-[34px] w-full rounded-[8px] border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-[var(--text-secondary)]">Contact</label>
+                    <div className="flex gap-1">
+                      <div className="w-[110px]">
+                        <Select value={collabContactType} onValueChange={setCollabContactType}>
+                          <SelectTrigger className="h-[34px] border-[var(--border)] bg-[var(--bg-panel)] text-[12px] text-[var(--text-primary)]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['WhatsApp', 'Instagram', 'College email'].map((c) => (
+                              <SelectItem key={c} value={c} className="text-[12px]">{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <input
+                        type="text"
+                        value={collabContactValue}
+                        onChange={(e) => setCollabContactValue(e.target.value)}
+                        placeholder="ID / Number"
+                        className="h-[34px] flex-1 rounded-[8px] border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2.5 text-[12px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mt-3">
               <RichTextEditor

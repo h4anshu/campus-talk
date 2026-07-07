@@ -13,6 +13,11 @@ export const createPostSchema = z
     space: z.enum(spaceKeyTuple).optional(),
     tags: z.array(z.string().trim().min(1).max(30)).max(8).default([]),
     anonymous: z.boolean().optional().default(false),
+    collabTotalSlots: z.number().int().min(1).max(100).optional().nullable(),
+    collabSkills: z.array(z.string()).max(8).optional(),
+    collabProjectType: z.string().optional().nullable(),
+    collabDeadline: z.string().optional().nullable(),
+    collabContact: z.string().optional().nullable(),
   })
   .refine((data) => (data.type === 'DISCUSSION' ? !!data.topic : true), {
     message: 'A discussion post needs a topic',

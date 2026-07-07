@@ -156,6 +156,13 @@ model Post {
   anonymous Boolean    @default(false)
   pinned    Boolean    @default(false)
   locked    Boolean    @default(false)
+  collabTotalSlots  Int?
+  collabFilledSlots Int?       @default(0)
+  collabSkills      String[]   @default([])
+  collabProjectType String?
+  collabDeadline    DateTime?
+  collabContact     String?
+  collabIsClosed    Boolean    @default(false)
   authorId  String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt

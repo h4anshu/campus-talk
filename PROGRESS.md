@@ -2,6 +2,27 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Closed out — Collaboration Post Features (Schema, API, UI)
+
+**Status:** Completed, verified, typechecked, and deployed.
+
+**Key work done:**
+1. **Schema & Models:** Added `collabTotalSlots`, `collabFilledSlots`, `collabSkills`, `collabProjectType`, `collabDeadline`, `collabContact`, and `collabIsClosed` to the `Post` model. Ran `prisma migrate dev` to generate migration `add_collab_fields` and applied it successfully to the database.
+2. **Serializer & Validation:** Updated `serializePost` to map these new collaboration fields cleanly for the client (including converting `collabDeadline` to an ISO string). Modified `createPostSchema` using Zod for client-side and server-side validation.
+3. **API Logic:** Implemented `POST /api/posts` updates to read collaboration fields from the request body. Created a new `PATCH /api/posts/[id]/collab` endpoint to handle slot increments (using `increment: 1`), closing posts, and applying the `COLLAB_SLOT_FILLED` reputation event to the OP. Handled schema drift during database migration safely via explicit reset and push.
+4. **Custom Hooks:** Created the React Query hook `useCollabUpdate` (`hooks/useCollabUpdate.ts`) to drive the PATCH calls and perform optimistic invalidations on `queryClient.setQueryData`.
+5. **Slot Bar & Controls (OP UI):** Overhauled `CollabSlotBar` to separate the OP (post author) view from the visitor view. OP sees active controls to increment slots ("+1 filled") and a "Mark team full & close" toggle with a red `Lock` icon. Visitors see the list of open slots with a "Comment to join" hint.
+6. **Information Box (PostDetail):** Added a new persistent Info Box component inside `PostDetail.tsx` displaying Team slots, required skills, Project type, Deadline, and Contact info using an organized grid structure.
+7. **Comment composer locking:** Locked down `CommentComposer.tsx` when `post.collabIsClosed` is true, disabling the input field, rendering "Comments locked — this team is complete", and graying out the submit button.
+8. **Dynamic Post Creation (CreatePostDialog):** Overhauled `CreatePostDialog.tsx` to detect `space === 'collaboration'` and dynamically inject Row 1 (Project Type, Slots), Row 2 (Tag-input for Skills), and Row 3 (Deadline, Contact type/value) inputs right above the editor. Implemented robust state handling for skills (max 8) and client-side validation to ensure slots are specified. Used `shadcn Select` component and installed `select` via `npx shadcn@latest add select`.
+9. **Feed integration:** Updated `CollaborationCard` and `PostCard` to display the "Comment to join" action button and dynamically switch to a locked amber "Team full" badge when the collaboration post is closed.
+
+**Verified:**
+- `npx tsc --noEmit` — Zero errors (successfully verified after regenerating Prisma Client schemas).
+- `npm run build` — Completed successfully, Next.js routes statically generated and compiled properly.
+
+---
+
 ## Closed out — Fix Feed Image Visibility & Vercel Build Errors
 
 **Status:** Completed, verified, typechecked, and deployed.

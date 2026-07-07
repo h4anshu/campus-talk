@@ -56,6 +56,13 @@ export interface MockPost {
   // for card-view thumbnails/icons, separate from any <img>/embed card
   // already embedded in the sanitized `body` HTML itself.
   media?: MockPostMedia[];
+  collabTotalSlots?: number | null;
+  collabFilledSlots?: number | null;
+  collabSkills?: string[];
+  collabProjectType?: string | null;
+  collabDeadline?: string | null;
+  collabContact?: string | null;
+  collabIsClosed?: boolean;
 }
 
 export interface MockPostMedia {

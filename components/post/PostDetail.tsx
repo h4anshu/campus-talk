@@ -77,8 +77,36 @@ export default function PostDetail({ post }: PostDetailProps) {
           </div>
         )}
 
-        {isCollaboration && post.slots && (
-          <CollabSlotBar slots={post.slots} skills={post.skills ?? []} />
+        {isCollaboration && (
+          <div className="mt-4">
+            <div className="mb-3 rounded-[8px] border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-[12px]">
+              <div className="grid grid-cols-[100px_1fr] gap-2">
+                <div className="text-[var(--text-muted)]">Team slots</div>
+                <div className="font-medium text-[var(--text-secondary)]">{post.collabTotalSlots || (post.slots?.total ?? 'Open')}</div>
+                
+                <div className="text-[var(--text-muted)]">Skills needed</div>
+                <div className="font-medium text-[var(--text-secondary)]">{(post.collabSkills?.length ? post.collabSkills : post.skills)?.join(', ') || 'Any'}</div>
+                
+                <div className="text-[var(--text-muted)]">Project type</div>
+                <div className="font-medium text-[var(--text-secondary)]">{post.collabProjectType || post.projectType || 'Not specified'}</div>
+                
+                <div className="text-[var(--text-muted)]">Deadline</div>
+                <div className="font-medium text-[var(--text-secondary)]">
+                  {post.collabDeadline 
+                    ? new Date(post.collabDeadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) 
+                    : 'Flexible'}
+                </div>
+                
+                <div className="text-[var(--text-muted)]">Contact info</div>
+                <div className="font-medium text-[var(--text-secondary)]">
+                  {post.collabContact ? (
+                    <span className="text-[var(--accent)]">{post.collabContact}</span>
+                  ) : 'Not specified'}
+                </div>
+              </div>
+            </div>
+            <CollabSlotBar post={post} isOP={post.viewerIsAuthor} />
+          </div>
         )}
 
         {isConfession && <ReactionButtons />}

@@ -128,6 +128,13 @@ export function serializePost(post: PostForSerialization, viewerId: string): Moc
     viewerIsAuthor: post.authorId === viewerId,
     priority: (post.priority as MockPost['priority']) ?? undefined,
     media,
+    collabTotalSlots: post.collabTotalSlots,
+    collabFilledSlots: post.collabFilledSlots,
+    collabSkills: post.collabSkills,
+    collabProjectType: post.collabProjectType,
+    collabDeadline: post.collabDeadline ? post.collabDeadline.toISOString() : null,
+    collabContact: post.collabContact,
+    collabIsClosed: post.collabIsClosed,
   };
 }
 

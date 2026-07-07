@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { MessageSquarePlus, Lock } from 'lucide-react';
 import type { MockPost } from '@/lib/mock/posts';
 import { stripHtmlTags } from '@/lib/utils';
 import VoteBlock from '@/components/post/VoteBlock';
@@ -71,8 +72,27 @@ export default function PostCard({ post }: PostCardProps) {
           </div>
         )}
 
-        {isCollaboration && post.slots && (
-          <CollabSlotBar slots={post.slots} skills={post.skills ?? []} />
+        {isCollaboration && (
+          <div className="mt-2.5">
+            <CollabSlotBar post={post} />
+            <div className="mt-3">
+              {post.collabIsClosed ? (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--warning-border)] bg-[var(--warning-dim)] px-2.5 py-1 text-[11px] font-medium text-[var(--warning)]">
+                  <Lock className="h-3 w-3" /> Team full
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/post/${post.id}`);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded bg-[var(--accent-fill)] px-2.5 py-1 text-[11px] font-medium text-white transition-opacity hover:opacity-90"
+                >
+                  <MessageSquarePlus className="h-3.5 w-3.5" /> Comment to join
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {isConfession && <ReactionButtons />}

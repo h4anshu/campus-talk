@@ -48,10 +48,17 @@ export default function PostPage({ params }: PostPageProps) {
           <h2 className="mb-3 text-[16px] font-medium text-[var(--text-primary)]">Comments</h2>
         )}
 
+        {post.collabIsClosed && (
+          <div className="mb-2 text-[12px] text-[var(--text-muted)]">
+            Comments locked — this team is complete.
+          </div>
+        )}
+
         <CommentComposer
           placeholder={post.type === 'DISCUSSION' ? 'Write an answer...' : 'Write a comment...'}
           submitLabel={post.type === 'DISCUSSION' ? 'Post answer' : 'Post comment'}
           onSubmit={(body) => createComment({ postId: post.id, body })}
+          locked={post.collabIsClosed}
         />
 
         <div className="mt-4">
