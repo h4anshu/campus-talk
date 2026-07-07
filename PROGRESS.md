@@ -4,6 +4,20 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Fix — Update Resources section description
+
+**Status:** Complete, typechecked. Single-string change.
+
+Updated `SECTION_META.resources.description` in `lib/constants.ts` to the new copy (mentions Google Drive/OneDrive links, YouTube auto-embed, no direct file uploads, admin approval).
+
+**Checked for the task's assumed "second place" and found none.** Grepped `components/post/` + `lib/` for `resources`/`Resources`: `CreatePostDialog.tsx` only references the key `'resources'` (destination tab list) and reads `sectionMeta.description` — it has no Resources-specific hardcoded string of its own; its "Posting in {label}..." banner and admin-approval notice are generic templates driven by `context.requiresApproval`/`isAnonymous`, not by section-specific copy. `SECTION_META.resources.description` is consumed in exactly one place, `SectionBanner.tsx:72`, which is what both `/spaces/resources`'s intro banner and (per the previous phase) any Resources-context `CreatePostDialog` banner would read if it referenced it — so there was only ever one string to update, not two.
+
+**Verified:** `npx tsc --noEmit` — zero errors. Not re-verified in a browser — this is a pure literal-string edit to a field already proven to render correctly via `SectionBanner` in the section-banner phase's headless check; no logic changed.
+
+**Deploy:** pushed to `main`; no manual `vercel --prod` per the standing "push to GitHub only" direction.
+
+---
+
 ## Feature — Context-aware post creation (dialog locks to current section)
 
 **Status:** Complete, typechecked, built, headless-verified across all 6 verification scenarios.

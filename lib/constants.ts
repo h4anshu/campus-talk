@@ -49,7 +49,7 @@ export const SECTION_META: Record<
     color: '#4D8EF5',
     borderColor: 'rgba(77,142,245,0.2)',
     description:
-      'Share notes, PYQs, assignments, and Drive links with your batch. Posts go live after admin approval — keep it useful, not spammy.',
+      'Share anything useful with your batch — upload images directly or drop links from Google Drive, OneDrive, or any cloud storage. Paste a YouTube link and it embeds automatically. No direct file uploads to keep the platform fast. Posts go live after admin approval.',
   },
   'lost-found': {
     icon: 'map-pin',
