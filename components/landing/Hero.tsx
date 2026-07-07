@@ -80,7 +80,7 @@ export default function Hero() {
   const router = useRouter();
 
   return (
-    <section className="relative flex items-center overflow-hidden bg-[#0C0E17] py-16 md:h-[calc(100vh-60px)] md:py-0">
+    <section className="relative flex items-center overflow-hidden bg-[var(--bg-page)] py-16 md:h-[calc(100vh-60px)] md:py-0">
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_-10%,rgba(29,78,216,0.18)_0%,transparent_55%)]" />
 

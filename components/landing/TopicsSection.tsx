@@ -85,7 +85,7 @@ export default function TopicsSection() {
                   <motion.div
                     whileHover={{ y: -4 }}
                     transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-                    className="flex items-center gap-3.5 rounded-[14px] border-[0.5px] border-[var(--border)] bg-[#161929] p-4 transition-[border-color,box-shadow] duration-300 group-hover:border-[var(--accent-border)] group-hover:shadow-[0_0_0_1px_var(--accent-border),0_10px_28px_-14px_rgba(77,142,245,0.6)] group-focus-visible:border-[var(--accent-border)]"
+                    className="flex items-center gap-3.5 rounded-[14px] border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-[border-color,box-shadow] duration-300 group-hover:border-[var(--accent-border)] group-hover:shadow-[0_0_0_1px_var(--accent-border),0_10px_28px_-14px_rgba(77,142,245,0.6)] group-focus-visible:border-[var(--accent-border)]"
                   >
                     {/* Icon badge (40x40) — subtle float loop */}
                     <motion.div

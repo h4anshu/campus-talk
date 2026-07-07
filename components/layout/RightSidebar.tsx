@@ -85,8 +85,8 @@ export default function RightSidebar() {
       <div className="rounded border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2.5 py-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--success)] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--success)]"></span>
           </span>
           <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Live Pulse</span>
         </div>

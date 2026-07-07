@@ -56,7 +56,7 @@ export default function WhyNotWhatsapp() {
             animate={inView ? 'visible' : 'hidden'}
             whileHover={{ y: -4 }}
             transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-            className="rounded-[16px] border-[0.5px] border-[var(--border)] bg-[#161929] p-6 transition-[border-color,box-shadow] duration-300 hover:border-[var(--danger-border)] hover:shadow-[0_10px_30px_-14px_rgba(220,53,69,0.5)]"
+            className="rounded-[16px] border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-6 transition-[border-color,box-shadow] duration-300 hover:border-[var(--danger-border)] hover:shadow-[0_10px_30px_-14px_rgba(220,53,69,0.5)]"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[rgba(37,211,102,0.12)] text-[#25D366]">
@@ -87,7 +87,7 @@ export default function WhyNotWhatsapp() {
             animate={inView ? 'visible' : 'hidden'}
             whileHover={{ y: -4 }}
             transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-            className="rounded-[16px] border-[0.5px] border-[var(--success-border)] bg-[#161929] p-6 transition-[border-color,box-shadow] duration-300 hover:border-[var(--success)] hover:shadow-[0_0_0_1px_var(--success-border),0_10px_30px_-14px_rgba(29,184,116,0.5)]"
+            className="rounded-[16px] border-[0.5px] border-[var(--success-border)] bg-[var(--bg-surface)] p-6 transition-[border-color,box-shadow] duration-300 hover:border-[var(--success)] hover:shadow-[0_0_0_1px_var(--success-border),0_10px_30px_-14px_rgba(29,184,116,0.5)]"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--success-dim)] text-[var(--success)]">

@@ -144,7 +144,7 @@ export default function SpacesSection() {
                     whileHover={{ y: -4 }}
                     transition={{ type: 'spring', stiffness: 320, damping: 22 }}
                     style={{ ['--space-color' as string]: meta.color }}
-                    className="flex h-full flex-col rounded-[16px] border-[0.5px] border-[var(--border)] bg-[#161929] p-5 transition-[border-color,box-shadow] duration-300 group-hover:border-[var(--space-color)] group-hover:shadow-[0_0_0_1px_var(--space-color),0_10px_30px_-12px_var(--space-color)] group-focus-visible:border-[var(--space-color)]"
+                    className="flex h-full flex-col rounded-[16px] border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-5 transition-[border-color,box-shadow] duration-300 group-hover:border-[var(--space-color)] group-hover:shadow-[0_0_0_1px_var(--space-color),0_10px_30px_-12px_var(--space-color)] group-focus-visible:border-[var(--space-color)]"
                   >
                     {/* Icon badge (48x48) — subtle float loop */}
                     <motion.div

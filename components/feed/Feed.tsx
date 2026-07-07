@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import type { SortOption } from '@/lib/constants';
 import { usePosts } from '@/hooks/usePosts';
 import SortBar from '@/components/feed/SortBar';
 import CreatePostBar from '@/components/feed/CreatePostBar';
 import PostCard from '@/components/post/PostCard';
 import EmptyState from '@/components/shared/EmptyState';
+import { StaggeredList, StaggeredItem } from '@/components/shared/StaggeredList';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface FeedProps {
@@ -26,24 +26,23 @@ export default function Feed({ topic, space }: FeedProps) {
       <div className="mx-auto w-full max-w-[720px]">
         <CreatePostBar />
 
-        <div className="mt-4 flex flex-col gap-3">
+        <div className="mt-4">
           {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-[132px] rounded-card bg-[var(--bg-surface)]" />
-            ))
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-[132px] rounded-card bg-[var(--bg-surface)]" />
+              ))}
+            </div>
           ) : isError ? (
             <EmptyState title="Couldn't load posts" description="Something went wrong. Try refreshing the page." />
           ) : posts && posts.length > 0 ? (
-            posts.map((post, i) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-              >
-                <PostCard post={post} />
-              </motion.div>
-            ))
+            <StaggeredList className="flex flex-col gap-3">
+              {posts.map((post) => (
+                <StaggeredItem key={post.id}>
+                  <PostCard post={post} />
+                </StaggeredItem>
+              ))}
+            </StaggeredList>
           ) : (
             <EmptyState title="No posts yet" description="Be the first to post here." />
           )}

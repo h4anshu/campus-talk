@@ -13,6 +13,7 @@ import LostFoundCard from '@/components/spaces/LostFoundCard';
 import CollaborationCard from '@/components/spaces/CollaborationCard';
 import ConfessionCard from '@/components/spaces/ConfessionCard';
 import EmptyState from '@/components/shared/EmptyState';
+import { StaggeredList, StaggeredItem } from '@/components/shared/StaggeredList';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SPACE_CARD_MAP: Record<SpaceKey, ComponentType<{ post: MockPost }>> = {
@@ -62,17 +63,25 @@ export default function SpacePage({ params }: SpacePageProps) {
         {count} post{count === 1 ? '' : 's'} in this space
       </p>
 
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-4">
         {isLoading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-[132px] rounded-card bg-[var(--bg-surface)]" />
-          ))
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-[132px] rounded-card bg-[var(--bg-surface)]" />
+            ))}
+          </div>
         ) : isError ? (
           <EmptyState title="Couldn't load posts" description="Something went wrong. Try refreshing the page." />
         ) : count === 0 ? (
           <EmptyState title={`No posts in ${space.label} yet`} description="Check back soon." />
         ) : (
-          posts!.map((post) => <Card key={post.id} post={post} />)
+          <StaggeredList className="flex flex-col gap-3">
+            {posts!.map((post) => (
+              <StaggeredItem key={post.id}>
+                <Card post={post} />
+              </StaggeredItem>
+            ))}
+          </StaggeredList>
         )}
       </div>
     </div>
