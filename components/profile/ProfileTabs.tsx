@@ -6,7 +6,9 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { ChevronUp, CheckCircle2 } from 'lucide-react';
 import type { MockPost } from '@/lib/mock/posts';
 import { MOCK_POSTS } from '@/lib/mock';
+import { REPUTATION_LABELS } from '@/lib/reputation';
 import { useSavedPostsStore } from '@/store/useSavedPostsStore';
+import { useReputationLog } from '@/hooks/useReputationLog';
 import PostCard from '@/components/post/PostCard';
 import EmptyState from '@/components/shared/EmptyState';
 
@@ -25,17 +27,26 @@ interface ProfileTabsProps {
   isOwnProfile: boolean;
 }
 
-type Tab = 'posts' | 'answers' | 'saved';
+type Tab = 'posts' | 'answers' | 'saved' | 'reputation';
 
 export default function ProfileTabs({ posts, answers, isOwnProfile }: ProfileTabsProps) {
   const [tab, setTab] = useState<Tab>('posts');
   const savedPostIds = useSavedPostsStore((s) => s.savedPostIds);
   const savedPosts = MOCK_POSTS.filter((p) => savedPostIds.includes(p.id));
+  // Enabled as soon as we know this is the viewer's own profile (not gated
+  // on the tab being active) so the tab's count badge is accurate from the
+  // first render, not stuck at 0 until the tab is clicked once.
+  const { data: reputationLog, isLoading: reputationLoading } = useReputationLog(isOwnProfile);
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: 'posts', label: 'Posts', count: posts.length },
     { key: 'answers', label: 'Answers', count: answers.length },
-    ...(isOwnProfile ? [{ key: 'saved' as Tab, label: 'Saved', count: savedPosts.length }] : []),
+    ...(isOwnProfile
+      ? [
+          { key: 'saved' as Tab, label: 'Saved', count: savedPosts.length },
+          { key: 'reputation' as Tab, label: 'Reputation', count: reputationLog?.length ?? 0 },
+        ]
+      : []),
   ];
 
   return (
@@ -99,6 +110,33 @@ export default function ProfileTabs({ posts, answers, isOwnProfile }: ProfileTab
             <EmptyState title="No saved posts" description="Posts you save will show up here." />
           ) : (
             savedPosts.map((post) => <PostCard key={post.id} post={post} />)
+          ))}
+
+        {tab === 'reputation' &&
+          (reputationLoading ? (
+            <p className="py-3 text-[12px] text-[var(--text-muted)]">Loading reputation history...</p>
+          ) : !reputationLog || reputationLog.length === 0 ? (
+            <EmptyState
+              title="No reputation events yet"
+              description="Votes, approvals, and milestones you earn will show up here."
+            />
+          ) : (
+            <div className="flex flex-col">
+              {reputationLog.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between border-b border-[var(--border)] py-3 last:border-b-0"
+                >
+                  <span className="text-[13px] text-[var(--text-secondary)]">{REPUTATION_LABELS[log.reason]}</span>
+                  <span
+                    className="text-[13px] font-medium"
+                    style={{ color: log.points > 0 ? 'var(--success)' : 'var(--danger)' }}
+                  >
+                    {log.points > 0 ? `+${log.points}` : log.points}
+                  </span>
+                </div>
+              ))}
+            </div>
           ))}
       </div>
     </div>

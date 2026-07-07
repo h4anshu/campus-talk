@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
+import { updateReputation } from '@/lib/updateReputation';
+import { checkMilestones } from '@/lib/checkMilestones';
 
 const voteSchema = z.object({ type: z.enum(['up', 'down']) });
 
@@ -17,7 +19,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const postId = params.id;
     const userId = session.user.id;
 
-    const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true } });
+    const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true, authorId: true } });
     if (!post) throw new ApiError('Post not found', 404);
 
     await prisma.$transaction(async (tx) => {
@@ -27,10 +29,25 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
       if (!existing) {
         await tx.vote.create({ data: { userId, postId, type: voteType } });
+        await updateReputation(tx, post.authorId, voteType === 'UP' ? 'POST_LIKED' : 'POST_DISLIKED', post.id);
       } else if (existing.type === voteType) {
         await tx.vote.delete({ where: { id: existing.id } });
+        await updateReputation(
+          tx,
+          post.authorId,
+          voteType === 'UP' ? 'POST_LIKED_REMOVED' : 'POST_DISLIKED_REMOVED',
+          post.id
+        );
       } else {
         await tx.vote.update({ where: { id: existing.id }, data: { type: voteType } });
+        // Switching direction: reverse the old vote's reward, then apply the new one.
+        await updateReputation(
+          tx,
+          post.authorId,
+          existing.type === 'UP' ? 'POST_LIKED_REMOVED' : 'POST_DISLIKED_REMOVED',
+          post.id
+        );
+        await updateReputation(tx, post.authorId, voteType === 'UP' ? 'POST_LIKED' : 'POST_DISLIKED', post.id);
       }
     });
 
@@ -38,6 +55,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const voteCount = votes.filter((v) => v.type === 'UP').length - votes.filter((v) => v.type === 'DOWN').length;
     const mine = votes.find((v) => v.userId === userId);
     const userVote = mine ? (mine.type === 'UP' ? 'up' : 'down') : null;
+
+    // Fire-and-forget: never blocks the vote response on milestone bookkeeping.
+    checkMilestones(post.authorId).catch(console.error);
 
     return NextResponse.json({ voteCount, userVote });
   } catch (error) {

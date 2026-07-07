@@ -102,6 +102,7 @@ model User {
   savedPosts SavedPost[]
   notifications      Notification[] @relation("NotificationUser")
   actorNotifications Notification[] @relation("NotificationActor")
+  reputationLogs ReputationLog[]
 }
 
 // --- NextAuth (Auth.js) Prisma adapter models ---
@@ -268,6 +269,17 @@ model TicketMessage {
   createdAt DateTime @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model ReputationLog {
+  id        String   @id @default(cuid())
+  userId    String
+  points    Int
+  reason    String   // enum-like string key (see lib/reputation.ts ReputationReason)
+  refId     String?  // postId / commentId that triggered it
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Notification {

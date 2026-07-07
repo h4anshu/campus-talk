@@ -6,6 +6,7 @@ import { createPostSchema } from '@/lib/validations/post';
 import { sanitizeBody } from '@/lib/sanitize';
 import { keyToEnum } from '@/lib/constants';
 import { serializePost, POST_INCLUDE, type PostForSerialization } from '@/lib/serializers';
+import { updateReputation } from '@/lib/updateReputation';
 
 export async function GET(req: NextRequest) {
   try {
@@ -74,25 +75,36 @@ export async function POST(req: NextRequest) {
     const isAdmin = session.user.role === 'ADMIN';
     const status = data.type === 'DISCUSSION' || isAdmin ? 'APPROVED' : 'PENDING';
 
-    const post = await prisma.post.create({
-      data: {
-        title: data.title,
-        body: sanitizedBody,
-        type: data.type,
-        topic: data.type === 'DISCUSSION' ? (keyToEnum(data.topic!) as TopicType) : null,
-        space: data.type === 'SPACE' ? (keyToEnum(data.space!) as SpaceType) : null,
-        anonymous: data.anonymous ?? false,
-        status,
-        authorId: session.user.id,
-        collegeId: session.user.collegeId,
-        tags: {
-          connectOrCreate: data.tags.map((name) => ({
-            where: { name },
-            create: { name },
-          })),
+    const post = await prisma.$transaction(async (tx) => {
+      const isFirstPost = (await tx.post.count({ where: { authorId: session.user.id } })) === 0;
+
+      const created = await tx.post.create({
+        data: {
+          title: data.title,
+          body: sanitizedBody,
+          type: data.type,
+          topic: data.type === 'DISCUSSION' ? (keyToEnum(data.topic!) as TopicType) : null,
+          space: data.type === 'SPACE' ? (keyToEnum(data.space!) as SpaceType) : null,
+          anonymous: data.anonymous ?? false,
+          status,
+          authorId: session.user.id,
+          collegeId: session.user.collegeId,
+          tags: {
+            connectOrCreate: data.tags.map((name) => ({
+              where: { name },
+              create: { name },
+            })),
+          },
         },
-      },
-      include: POST_INCLUDE,
+        include: POST_INCLUDE,
+      });
+
+      await updateReputation(tx, session.user.id, 'POST_PUBLISHED', created.id);
+      if (isFirstPost) {
+        await updateReputation(tx, session.user.id, 'FIRST_POST', created.id);
+      }
+
+      return created;
     });
 
     return NextResponse.json(

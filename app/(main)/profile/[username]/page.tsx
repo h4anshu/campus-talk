@@ -5,6 +5,7 @@ import { MOCK_POSTS } from '@/lib/mock';
 import { MOCK_COMMENTS_POST_1, type MockComment } from '@/lib/mock/comments';
 import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
 import { serializePost, netVoteScore, POST_INCLUDE, type PostForSerialization } from '@/lib/serializers';
+import { getReputationTier } from '@/lib/reputation';
 import type { MockPost } from '@/lib/mock/posts';
 import Avatar from '@/components/shared/Avatar';
 import YearBadge from '@/components/shared/YearBadge';
@@ -118,10 +119,21 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const acceptedCount = answers.filter((a) => a.accepted).length;
 
+  // Own profile's `reputation` is now the real, atomically-maintained
+  // User.reputation counter (kept in sync by every vote/post/approval event
+  // — see lib/updateReputation.ts) and must be shown as-is: it already
+  // reflects every post/answer vote, so adding the vote-count sums below on
+  // top would double-count them. The mock-data fallback path (viewing
+  // another real user's profile — not yet wired to the database, see the
+  // note above) has no persisted counter to read, so it keeps the old
+  // approximate sum so those profiles don't just show a flat 0.
   const reputation =
-    (profile.reputation ?? 0) +
-    posts.reduce((sum, p) => sum + p.voteCount, 0) +
-    answers.reduce((sum, a) => sum + a.voteCount, 0);
+    isOwnProfile && dbUser
+      ? profile.reputation ?? 0
+      : (profile.reputation ?? 0) +
+        posts.reduce((sum, p) => sum + p.voteCount, 0) +
+        answers.reduce((sum, a) => sum + a.voteCount, 0);
+  const reputationTier = getReputationTier(reputation);
 
   return (
     <div className="mx-auto max-w-[720px] pb-8">
@@ -157,8 +169,23 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         {profile.bio && <p className="mt-2 max-w-[480px] text-[13px] text-[var(--text-secondary)]">{profile.bio}</p>}
 
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-3 text-center">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              <span className="text-[18px] font-medium text-[var(--text-primary)]">{reputation}</span>
+              <span
+                className="rounded-[4px] border px-2 py-[2px] text-[11px] font-medium"
+                style={{
+                  color: reputationTier.color,
+                  background: `${reputationTier.color}18`,
+                  borderColor: `${reputationTier.color}35`,
+                }}
+              >
+                {reputationTier.label}
+              </span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">Reputation</div>
+          </div>
           {[
-            { label: 'Reputation', value: reputation },
             { label: 'Posts', value: posts.length },
             { label: 'Answers', value: answers.length },
             { label: 'Accepted', value: acceptedCount },
