@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 interface MediaItem {
   type: string;
@@ -31,7 +32,7 @@ export function MediaBlock({ media = [], maxHeight = 280, className = '' }: Medi
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={images[0].url}
+            src={optimizeCloudinaryUrl(images[0].url)}
             alt=""
             className="w-full"
             style={{ objectFit: 'contain', maxHeight, display: 'block' }}

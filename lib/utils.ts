@@ -41,3 +41,14 @@ export function getYearSuffix(year: number): string {
 export function stripHtmlTags(html: string) {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
+
+// Automatically apply format (f_auto) and quality (q_auto) optimizations 
+// to Cloudinary URLs to support modern formats (like WebP) and HEIC conversion.
+export function optimizeCloudinaryUrl(urlOrHtml: string) {
+  if (!urlOrHtml) return urlOrHtml
+  return urlOrHtml.replace(
+    /(res\.cloudinary\.com\/[^/]+\/image\/upload\/)(?!f_auto,q_auto)/g,
+    '$1f_auto,q_auto/'
+  )
+}
+

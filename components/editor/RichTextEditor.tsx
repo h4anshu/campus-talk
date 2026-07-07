@@ -10,6 +10,7 @@ import { Bold, Italic, Code, List, Link2, ImagePlus, Video, Loader2 } from 'luci
 import { toast } from 'sonner';
 import { fetchJson } from '@/lib/api-client';
 import { detectEmbed } from '@/lib/embed';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 interface RichTextEditorProps {
   onChange: (html: string) => void;
@@ -137,8 +138,10 @@ export default function RichTextEditor({
       if (!uploadRes.ok) throw new Error('Upload to Cloudinary failed');
       const uploaded = (await uploadRes.json()) as { secure_url: string; public_id: string };
 
-      editor.chain().focus().setImage({ src: uploaded.secure_url }).run();
-      onImageUploaded?.(uploaded.secure_url, uploaded.public_id);
+      const optimizedUrl = optimizeCloudinaryUrl(uploaded.secure_url);
+
+      editor.chain().focus().setImage({ src: optimizedUrl }).run();
+      onImageUploaded?.(optimizedUrl, uploaded.public_id);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Image upload failed');
     } finally {

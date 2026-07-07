@@ -1,4 +1,5 @@
 import type { MockPost } from '@/lib/mock/posts';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 import VoteBlock from '@/components/post/VoteBlock';
 import PostMeta from '@/components/post/PostMeta';
 import PostBadges from '@/components/post/PostBadges';
@@ -55,7 +56,7 @@ export default function PostDetail({ post }: PostDetailProps) {
             own background-color shows through the letterboxed gaps. */}
         <div
           className="mt-3 break-words text-[13px] leading-[1.75] text-[var(--text-secondary)] [word-break:break-word] [&_a]:text-[var(--accent)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--bg-panel)] [&_code]:px-1 [&_code]:py-0.5 [&_img]:mt-2 [&_img]:block [&_img]:w-full [&_img]:min-h-[140px] [&_img]:max-h-[500px] [&_img]:rounded-[9px] [&_img]:bg-[var(--bg-page)] [&_img]:object-contain [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc [&_.cv-embed]:my-2 [&_.cv-embed]:block [&_.cv-embed]:max-w-full [&_.cv-embed]:overflow-hidden [&_.cv-embed]:rounded-[9px] [&_.cv-embed]:border [&_.cv-embed]:border-[var(--border)] [&_.cv-embed-drive]:bg-[var(--bg-panel)] [&_.cv-embed-drive_a]:block [&_.cv-embed-drive_a]:p-3 [&_.cv-embed-drive_a]:text-[var(--accent)]"
-          dangerouslySetInnerHTML={{ __html: post.body }}
+          dangerouslySetInnerHTML={{ __html: optimizeCloudinaryUrl(post.body) }}
         />
 
         {/* Real playable YouTube (thumbnail + click-to-play, replacing the
