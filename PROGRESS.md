@@ -4,6 +4,34 @@ Running log of completed work. One entry per task, most recent first.
 
 ---
 
+## Closed out — Reputation system + leaderboard migration applied; deploy account corrected
+
+**Status:** Fully live. Migration applied, deployed, sanity-checked. Closing out the two entries below with the final state and a real operational discovery made along the way.
+
+**A real, non-obvious discovery this round: two different Vercel setups existed for this repo, and only one of them is actually correct.**
+- `bbd-forum` under account `princevishwakarma126-2924` — this is what every earlier session in this log had been deploying to via manual `vercel --prod` runs (see the Batch 2A entry's "no git→Vercel auto-deploy webhook on this project" note). It has **no GitHub integration at all**.
+- `campus-talk` under account `h4anshu` (team `anshu-mishra-s-projects`) — production URL `campus-talk-gamma.vercel.app`, which is the actual URL referenced all the way back in the Backend Phase 1/2 entries. This project **does** have real GitHub auto-deploy wired up, and already has every real env var configured (`DATABASE_URL`, `GOOGLE_CLIENT_ID/SECRET`, `CLOUDINARY_*`, `ADMIN_PASSWORD_HASH`, `NEXTAUTH_SECRET`, etc. — confirmed via `vercel env ls`, names only, values never pulled).
+
+In other words: `bbd-forum` was very likely the wrong/stale project the CLI happened to be authenticated into, and `campus-talk` is the one that matters. **Going forward, deploy verification should check `campus-talk` under the `h4anshu` account** — `git push origin main` alone now triggers a real deploy there, no manual `vercel --prod` needed anymore.
+
+**Sequence this round:**
+1. Switched the Vercel CLI login from `princevishwakarma126-2924` to `h4anshu` (user-directed, plain CLI re-auth, nothing project-side changed by this step alone).
+2. Discovered `campus-talk` above while checking deploy status — confirmed the earlier push of the leaderboard/reputation commits had *already* auto-deployed there and was `● Ready`.
+3. Linked this local repo to `campus-talk` (`vercel link`) to check env var *names* (`vercel env ls production`) — confirmed `DATABASE_URL` exists. Did **not** pull actual values: `vercel env pull` was correctly blocked by a safety guard (writes live production secrets to a local file, which the user hadn't explicitly authorized for this account/project). Asked the user directly rather than working around it.
+4. User ran `vercel env pull` + `npx prisma migrate deploy` themselves and confirmed the migration succeeded.
+5. Post-migration sanity check: `/api/leaderboard`, `/api/leaderboard/me`, `/api/posts/[id]/vote` all return `401` (not `500`) on the live URL for unauthenticated requests — consistent with a healthy app, though **this specifically can't prove the `ReputationLog` table exists**, since `getSessionOrThrow()` throws before any of these routes ever reach a reputation-related query. Taking the user's direct confirmation of `migrate deploy`'s success as the actual proof, not the curl checks.
+
+**Known gaps, unchanged from the reputation-system entry below — still real, still open, not bugs to silently patch:**
+- `REPORT_VERIFIED` / `REPORT_FALSE` / `POST_REMOVED_BY_REPORT` reputation events are defined in `lib/reputation.ts` but **never fire** — no Report/moderation model exists in the schema at all (the Report Post modal is UI-only, no backend).
+- `LOST_FOUND_RETURNED` / `COLLAB_SLOT_FILLED` are likewise defined but unwired — `lostFoundStatus`/`slots` only exist on `MockPost`, not as real Prisma columns, so there's no real mutation to attach them to.
+- If a post author flips which answer is "accepted" between two different answers, the previously-accepted one's +15 is never clawed back — only intentional gap, not a fix that shipped.
+
+None of the above are in-progress; they're documented boundaries for whenever a Report model / Lost & Found resolution flow / multi-accept correction is actually built.
+
+**Everything else from this session (UI fixes, Report modal, presence-indicator removal, edit-profile, section banners, context-aware post creation, vote icons) was already pushed and deployed in earlier turns — nothing else outstanding.**
+
+---
+
 ## Feature — Leaderboard (page, API, sidebar nav) + reputation-system audit
 
 **Status:** Code complete, typechecked, built, UI verified. **Committed locally only — not pushed**, same reason as the previous entry below: the `ReputationLog` migration this feature partly depends on still hasn't been applied to the live database, and nothing about that has changed since the user's last explicit "hold off pushing" decision.
@@ -26,7 +54,7 @@ Running log of completed work. One entry per task, most recent first.
 
 **Not verified — genuinely blocked, not routine:** live DB reads (a real ranked list, a real `/api/leaderboard/me` rank computation) need the same live Postgres connection this sandbox still doesn't have. The all-time filter only touches the pre-existing `User.reputation` column, so it would work today even without the pending migration — but the week/month filters read `ReputationLog` via `groupBy`, so those two paths specifically will 500 until that table exists.
 
-**Deploy: committed locally, still NOT pushed to `main`.** Same standing reason as the previous entry — the user chose to hold off until the `ReputationLog` migration is applied to the live database, and that hasn't changed. This session's commits sit on top of that same unpushed local history. **Next step, unchanged from before:** apply `npx prisma migrate deploy` against the real `DATABASE_URL`, confirm the table exists, then push everything (this leaderboard work plus the underlying reputation system) to `main` together.
+**Deploy: DONE.** Pushed to `main` (`7c8a662`), auto-deployed `● Ready`, and the `ReputationLog` migration has since been applied by the user against the live database (`npx prisma migrate deploy`, confirmed successful). See the closing entry above this one for the full wrap-up and what's still genuinely open.
 
 ---
 
@@ -62,7 +90,7 @@ Everything that **does** have a real, existing mutation is fully wired:
 
 **Not verified — genuinely blocked, not just "same standing constraint":** the actual atomic DB writes (voting increments `User.reputation`, a `ReputationLog` row is created, milestones fire once and stay idempotent) need a live Postgres connection this sandbox does not have (`prisma migrate dev` itself failed on `datasource.url` before reaching any DB). The migration SQL was hand-authored to match this project's exact Prisma-generated convention (`prisma/migrations/20260707120000_add_reputation_log/migration.sql`, modeled directly on the most recent real migration's style) so it should apply cleanly via `prisma migrate deploy`/`migrate dev` wherever a real `DATABASE_URL` is configured, but this has **not been run against a real database** and needs that verification pass before shipping.
 
-**Deploy: committed locally (`98e1ae8`) but deliberately NOT pushed to `main` yet.** Flagged to the user before pushing that this isn't purely additive: `updateReputation` now runs *inside the same transaction* as voting, post-creation, admin-approval, and answer-accept — if deployed before the `ReputationLog` migration is applied to the live database, every one of those routes throws on the missing table and the whole transaction (including the original action) rolls back. That's a real risk to core site functionality, not just "reputation won't populate," so it warranted asking rather than pushing and noting it after the fact like a routine caveat. User chose to hold off pushing until the migration is applied against the live DB first. **Next step, blocking the push:** run `npx prisma migrate deploy` (or `migrate dev`) against the real `DATABASE_URL`, confirm the `ReputationLog` table exists, then push `98e1ae8` to `main`.
+**Deploy: DONE.** Was deliberately held back from `main` at first — flagged to the user before pushing that this isn't purely additive: `updateReputation` runs *inside the same transaction* as voting, post-creation, admin-approval, and answer-accept, so deploying before the `ReputationLog` migration existed would have thrown on every one of those routes and rolled back the original action too. Not "reputation won't populate," a real risk to core site functionality — so it warranted asking rather than a routine after-the-fact caveat. User later said to push anyway; pushed (`98e1ae8`), then the user applied `npx prisma migrate deploy` against the live database themselves and confirmed it succeeded. See the top entry for the full wrap-up.
 
 ---
 
