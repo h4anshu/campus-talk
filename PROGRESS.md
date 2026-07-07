@@ -2,6 +2,18 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Closed out — Notifications Overhaul & Realtime Sync
+
+**Status:** Completed, verified, typechecked, and deployed.
+
+**Key work done:**
+1. **Database Schema Overhaul**: Migrated `Notification` schema to support custom enum `NotificationType`, `title`, `body`, `actorName`, `actorImage`, `linkUrl`, and `read` boolean fields. Restructured corresponding model relations on `User` and `Post` models.
+2. **Safer Notification Helper**: Created `lib/createNotification.ts` exposing `createNotification` and `createNotificationSafe` to prevent notification errors from failing core application transactions.
+3. **Overhauled API Routes**: Replaced old API routes with `GET /api/notifications` returning a clean list of notifications, `PATCH /api/notifications/read` marking all as read, and `PATCH /api/notifications/[id]/read` marking a single notification as read.
+4. **Custom Hooks & Realtime Fallback**: Rebuilt notifications React Query hooks with optimistic updates and robust realtime database sync using Supabase with dynamic config fallback support.
+5. **Bell Popover Dropdown UI**: Upgraded the Navbar notifications component to use a Popover displaying contextual icons matching each notification type, unread badge counter, formatDistanceToNow timestamps, and a "Mark all read" toggle.
+6. **Wired mutations**: Integrated safe notification triggers across API routes for Post votes, Comment votes, top-level comments, nested replies, accepting answers, admin post approval, admin post rejection with reasons, and support ticket replies.
+
 ---
 
 ## Closed out — Reputation system + leaderboard migration applied; deploy account corrected
