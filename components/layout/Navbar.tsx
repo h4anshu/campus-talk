@@ -17,6 +17,13 @@ import {
   Bookmark,
   ShieldQuestion,
   LogOut,
+  Check,
+  ThumbsUp,
+  BadgeCheck,
+  ShieldCheck,
+  XCircle,
+  Mail,
+  Trophy,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -26,6 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { COLLEGE_NAME, PLATFORM_NAME } from '@/lib/constants';
 import { slugify, getInitials, getAvatarColor } from '@/lib/utils';
 import { useCreatePostStore } from '@/store/useCreatePostStore';
@@ -34,9 +42,12 @@ import Avatar from '@/components/shared/Avatar';
 import SearchOverlay from '@/components/layout/SearchOverlay';
 import {
   useNotifications,
-  useMarkNotificationsRead,
-  useNotificationsRealtime,
+  useMarkAllRead,
+  useMarkOneRead,
+  useNotificationRealtime,
+  type AppNotification,
 } from '@/hooks/useNotifications';
+import { formatDistanceToNow } from 'date-fns';
 
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -46,6 +57,20 @@ function NavBadge({ count }: { count: number }) {
     </span>
   );
 }
+
+const NOTIF_ICONS: Record<string, React.ReactNode> = {
+  POST_LIKED:           <ThumbsUp className="w-3.5 h-3.5" style={{ color: '#4D8EF5' }} />,
+  COMMENT_LIKED:        <ThumbsUp className="w-3.5 h-3.5" style={{ color: '#4D8EF5' }} />,
+  POST_COMMENTED:       <MessageSquare className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+  COMMENT_REPLIED:      <MessageSquare className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+  ANSWER_ACCEPTED:      <BadgeCheck className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+  POST_APPROVED:        <ShieldCheck className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+  POST_REJECTED:        <XCircle className="w-3.5 h-3.5" style={{ color: '#DC3545' }} />,
+  TICKET_REPLY:         <Mail className="w-3.5 h-3.5" style={{ color: '#D97706' }} />,
+  REPORT_VERIFIED:      <ShieldCheck className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+  COLLAB_SLOT_FILLED:   <Trophy className="w-3.5 h-3.5" style={{ color: '#D97706' }} />,
+  LOST_FOUND_RETURNED:  <Check className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+};
 
 export default function Navbar() {
   const router = useRouter();
@@ -58,13 +83,18 @@ export default function Navbar() {
   const openTicketCount = tickets?.filter((t) => t.status !== 'RESOLVED').length ?? 0;
   const unreadTicketCount = tickets?.filter((t) => t.unread).length ?? 0;
 
-  const { data: notificationsData } = useNotifications();
-  const { mutate: markNotificationsRead } = useMarkNotificationsRead();
-  const unreadNotificationCount = notificationsData?.unreadCount ?? 0;
-  const notificationsList = notificationsData?.notifications ?? [];
+  const { data: notifications = [] } = useNotifications();
+  const { mutate: markAllRead } = useMarkAllRead();
+  const { mutate: markOneRead } = useMarkOneRead();
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Enable live realtime notification updates via Supabase
-  useNotificationsRealtime(user?.id);
+  useNotificationRealtime(user?.id);
+
+  function handleNotifClick(n: AppNotification) {
+    markOneRead(n.id);
+    if (n.linkUrl) router.push(n.linkUrl);
+  }
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -134,49 +164,94 @@ export default function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
-            <DropdownMenuTrigger asChild>
+          <Popover>
+            <PopoverTrigger asChild>
               <button className="relative flex h-8 w-8 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-panel)] hover:text-[var(--text-primary)]">
-                <Bell className="h-[18px] w-[18px]" />
-                <NavBadge count={unreadNotificationCount} />
+                <Bell className="h-[18px] w-[18px]" style={{ color: 'var(--text-secondary)' }} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-medium flex items-center justify-center text-white"
+                    style={{ background: 'var(--accent-fill)' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
+            </PopoverTrigger>
+
+            <PopoverContent
               align="end"
-              className="w-[240px] border-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-primary)]"
+              sideOffset={8}
+              className="w-[340px] p-0 border rounded-[12px]"
+              style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}
             >
-              <DropdownMenuLabel className="text-[12px] text-[var(--text-secondary)]">
-                Notifications
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-[var(--border)]" />
-              {notificationsList.length === 0 ? (
-                <div className="px-3 py-4 text-center text-[11px] text-[var(--text-muted)]">
-                  No notifications yet
-                </div>
-              ) : (
-                <div className="max-h-[300px] overflow-y-auto">
-                  {notificationsList.slice(0, 5).map((notif) => (
-                    <DropdownMenuItem
-                      key={notif.id}
-                      className="flex flex-col items-start gap-0.5 text-[11px] py-2 border-b-[0.5px] border-[var(--border)] last:border-b-0"
-                      onClick={() => router.push(`/post/${notif.postId}`)}
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                <span className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Notifications {unreadCount > 0 && (
+                    <span className="ml-1.5 text-[11px] px-1.5 py-[1px] rounded-full"
+                      style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+                      {unreadCount} new
+                    </span>
+                  )}
+                </span>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => markAllRead()}
+                    className="text-[12px] transition-colors"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              {/* List */}
+              <div className="max-h-[380px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 gap-2">
+                    <Bell className="w-8 h-8" style={{ color: 'var(--text-muted)' }} />
+                    <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <button
+                      key={n.id}
+                      onClick={() => handleNotifClick(n)}
+                      className="w-full flex items-start gap-3 px-4 py-3 border-b text-left transition-colors hover:bg-[var(--bg-elevated)]"
+                      style={{
+                        borderColor: 'var(--border)',
+                        background: n.read ? 'transparent' : 'rgba(77,142,245,0.04)',
+                      }}
                     >
-                      <div className="text-[var(--text-primary)]">
-                        {notif.type === 'COMMENT' ? (
-                          <><strong>{notif.actor?.name}</strong> commented on your post</>
-                        ) : (
-                          <><strong>{notif.actor?.name}</strong> replied to your comment</>
-                        )}
+                      {/* Icon circle */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ background: 'var(--bg-panel)' }}>
+                        {NOTIF_ICONS[n.type] ?? <Bell className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />}
                       </div>
-                      <div className="text-[11px] text-[var(--text-muted)] truncate max-w-full">
-                        {notif.post?.title}
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p className="text-[13px] font-medium leading-snug"
+                          style={{ color: n.read ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
+                          {n.title}
+                        </p>
+                        <p className="text-[12px] leading-snug mt-[2px] truncate"
+                          style={{ color: 'var(--text-muted)' }}>
+                          {n.body}
+                        </p>
+                        <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
+                          {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                        </p>
                       </div>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+                      {!n.read && (
+                        <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
+                          style={{ background: 'var(--accent)' }} />
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
 
           <button
             onClick={openCreatePost}

@@ -100,8 +100,7 @@ model User {
   votes     Vote[]
   tickets   Ticket[]
   savedPosts SavedPost[]
-  notifications      Notification[] @relation("NotificationUser")
-  actorNotifications Notification[] @relation("NotificationActor")
+  notifications      Notification[]
   reputationLogs ReputationLog[]
 }
 
@@ -170,7 +169,6 @@ model Post {
   tags      Tag[]
   savedBy   SavedPost[]
   searchVector Unsupported("tsvector")?
-  notifications Notification[]
 }
 
 model Comment {
@@ -281,17 +279,32 @@ model ReputationLog {
 
   user User @relation(fields: [userId], references: [id])
 }
+enum NotificationType {
+  POST_LIKED
+  COMMENT_LIKED
+  POST_COMMENTED
+  COMMENT_REPLIED
+  ANSWER_ACCEPTED
+  POST_APPROVED
+  POST_REJECTED
+  TICKET_REPLY
+  REPORT_VERIFIED
+  COLLAB_SLOT_FILLED
+  LOST_FOUND_RETURNED
+}
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   userId    String
-  actorId   String?
-  type      String   // COMMENT, REPLY, VOTE, etc.
-  postId    String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  linkUrl   String?          // where to navigate on click
+  actorName String?          // who triggered it (null for system events)
+  actorImage String?
+  refId     String?          // postId / commentId / ticketId
+  createdAt DateTime         @default(now())
 
-  user  User  @relation("NotificationUser", fields: [userId], references: [id], onDelete: Cascade)
-  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
-  post  Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

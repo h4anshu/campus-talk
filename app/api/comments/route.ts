@@ -5,13 +5,17 @@ import { createCommentSchema } from '@/lib/validations/comment';
 import { sanitizePlainText } from '@/lib/sanitize';
 import { serializeAuthor } from '@/lib/serializers';
 import type { MockComment } from '@/lib/mock/comments';
+import { createNotificationSafe } from '@/lib/createNotification';
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSessionOrThrow();
     const data = createCommentSchema.parse(await req.json());
 
-    const post = await prisma.post.findUnique({ where: { id: data.postId }, select: { id: true } });
+    const post = await prisma.post.findUnique({
+      where: { id: data.postId },
+      select: { id: true, authorId: true }
+    });
     if (!post) throw new ApiError('Post not found', 404);
 
     if (data.parentId) {
@@ -38,40 +42,36 @@ export async function POST(req: NextRequest) {
     });
 
     // Create notifications for comments/replies
-    try {
-      if (data.parentId) {
-        const parent = await prisma.comment.findUnique({
-          where: { id: data.parentId },
-          select: { authorId: true },
+    if (!comment.parentId) {
+      if (post.authorId !== session.user.id) {
+        await createNotificationSafe({
+          userId: post.authorId,
+          type: 'POST_COMMENTED',
+          title: `${session.user.name} commented on your post`,
+          body: `"${comment.body.slice(0, 80)}"`,
+          linkUrl: `/post/${post.id}`,
+          actorName: session.user.name ?? undefined,
+          actorImage: session.user.image ?? undefined,
+          refId: post.id,
         });
-        if (parent && parent.authorId !== session.user.id) {
-          await prisma.notification.create({
-            data: {
-              userId: parent.authorId,
-              actorId: session.user.id,
-              type: 'REPLY',
-              postId: data.postId,
-            },
-          });
-        }
-      } else {
-        const postDetail = await prisma.post.findUnique({
-          where: { id: data.postId },
-          select: { authorId: true },
-        });
-        if (postDetail && postDetail.authorId !== session.user.id) {
-          await prisma.notification.create({
-            data: {
-              userId: postDetail.authorId,
-              actorId: session.user.id,
-              type: 'COMMENT',
-              postId: data.postId,
-            },
-          });
-        }
       }
-    } catch (err) {
-      console.error('Notification creation failed:', err);
+    } else {
+      const parent = await prisma.comment.findUnique({
+        where: { id: comment.parentId },
+        select: { authorId: true }
+      });
+      if (parent && parent.authorId !== session.user.id) {
+        await createNotificationSafe({
+          userId: parent.authorId,
+          type: 'COMMENT_REPLIED',
+          title: `${session.user.name} replied to your comment`,
+          body: `"${comment.body.slice(0, 80)}"`,
+          linkUrl: `/post/${post.id}`,
+          actorName: session.user.name ?? undefined,
+          actorImage: session.user.image ?? undefined,
+          refId: comment.id,
+        });
+      }
     }
 
     const serialized: MockComment = {

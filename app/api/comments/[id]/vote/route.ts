@@ -5,6 +5,8 @@ import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
 import { updateReputation } from '@/lib/updateReputation';
 import { checkMilestones } from '@/lib/checkMilestones';
 
+import { createNotificationSafe } from '@/lib/createNotification';
+
 const voteSchema = z.object({ type: z.enum(['up', 'down']) });
 
 interface RouteParams {
@@ -19,8 +21,18 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const commentId = params.id;
     const userId = session.user.id;
 
-    const comment = await prisma.comment.findUnique({ where: { id: commentId }, select: { id: true, authorId: true } });
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true, authorId: true, postId: true }
+    });
     if (!comment) throw new ApiError('Comment not found', 404);
+
+    let isNewUpvote = false;
+
+    const existing = await prisma.vote.findUnique({
+      where: { userId_commentId: { userId, commentId } },
+    });
+    isNewUpvote = voteType === 'UP' && (!existing || existing.type === 'DOWN');
 
     await prisma.$transaction(async (tx) => {
       const existing = await tx.vote.findUnique({
@@ -43,6 +55,19 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         if (voteType === 'UP') await updateReputation(tx, comment.authorId, 'COMMENT_LIKED', comment.id);
       }
     });
+
+    if (isNewUpvote && comment.authorId !== session.user.id) {
+      await createNotificationSafe({
+        userId: comment.authorId,
+        type: 'COMMENT_LIKED',
+        title: 'Someone liked your comment',
+        body: 'Your comment received a like',
+        linkUrl: `/post/${comment.postId}`,
+        actorName: session.user.name ?? undefined,
+        actorImage: session.user.image ?? undefined,
+        refId: comment.id,
+      });
+    }
 
     const votes = await prisma.vote.findMany({ where: { commentId }, select: { type: true, userId: true } });
     const voteCount = votes.filter((v) => v.type === 'UP').length - votes.filter((v) => v.type === 'DOWN').length;

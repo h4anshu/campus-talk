@@ -4,6 +4,8 @@ import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
 import { updateReputation } from '@/lib/updateReputation';
 import { checkMilestones } from '@/lib/checkMilestones';
 
+import { createNotificationSafe } from '@/lib/createNotification';
+
 interface RouteParams {
   params: { id: string };
 }
@@ -15,7 +17,7 @@ export async function PATCH(_req: NextRequest, { params }: RouteParams) {
 
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
-      include: { post: { select: { id: true, authorId: true } } },
+      include: { post: { select: { id: true, authorId: true, title: true } } },
     });
     if (!comment) throw new ApiError('Comment not found', 404);
     if (comment.parentId !== null) {
@@ -36,6 +38,17 @@ export async function PATCH(_req: NextRequest, { params }: RouteParams) {
       });
       await updateReputation(tx, comment.authorId, 'ANSWER_ACCEPTED', comment.id);
     });
+
+    if (comment.authorId !== session.user.id) {
+      await createNotificationSafe({
+        userId: comment.authorId,
+        type: 'ANSWER_ACCEPTED',
+        title: 'Your answer was marked as helpful',
+        body: `Your answer on "${comment.post.title.slice(0, 60)}" was accepted`,
+        linkUrl: `/post/${comment.post.id}`,
+        refId: comment.id,
+      });
+    }
 
     checkMilestones(comment.authorId).catch(console.error);
 

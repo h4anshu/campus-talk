@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
-import { isAdminSession } from '@/lib/admin-auth';
+import { isAdminSession, getOrCreateAdminOfficeUser } from '@/lib/admin-auth';
 import { replyTicketSchema } from '@/lib/validations/ticket';
+import { createNotificationSafe } from '@/lib/createNotification';
 
 interface RouteParams {
   params: { id: string };
@@ -26,6 +27,29 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const message = await prisma.ticketMessage.create({
       data: { body, fromAdmin: admin, ticketId: params.id },
     });
+
+    const adminOfficeUser = await getOrCreateAdminOfficeUser();
+    const recipientId = admin ? ticket.userId : adminOfficeUser.id;
+
+    if (admin) {
+      await createNotificationSafe({
+        userId: ticket.userId,
+        type: 'TICKET_REPLY',
+        title: 'Admin replied to your ticket',
+        body: `Re: "${ticket.subject.slice(0, 60)}"`,
+        linkUrl: `/tickets`,
+        refId: ticket.id,
+      });
+    } else {
+      await createNotificationSafe({
+        userId: recipientId,
+        type: 'TICKET_REPLY',
+        title: 'New reply to ticket',
+        body: `Re: "${ticket.subject.slice(0, 60)}"`,
+        linkUrl: `/admin/tickets`,
+        refId: ticket.id,
+      });
+    }
 
     return NextResponse.json(
       {

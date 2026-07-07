@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { handleApiError, ApiError } from '@/lib/api-helpers';
 import { requireAdmin } from '@/lib/admin-auth';
 import { updateReputation } from '@/lib/updateReputation';
+import { createNotificationSafe } from '@/lib/createNotification';
 
 interface RouteParams {
   params: { id: string };
@@ -12,7 +13,10 @@ export async function PATCH(_req: Request, { params }: RouteParams) {
   try {
     await requireAdmin();
 
-    const existing = await prisma.post.findUnique({ where: { id: params.id } });
+    const existing = await prisma.post.findUnique({
+      where: { id: params.id },
+      select: { id: true, authorId: true, title: true, type: true, status: true }
+    });
     if (!existing) throw new ApiError('Post not found', 404);
 
     await prisma.$transaction(async (tx) => {
@@ -27,6 +31,15 @@ export async function PATCH(_req: Request, { params }: RouteParams) {
       if (existing.type === 'SPACE' && existing.status === 'PENDING') {
         await updateReputation(tx, existing.authorId, 'SPACE_POST_APPROVED', existing.id);
       }
+    });
+
+    await createNotificationSafe({
+      userId: existing.authorId,
+      type: 'POST_APPROVED',
+      title: 'Your post was approved',
+      body: `Your post "${existing.title.slice(0, 60)}" is now live`,
+      linkUrl: `/post/${existing.id}`,
+      refId: existing.id,
     });
 
     return NextResponse.json({ success: true });
