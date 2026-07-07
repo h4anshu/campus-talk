@@ -36,12 +36,12 @@ export default function AnnouncementCard({ post }: AnnouncementCardProps) {
     >
       <div className="flex flex-wrap items-center gap-1.5">
         {post.pinned && <Pin className="h-3.5 w-3.5 text-[var(--accent)]" fill="var(--accent)" />}
-        <span className="flex items-center gap-1 rounded-full border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]">
+        <span className="flex items-center gap-1 rounded-full border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent)]">
           <ShieldCheck className="h-3 w-3" />
           Official
         </span>
         <span
-          className={`rounded-full border-[0.5px] px-2 py-0.5 text-[10px] font-medium ${PRIORITY_STYLES[priority]}`}
+          className={`rounded-full border-[0.5px] px-2 py-0.5 text-[11px] font-medium ${PRIORITY_STYLES[priority]}`}
         >
           {priority}
         </span>
@@ -56,7 +56,7 @@ export default function AnnouncementCard({ post }: AnnouncementCardProps) {
         {post.title}
       </h3>
 
-      <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
+      <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-secondary)]">
         {stripHtmlTags(post.body)}
       </p>
 

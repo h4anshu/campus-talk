@@ -39,7 +39,7 @@ function NavItem({
       <Icon className="h-4 w-4 shrink-0" />
       <span className="flex-1 truncate">{label}</span>
       {!!unread && (
-        <span className="rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] font-medium text-white">
+        <span className="rounded-full bg-[var(--accent-fill)] px-1.5 py-0.5 text-[10px] font-medium text-white">
           {unread}
         </span>
       )}
@@ -91,7 +91,7 @@ export default function LeftSidebar() {
   return (
     <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-[200px] shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 lg:flex">
       <div className="mb-4 border-b-[0.5px] border-[var(--border)] pb-3 px-1.5 pt-1">
-        <span className="text-[9px] uppercase font-medium tracking-wider text-[var(--text-muted)]">Current View</span>
+        <span className="text-[11px] uppercase font-medium tracking-wider text-[var(--text-muted)]">Current View</span>
         <h1 className="text-[14px] font-semibold text-[var(--text-primary)] mt-0.5">{pageTitle}</h1>
       </div>
 
@@ -121,7 +121,7 @@ export default function LeftSidebar() {
       </div>
 
       <div className="mt-4">
-        <div className="px-2.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+        <div className="px-2.5 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           Spaces
         </div>
         <div className="mt-1.5 flex flex-col gap-0.5">
@@ -139,7 +139,7 @@ export default function LeftSidebar() {
       </div>
 
       <div className="mt-5">
-        <div className="px-2.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+        <div className="px-2.5 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           Discussions
         </div>
         <div className="mt-1.5 flex flex-col gap-0.5">

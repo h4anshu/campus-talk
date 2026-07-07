@@ -51,7 +51,7 @@ export default function PostCard({ post }: PostCardProps) {
           {post.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
+        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-secondary)]">
           {stripHtmlTags(post.body)}
         </p>
 

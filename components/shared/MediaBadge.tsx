@@ -38,7 +38,7 @@ export default function MediaBadge({ media }: MediaBadgeProps) {
         return (
           <span
             key={type}
-            className="flex items-center gap-1 rounded-full border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]"
+            className="flex items-center gap-1 rounded-full border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-muted)]"
           >
             <Icon className="h-3 w-3" />
             {LABELS[type] ?? 'Attachment'}

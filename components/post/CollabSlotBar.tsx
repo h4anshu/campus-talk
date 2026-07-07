@@ -24,7 +24,7 @@ export default function CollabSlotBar({ slots, skills }: CollabSlotBarProps) {
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] text-[var(--text-muted)]">
+          <span className="text-[11px] text-[var(--text-muted)]">
             {slots.filled}/{slots.total} slots filled
           </span>
           {skills.map((skill) => (

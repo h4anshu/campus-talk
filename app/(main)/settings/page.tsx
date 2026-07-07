@@ -225,7 +225,7 @@ export default function SettingsPage() {
               <label className="text-[12px] font-medium text-[var(--text-secondary)]">
                 About Bio
               </label>
-              <span className="text-[10px] text-[var(--text-muted)]">
+              <span className="text-[11px] text-[var(--text-muted)]">
                 {bio.length}/500
               </span>
             </div>

@@ -64,7 +64,7 @@ export default function CommentItem({ comment, depth, postId, postAuthorName }: 
             {comment.author.name}
           </span>
           {isOP && (
-            <span className="rounded-[4px] bg-[var(--accent-dim)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--accent)]">
+            <span className="rounded-[4px] bg-[var(--accent-dim)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--accent)]">
               OP
             </span>
           )}

@@ -75,7 +75,7 @@ export default function ProfileTabs({ posts, answers, isOwnProfile }: ProfileTab
                 className="rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[var(--border-med)]"
               >
                 {answer.accepted && (
-                  <div className="mb-2 flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)]">
+                  <div className="mb-2 flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] px-2 py-0.5 text-[11px] font-medium text-[var(--success)]">
                     <CheckCircle2 className="h-3 w-3" />
                     Accepted answer
                   </div>

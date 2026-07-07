@@ -47,7 +47,7 @@ export default function EventCard({ post }: EventCardProps) {
 
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="rounded-full border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]">
+          <span className="rounded-full border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent)]">
             Events
           </span>
           <MediaBadge media={post.media?.filter((m) => m.type === 'drive')} />
@@ -61,7 +61,7 @@ export default function EventCard({ post }: EventCardProps) {
           {post.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-muted)]">
+        <p className="mt-1 line-clamp-2 break-words text-[11px] leading-relaxed text-[var(--text-secondary)]">
           {stripHtmlTags(post.body)}
         </p>
 

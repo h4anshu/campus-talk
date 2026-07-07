@@ -77,7 +77,7 @@ export default function MyTicketsPage() {
                     {ticket.subject}
                   </span>
                   <span
-                    className={`rounded-full border-[0.5px] px-2 py-0.5 text-[10px] font-medium ${STATUS_STYLES[ticket.status]}`}
+                    className={`rounded-full border-[0.5px] px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLES[ticket.status]}`}
                   >
                     {STATUS_LABELS[ticket.status]}
                   </span>

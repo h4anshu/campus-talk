@@ -184,7 +184,7 @@ export default function SpacesSection() {
                                   suffix={stat.suffix}
                                 />
                               </div>
-                              <span className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                              <span className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
                                 {stat.label}
                               </span>
                             </div>

@@ -32,10 +32,10 @@ export default function ConfessionCard({ post }: ConfessionCardProps) {
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="rounded-full border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]">
+          <span className="rounded-full border-[0.5px] border-[var(--accent-border)] bg-[var(--accent-dim)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent)]">
             Confession
           </span>
-          <span className="rounded-full border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+          <span className="rounded-full border-[0.5px] border-[var(--border)] bg-[var(--bg-panel)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-muted)]">
             Anonymous
           </span>
           <MediaBadge media={post.media?.filter((m) => m.type === 'drive')} />

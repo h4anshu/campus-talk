@@ -74,7 +74,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
             <select
               value={ticket.status}
               onChange={(e) => setStatus(e.target.value as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED')}
-              className={`rounded-full border-[0.5px] px-2 py-0.5 text-[10px] font-medium outline-none ${STATUS_STYLES[ticket.status]}`}
+              className={`rounded-full border-[0.5px] px-2 py-0.5 text-[11px] font-medium outline-none ${STATUS_STYLES[ticket.status]}`}
             >
               {Object.entries(STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value} className="bg-[var(--bg-elevated)] text-[var(--text-primary)]">
@@ -84,7 +84,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
             </select>
           ) : (
             <span
-              className={`rounded-full border-[0.5px] px-2 py-0.5 text-[10px] font-medium ${STATUS_STYLES[ticket.status]}`}
+              className={`rounded-full border-[0.5px] px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLES[ticket.status]}`}
             >
               {STATUS_LABELS[ticket.status]}
             </span>
@@ -115,7 +115,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
                   <p className="break-words text-[12px] leading-relaxed text-[var(--text-primary)]">{msg.body}</p>
                 </div>
                 <span
-                  className="mt-1 px-1 text-[10px] text-[var(--text-muted)]"
+                  className="mt-1 px-1 text-[11px] text-[var(--text-muted)]"
                   title={format(msg.createdAt, 'PPpp')}
                 >
                   {msg.fromAdmin ? 'Admin' : ticket.user.name} ·{' '}

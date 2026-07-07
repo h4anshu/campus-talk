@@ -92,7 +92,7 @@ export default function Navbar() {
             <span className="text-[13px] font-medium text-[var(--text-primary)]">
               {PLATFORM_NAME}
             </span>
-            <span className="text-[10px] text-[var(--text-muted)]">{COLLEGE_NAME}</span>
+            <span className="text-[11px] text-[var(--text-muted)]">{COLLEGE_NAME}</span>
           </div>
         </Link>
 
@@ -104,7 +104,7 @@ export default function Navbar() {
           <span className="min-w-0 flex-1 truncate text-[12px] text-[var(--text-muted)]">
             Search Campus Thread...
           </span>
-          <kbd className="hidden shrink-0 rounded border-[0.5px] border-[var(--border-med)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)] sm:block">
+          <kbd className="hidden shrink-0 rounded border-[0.5px] border-[var(--border-med)] px-1.5 py-0.5 text-[11px] text-[var(--text-muted)] sm:block">
             Ctrl K
           </kbd>
         </button>
@@ -169,7 +169,7 @@ export default function Navbar() {
                           <><strong>{notif.actor?.name}</strong> replied to your comment</>
                         )}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)] truncate max-w-full">
+                      <div className="text-[11px] text-[var(--text-muted)] truncate max-w-full">
                         {notif.post?.title}
                       </div>
                     </DropdownMenuItem>
@@ -231,7 +231,7 @@ export default function Navbar() {
                 <Settings className="h-4 w-4" /> Settings
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="gap-2 text-[13px] text-[var(--danger)] focus:text-[var(--danger)]"
+                className="gap-2 text-[13px] text-[#F26571] focus:text-[#F26571]"
                 onClick={() => signOut({ callbackUrl: '/landing' })}
               >
                 <LogOut className="h-4 w-4" /> Log out

@@ -25,7 +25,7 @@
   /* Text */
   --text-primary:   #F0F2FA;    /* was #E6E8F0, thoda brighter */
   --text-secondary: #9EA3B8;    /* was #7E8398, much more readable */
-  --text-muted:     #6B7190;    /* was #444860, was too dark */
+  --text-muted:     #868CAB;    /* was #6B7190, still failed AA (3.2-4.0) */
 
   /* Status */
   --success:        #1DB874;

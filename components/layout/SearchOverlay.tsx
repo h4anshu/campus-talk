@@ -87,7 +87,7 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
               placeholder="Search posts, people, topics..."
               className="w-full bg-transparent text-[13px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
             />
-            <kbd className="rounded border-[0.5px] border-[var(--border-med)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]">
+            <kbd className="rounded border-[0.5px] border-[var(--border-med)] px-1.5 py-0.5 text-[11px] text-[var(--text-muted)]">
               Esc
             </kbd>
           </div>
@@ -101,7 +101,7 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
 
             {posts.length > 0 && (
               <div className="mb-2">
-                <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
                   Posts
                 </div>
                 {posts.map((post) => (
@@ -119,7 +119,7 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
 
             {people.length > 0 && (
               <div className="mb-2">
-                <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
                   People
                 </div>
                 {people.map((person) => (
@@ -142,7 +142,7 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
 
             {topics.length > 0 && (
               <div>
-                <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
                   Topics
                 </div>
                 {topics.map((topic) => {

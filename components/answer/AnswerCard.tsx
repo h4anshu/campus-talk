@@ -70,7 +70,7 @@ export default function AnswerCard({ answer, postId, postAuthorName, viewerIsAut
       <div className="min-w-0">
         <div className="mb-2 flex items-center gap-2">
           {answer.accepted && (
-            <div className="flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--success)]">
+            <div className="flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--success-border)] bg-[var(--success-dim)] px-2 py-0.5 text-[11px] font-medium text-[var(--success)]">
               <CheckCircle2 className="h-3 w-3" />
               Accepted answer
             </div>
@@ -79,7 +79,7 @@ export default function AnswerCard({ answer, postId, postAuthorName, viewerIsAut
             <button
               onClick={() => acceptAnswer(answer.id)}
               disabled={accepting}
-              className="flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--border)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--success-border)] hover:text-[var(--success)] disabled:opacity-50"
+              className="flex w-fit items-center gap-1.5 rounded-full border-[0.5px] border-[var(--border)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--success-border)] hover:text-[var(--success)] disabled:opacity-50"
             >
               <CheckCircle2 className="h-3 w-3" />
               Mark as accepted
@@ -93,7 +93,7 @@ export default function AnswerCard({ answer, postId, postAuthorName, viewerIsAut
             {answer.author.name}
           </span>
           {isOP && (
-            <span className="rounded-[4px] bg-[var(--accent-dim)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--accent)]">
+            <span className="rounded-[4px] bg-[var(--accent-dim)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--accent)]">
               OP
             </span>
           )}

@@ -157,7 +157,7 @@ export default function LandingNav() {
             <span className="text-[15px] font-semibold text-[#F0F2FA]">
               {PLATFORM_NAME}
             </span>
-            <span className="text-[10px] text-[#6B7190]">
+            <span className="text-[11px] text-[#6B7190]">
               {COLLEGE_NAME}
             </span>
           </div>
@@ -228,7 +228,7 @@ export default function LandingNav() {
                         <div className="text-[12px] font-medium text-[#E8EAF0]">
                           {space.title}
                         </div>
-                        <div className="text-[10px] text-[#6B7190] mt-px">
+                        <div className="text-[11px] text-[#6B7190] mt-px">
                           {space.subtitle}
                         </div>
                       </div>
@@ -315,7 +315,7 @@ export default function LandingNav() {
               <span className="text-[13px] font-semibold text-[#F0F2FA]">
                 {PLATFORM_NAME}
               </span>
-              <span className="text-[10px] text-[#6B7190]">
+              <span className="text-[11px] text-[#6B7190]">
                 {COLLEGE_NAME}
               </span>
             </div>

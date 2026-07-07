@@ -27,7 +27,7 @@ export default function RightSidebar() {
   return (
     <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-[180px] shrink-0 flex-col gap-3.5 overflow-y-auto border-l-[0.5px] border-[var(--border)] bg-[var(--bg-surface)] px-3 py-4 xl:flex">
       <div>
-        <div className="flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+        <div className="flex items-center gap-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           <TrendingUp className="h-3 w-3" />
           Trending
         </div>
@@ -45,7 +45,7 @@ export default function RightSidebar() {
       </div>
 
       <div>
-        <div className="flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+        <div className="flex items-center gap-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           <CalendarDays className="h-3 w-3" />
           Upcoming events
         </div>
@@ -57,7 +57,7 @@ export default function RightSidebar() {
               className="rounded border-[0.5px] border-[var(--border)] px-2 py-1.5 transition-colors hover:border-[var(--border-med)]"
             >
               <div className="text-[11px] font-medium text-[var(--text-primary)]">{event.title}</div>
-              <div className="mt-0.5 text-[10px] text-[var(--text-muted)]">
+              <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">
                 {event.countdown} · {event.venue}
               </div>
             </Link>
@@ -66,7 +66,7 @@ export default function RightSidebar() {
       </div>
 
       <div>
-        <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+        <div className="px-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
           Community
         </div>
         <div className="mt-2 grid grid-cols-2 gap-1.5">
@@ -76,7 +76,7 @@ export default function RightSidebar() {
               className="rounded border-[0.5px] border-[var(--border)] px-2 py-1.5 text-center"
             >
               <div className="text-[13px] font-medium text-[var(--text-primary)]">{stat.value}</div>
-              <div className="text-[10px] text-[var(--text-muted)]">{stat.label}</div>
+              <div className="text-[11px] text-[var(--text-muted)]">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -88,9 +88,9 @@ export default function RightSidebar() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
           </span>
-          <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Live Pulse</span>
+          <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Live Pulse</span>
         </div>
-        <span className="text-[10px] font-bold text-[var(--text-primary)]">
+        <span className="text-[11px] font-bold text-[var(--text-primary)]">
           {stats?.online ?? '0'} online
         </span>
       </div>
