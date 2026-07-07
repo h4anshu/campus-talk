@@ -2,6 +2,17 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Closed out — Fix Feed Image Visibility & Vercel Build Errors
+
+**Status:** Completed, verified, typechecked, and deployed.
+
+**Key work done:**
+1. **Refined Image Extraction Fallback**: Updated `serializePost` in `lib/serializers.ts` to unconditionally extract pasted images from `post.body` using a more robust regex (`/<img[^>]+src=["']([^"'>]+)["']/gi`) that handles single quotes and various formats. Added deduplication to ensure images already in the DB aren't duplicated.
+2. **Fixed Duplicate Imports**: Removed duplicate import of `MOCK_COMMENTS_POST_1` in `app/(main)/profile/[username]/page.tsx` that was causing Webpack build failures on Vercel.
+3. **Fixed TypeScript Errors**: Added the missing `banner?: string | null` property to `EditProfileButtonProps` in `components/profile/EditProfileButton.tsx`, resolving a type error that blocked Vercel deployments.
+
+---
+
 ## Closed out — Show Images on Feed Cards
 
 **Status:** Completed, verified, typechecked, and deployed.
