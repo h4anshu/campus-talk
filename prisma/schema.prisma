@@ -58,6 +58,12 @@ enum TicketStatus {
   RESOLVED
 }
 
+enum UserStatus {
+  ACTIVE
+  WARNED
+  BANNED
+}
+
 model College {
   id            String   @id @default(cuid())
   name          String
@@ -84,6 +90,11 @@ model User {
   bio       String?
   role      Role     @default(STUDENT)
   reputation Int     @default(0)
+  status        UserStatus @default(ACTIVE)
+  warningCount  Int        @default(0)
+  bannedAt      DateTime?
+  bannedReason  String?
+  bannedEmail   String?    // set on permanent ban, blocks re-signup
   lastActiveAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,6 +114,14 @@ model User {
   savedPosts SavedPost[]
   notifications      Notification[]
   reputationLogs ReputationLog[]
+}
+
+model BannedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  reason    String?
+  bannedAt  DateTime @default(now())
+  bannedBy  String   // admin userId
 }
 
 // --- NextAuth (Auth.js) Prisma adapter models ---
@@ -170,7 +189,7 @@ model Post {
   collegeId String?
   college   College? @relation(fields: [collegeId], references: [id])
 
-  author    User      @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments  Comment[]
   votes     Vote[]
   media     Media[]
@@ -193,7 +212,7 @@ model Comment {
   collegeId String?
   college   College? @relation(fields: [collegeId], references: [id])
 
-  author    User      @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
@@ -208,7 +227,7 @@ model Vote {
   commentId String?
   createdAt DateTime @default(now())
 
-  user    User     @relation(fields: [userId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
@@ -260,7 +279,7 @@ model Ticket {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  user     User           @relation(fields: [userId], references: [id])
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages TicketMessage[]
 }
 
@@ -285,7 +304,7 @@ model ReputationLog {
   refId     String?  // postId / commentId that triggered it
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 enum NotificationType {
   POST_LIKED
@@ -299,6 +318,7 @@ enum NotificationType {
   REPORT_VERIFIED
   COLLAB_SLOT_FILLED
   LOST_FOUND_RETURNED
+  ADMIN_WARNING
 }
 
 model Notification {

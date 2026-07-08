@@ -33,6 +33,7 @@ function GoogleIcon({ className }: { className?: string }) {
 function LoginCard() {
   const searchParams = useSearchParams();
   const showDomainError = searchParams.get('error') === 'domain';
+  const showBannedError = searchParams.get('error') === 'banned';
 
   return (
     <motion.div
@@ -54,6 +55,12 @@ function LoginCard() {
       {showDomainError && (
         <p className="mt-5 rounded border-[0.5px] border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2.5 text-center text-[12px] text-[var(--danger)]">
           Only BBD college emails are allowed to join.
+        </p>
+      )}
+
+      {showBannedError && (
+        <p className="mt-5 rounded border-[0.5px] border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2.5 text-center text-[12px] text-[var(--danger)]">
+          Your account has been banned.
         </p>
       )}
 

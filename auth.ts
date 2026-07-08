@@ -32,6 +32,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     async signIn({ user }) {
+      const email = user.email?.toLowerCase();
+
+      // Permanently blocked (account was deleted with "also block email").
+      const blocked = email ? await prisma.bannedEmail.findUnique({ where: { email } }) : null;
+      if (blocked) return '/login?error=banned';
+
+      // Still-existing account that's currently suspended.
+      const existing = email
+        ? await prisma.user.findUnique({ where: { email }, select: { status: true } })
+        : null;
+      if (existing?.status === 'BANNED') return '/login?error=banned';
+
       const college = await findMatchingCollege(user.email);
       if (!college) return '/login?error=domain';
       return true;

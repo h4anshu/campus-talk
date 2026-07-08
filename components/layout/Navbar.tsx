@@ -24,6 +24,7 @@ import {
   XCircle,
   Mail,
   Trophy,
+  TriangleAlert,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -70,6 +71,7 @@ const NOTIF_ICONS: Record<string, React.ReactNode> = {
   REPORT_VERIFIED:      <ShieldCheck className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
   COLLAB_SLOT_FILLED:   <Trophy className="w-3.5 h-3.5" style={{ color: '#D97706' }} />,
   LOST_FOUND_RETURNED:  <Check className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+  ADMIN_WARNING:        <TriangleAlert className="w-3.5 h-3.5" style={{ color: '#D97706' }} />,
 };
 
 export default function Navbar() {

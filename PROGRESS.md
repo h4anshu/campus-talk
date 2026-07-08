@@ -2,6 +2,36 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Feature — Admin User Management (schema, ban/warn API, /admin/users page)
+
+**Status:** Code complete, typechecked, built. **Migration authored but not applied** — hand-wrote `prisma/migrations/20260708120000_add_user_management/migration.sql`; user runs `npx prisma migrate deploy` when ready, per this task's explicit "no migrate dev" instruction.
+
+**The task spec assumed the wrong admin auth system — adapted before writing any code.** It described `session.user.role === 'ADMIN'` checks via NextAuth, gated through `middleware.ts` and a `app/(admin)/` route group. Neither exists: this app's real admin panel is a completely separate single-shared-password system (`lib/admin-auth.ts`, signed `admin_session` cookie, `requireAdmin()`), living at `app/admin/(protected)/`, with no admin `User` row at all. Built everything against the real system instead — `requireAdmin()` in every route (401 on failure, matching every existing admin route), and "cannot warn/ban/delete an ADMIN-role account" now guards against the system `Admin Office` user rather than a nonexistent admin-login flow. `/admin/users` already existed as a nav entry and placeholder page from an earlier phase — replaced the placeholder.
+
+**A real schema gap found and fixed, not in the task's spec:** the task claimed Post/Comment/Vote/Ticket "cascade delete via existing `onDelete: Cascade` relations" when a User is deleted. False — only `Account`/`Session`/`SavedPost`/`Notification` had cascade; `Post.authorId`, `Comment.authorId`, `Vote.userId`, `Ticket.userId`, `ReputationLog.userId` were all `ON DELETE RESTRICT`. `prisma.user.delete()` on any user with real content would have thrown a foreign-key violation, not deleted anything. Added `onDelete: Cascade` to those five relations too (schema + hand-written `DROP CONSTRAINT`/`ADD CONSTRAINT` pairs in the same migration file) so the DELETE route's account wipe actually works.
+
+**Middleware and admin nav needed no changes**, contrary to the task's instructions to modify both: `/admin/users` is already nav-listed (`components/admin/AdminNav.tsx`) and already protected (the whole `(protected)` route group's layout calls `isAdminSession()` + `redirect()`). Adding `/admin/*` to the student-facing `middleware.ts` matcher would have wrongly applied the NextAuth-cookie check to a route that uses a completely different auth system — left that matcher untouched, per its own explicit comment explaining why `/admin` is deliberately excluded.
+
+**Banned-user enforcement, adapted for how sessions actually work here:** `auth: { session: { strategy: 'database' } }` means every `auth()` call re-validates against the `Session` table in Postgres — so `POST /api/admin/users/[id]/ban` deleting that user's `Session` rows makes them get bounced on their *very next* request anywhere in the app, no middleware DB lookup needed (and Prisma calls from Edge middleware would've been a bad idea anyway). Login-time blocking covers two cases in `auth.ts`'s `signIn` callback: a `BannedEmail` row (permanent block after a deleted+blocked account) and a still-existing `User` row with `status: 'BANNED'` (suspended but not deleted) — both short-circuit to `/login?error=banned`, mirroring the existing `?error=domain` pattern exactly (the only other error-redirect precedent in the codebase).
+
+**Other deviations from the literal task text:**
+- Skipped the task's instruction to hand-insert a row into `_prisma_migrations` inside the migration SQL — that table is Prisma-CLI-managed at apply time, not something a migration file writes to itself; a fabricated row/checksum would make Prisma think the migration was corrupted.
+- `ALTER TYPE "NotificationType" ADD VALUE IF NOT EXISTS 'ADMIN_WARNING'` — flagging a real Postgres constraint: this can't be used in the same transaction as a later statement that *references* the new value. Nothing else in this migration file does, so it's safe as written, but noting it since it's a real footgun if this migration is ever hand-edited to add more.
+- Icon for `ADMIN_WARNING` uses lucide's `TriangleAlert` (project convention, confirmed via `Navbar.tsx`'s existing `NOTIF_ICONS` map) rather than the task's Tabler `ti-alert-triangle` — no Tabler webfont exists anywhere in this codebase.
+- `GET /api/admin/users`'s response includes `updatedAt` beyond the task's documented shape — the detail panel's "last active" requirement (section 6) needs it and nothing else in the spec provided it.
+- New `components/ui/checkbox.tsx` and every new admin dialog explicitly override shadcn's default `bg-popover`/`bg-accent`-style tokens with this project's real Blueprint tokens (`--bg-elevated`, `--accent-fill`, etc.) — those defaults aren't defined anywhere in `globals.css` and would render transparent, the same bug fixed for `select.tsx`/`CreatePostDialog.tsx` in an earlier session.
+
+**Verified:**
+- `npx prisma generate` — succeeds, new types available (`UserStatus`, `BannedEmail`, `User.status/warningCount/bannedAt/bannedReason/bannedEmail`)
+- `npx tsc --noEmit` — zero errors
+- `npx next build` — succeeds; new routes present: `/admin/users` (13.4 kB), `/api/admin/users`, `/api/admin/users/[id]`, `/api/admin/users/[id]/warn`, `/api/admin/users/[id]/ban`, `/api/admin/users/[id]/unban`
+
+**Not verified — genuinely blocked:** end-to-end click-through (open `/admin/users`, warn/ban/delete a real user, confirm the bell notification and the login-block) needs the real admin password and a live Postgres session this sandbox doesn't have, plus the migration hasn't been applied yet regardless.
+
+**Deploy:** held for the user to run `npx prisma migrate deploy` first — pushing before the migration lands would 500 on every `/api/admin/users*` route and the `signIn` callback's new `BannedEmail`/`status` lookups.
+
+---
+
 ## [astro-main] Fix — MongoDB Caching, API Fallback & Credential Cleanup
 
 **Status:** Completed, deployed, and live on `astro-dun-kappa.vercel.app`.
