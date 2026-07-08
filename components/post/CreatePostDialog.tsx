@@ -215,6 +215,7 @@ export default function CreatePostDialog() {
     >
       <DialogContent
         showCloseButton
+        onInteractOutside={(e) => e.preventDefault()}
         className="flex max-h-[85vh] w-full max-w-[640px] flex-col gap-0 overflow-hidden border-[0.5px] border-[var(--border-med)] bg-[var(--bg-elevated)] p-0"
       >
         <motion.div
