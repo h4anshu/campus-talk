@@ -64,6 +64,24 @@ enum UserStatus {
   BANNED
 }
 
+enum ReportReason {
+  SPAM
+  MISINFORMATION
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  HATE_SPEECH
+  PLAGIARISM
+  WRONG_CATEGORY
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+  ACTION_TAKEN
+}
+
 model College {
   id            String   @id @default(cuid())
   name          String
@@ -114,6 +132,7 @@ model User {
   savedPosts SavedPost[]
   notifications      Notification[]
   reputationLogs ReputationLog[]
+  reportsMade Report[] @relation("ReportsMade")
 }
 
 model BannedEmail {
@@ -195,6 +214,7 @@ model Post {
   media     Media[]
   tags      Tag[]
   savedBy   SavedPost[]
+  reports   Report[]
   searchVector Unsupported("tsvector")?
 }
 
@@ -264,6 +284,24 @@ model SavedPost {
   @@id([userId, postId])
 }
 
+model Report {
+  id         String       @id @default(cuid())
+  reason     ReportReason
+  otherText  String?
+  status     ReportStatus @default(PENDING)
+  postId     String
+  reporterId String
+  createdAt  DateTime     @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolution String?
+
+  post     Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporter User @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, reporterId])
+}
+
 model Ticket {
   id        String       @id @default(cuid())
   subject   String
@@ -319,6 +357,8 @@ enum NotificationType {
   COLLAB_SLOT_FILLED
   LOST_FOUND_RETURNED
   ADMIN_WARNING
+  REPORT_ACTION_TAKEN
+  POST_REMOVED_BY_ADMIN
 }
 
 model Notification {

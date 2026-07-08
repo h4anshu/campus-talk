@@ -2,6 +2,40 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Feature — Report System (schema, report submission, admin moderation queue)
+
+**Status:** Code complete, typechecked, built. **Migration authored but not applied** — hand-wrote `prisma/migrations/20260708130000_add_report_system/migration.sql`; user runs `npx prisma migrate deploy` when ready.
+
+**Closes a gap flagged in this log twice before** ("Closed out — Reputation system + leaderboard..." and the reputation-system entry): `REPORT_VERIFIED`/`REPORT_FALSE`/`POST_REMOVED_BY_REPORT` reputation reasons and the `ReportPostDialog` UI have existed since early sessions with **no backend at all** — this task builds the actual `Report` model, submission route, and admin moderation queue those reasons were always meant to attach to.
+
+**Same admin-auth mismatch as the last task, resolved the same way.** The spec assumed `app/(admin)/reports/page.tsx` + a `middleware.ts` matcher entry. Neither applies — built at `app/admin/(protected)/reports/page.tsx`, gated by the existing `requireAdmin()`/`isAdminSession()` cookie system, no middleware change (the whole `(protected)` route group is already gated at the layout level, confirmed again this session).
+
+**A real gap in the task's dialog-reuse plan, found and fixed before writing the page.** The task says to reuse `WarnUserDialog`/`BanUserDialog` from the User Management task and, after their action completes, also call the report-action endpoint (`WARN_AUTHOR`/`BAN_AUTHOR`) to update report status and notify reporters. But both dialogs are fully self-contained — they call `useWarnUser()`/`useBanUser()` internally and only expose `onOpenChange`, with no hook for a parent to chain a follow-up call after success. Added an optional `onSuccess?: () => void` prop to both (backward compatible — the existing `/admin/users` page doesn't pass it, so its behavior is unchanged), fired right before the dialog closes. The Reports page passes `onSuccess={() => afterWarnOrBan('WARN_AUTHOR' | 'BAN_AUTHOR')}`, which calls `useReportAction()` to mark the report resolved and notify reporters — exactly the two-step flow the task described, now actually wireable.
+
+**`ReportPostDialog.tsx` lives at `components/shared/`, not `components/post/`** as the task assumed (invoked from `components/post/PostActions.tsx`). Its previous reason list (`spam`/`harassment`/`inappropriate`/`offtopic`/`other`, local TS type, no backend) was replaced wholesale with the task's 8-value `ReportReason` enum (`SPAM`/`MISINFORMATION`/`HARASSMENT`/`INAPPROPRIATE_CONTENT`/`HATE_SPEECH`/`PLAGIARISM`/`WRONG_CATEGORY`/`OTHER`) and wired to a real `useSubmitReport` mutation — `OTHER` still reveals a required, 200-char-capped textarea. Also added the same `onInteractOutside` backdrop-click guard every other dialog in this codebase already has (a prior session's fix that this dialog had never received, since it predates that fix and was untouched until now).
+
+**Distinguishing the 409 "already reported" case required a message-match, not a status-code check.** `fetchJson` (the shared client fetch wrapper used everywhere) throws a plain `Error` with only the server's message string — it doesn't preserve the HTTP status code. Rather than changing that shared utility (used by every hook in the app; changing its error shape risks every existing `error instanceof Error` check elsewhere), `POST /api/posts/[id]/report`'s 409 response uses the literal message `'You have already reported this post'`, and the dialog's `onError` matches on `message.includes('already reported')` to show the dedicated toast and still close the dialog (matching the task's "on 409 → toast + close" spec) versus the generic "failed, try again" toast that stays open for retry.
+
+**`GET /api/admin/reports`'s grouping is done in application code, not `groupBy`.** The task suggested `prisma.report.groupBy`, but that can't produce the full nested shape the response needs (post details, author details, up to 10 reporters per post, one "top reason" per group) in a single aggregate query. Fetched all matching `Report` rows with `post`+`author`+`reporter` included, grouped by `postId` in JS, then sorted/paginated the grouped list. `stats` (total/pending/actionTaken/dismissed) is computed separately via a flat `prisma.report.groupBy({ by: ['status'] })` over raw report rows — a genuine, literal reading of the task's flat top-level `stats` object, distinct from the per-post `status` field (which is "status of the most recent report on this post," per the task's own spec, since a single post can carry reports in different states).
+
+**Reputation wiring (task section 4) folded into the action route (section 3), not left as an afterthought:** inside the same `$transaction` as each action's Post/Report/User update — `REPORT_VERIFIED` for every reporter on `REMOVE_POST`/`WARN_AUTHOR`/`BAN_AUTHOR`, `POST_REMOVED_BY_REPORT` for the post author on `REMOVE_POST`, `REPORT_FALSE` for every reporter on `DISMISS`. `MARK_REVIEWED` fires no reputation change (the task's section 3 doesn't ask for one there, and section 4 only names the other three reasons).
+
+**Other deviations from the literal task text, same reasoning as the User Management task:**
+- Skipped hand-inserting a row into `_prisma_migrations` — Prisma-CLI-managed at apply time, not something a migration file should fabricate.
+- `POST_REMOVED_BY_ADMIN`/`REPORT_ACTION_TAKEN` bell icons use the existing `NOTIF_ICONS` map's established convention (raw hex via inline `style`, not `var(--text-success)`/`var(--text-danger)` as the task specified — those CSS variables don't exist in this theme; `Trash2`/`ShieldCheck` in `#DC3545`/`#1DB874` to match the map's existing color values for danger/success).
+- Confirmed `ADMIN_WARNING` was already mapped (from the prior task) — task step 4 asked to "verify," nothing to add there.
+
+**Verified:**
+- `npx prisma generate` — succeeds, new types available (`Report`, `ReportReason`, `ReportStatus`)
+- `npx tsc --noEmit` — zero errors
+- `npx next build` — succeeds; new routes present: `/admin/reports` (5.95 kB), `/api/admin/reports`, `/api/admin/reports/[postId]/action`, `/api/posts/[id]/report`
+
+**Not verified — genuinely blocked:** end-to-end click-through (submit a real report, open `/admin/reports`, take each action, confirm notifications/reputation/status transitions) needs a real logged-in student session plus the real admin password plus the migration actually applied — none available in this sandbox.
+
+**Deploy:** held for the user to run `npx prisma migrate deploy` first, then commit/push — same reasoning as every migration-carrying feature in this log: pushing before the migration lands would 500 on `/api/posts/[id]/report` and every `/api/admin/reports*` route.
+
+---
+
 ## Feature — Admin User Management (schema, ban/warn API, /admin/users page)
 
 **Status:** Code complete, typechecked, built. **Migration authored but not applied** — hand-wrote `prisma/migrations/20260708120000_add_user_management/migration.sql`; user runs `npx prisma migrate deploy` when ready, per this task's explicit "no migrate dev" instruction.

@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: '/admin/tickets', label: 'Tickets' },
   { href: '/admin/announcements', label: 'Compose' },
   { href: '/admin/users', label: 'Users' },
+  { href: '/admin/reports', label: 'Reports' },
 ];
 
 export default function AdminNav() {

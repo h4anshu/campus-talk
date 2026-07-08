@@ -1,0 +1,36 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
+import { submitReportSchema } from '@/lib/validations/report';
+
+interface RouteParams {
+  params: { id: string };
+}
+
+export async function POST(req: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getSessionOrThrow();
+    const data = submitReportSchema.parse(await req.json());
+
+    const post = await prisma.post.findUnique({ where: { id: params.id }, select: { id: true } });
+    if (!post) throw new ApiError('Post not found', 404);
+
+    const existing = await prisma.report.findUnique({
+      where: { postId_reporterId: { postId: params.id, reporterId: session.user.id } },
+    });
+    if (existing) throw new ApiError('You have already reported this post', 409);
+
+    await prisma.report.create({
+      data: {
+        postId: params.id,
+        reporterId: session.user.id,
+        reason: data.reason,
+        otherText: data.reason === 'OTHER' ? data.otherText : null,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

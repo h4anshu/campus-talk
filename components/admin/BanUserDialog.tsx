@@ -10,9 +10,11 @@ interface BanUserDialogProps {
   onOpenChange: (open: boolean) => void;
   userId: string;
   userName: string;
+  /** Fired after the ban is applied successfully, before the dialog closes. */
+  onSuccess?: () => void;
 }
 
-export default function BanUserDialog({ open, onOpenChange, userId, userName }: BanUserDialogProps) {
+export default function BanUserDialog({ open, onOpenChange, userId, userName, onSuccess }: BanUserDialogProps) {
   const [reason, setReason] = useState('');
   const { mutate: banUser, isPending } = useBanUser();
 
@@ -30,6 +32,7 @@ export default function BanUserDialog({ open, onOpenChange, userId, userName }: 
       {
         onSuccess: () => {
           toast.success('Account suspended');
+          onSuccess?.();
           handleClose(false);
         },
         onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to suspend account'),

@@ -10,11 +10,13 @@ interface WarnUserDialogProps {
   onOpenChange: (open: boolean) => void;
   userId: string;
   userName: string;
+  /** Fired after the warning is sent successfully, before the dialog closes. */
+  onSuccess?: () => void;
 }
 
 const MAX_LENGTH = 500;
 
-export default function WarnUserDialog({ open, onOpenChange, userId, userName }: WarnUserDialogProps) {
+export default function WarnUserDialog({ open, onOpenChange, userId, userName, onSuccess }: WarnUserDialogProps) {
   const [message, setMessage] = useState('');
   const { mutate: warnUser, isPending } = useWarnUser();
 
@@ -32,6 +34,7 @@ export default function WarnUserDialog({ open, onOpenChange, userId, userName }:
       {
         onSuccess: () => {
           toast.success('Warning sent — user notified');
+          onSuccess?.();
           handleClose(false);
         },
         onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to send warning'),

@@ -25,6 +25,7 @@ import {
   Mail,
   Trophy,
   TriangleAlert,
+  Trash2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -72,6 +73,8 @@ const NOTIF_ICONS: Record<string, React.ReactNode> = {
   COLLAB_SLOT_FILLED:   <Trophy className="w-3.5 h-3.5" style={{ color: '#D97706' }} />,
   LOST_FOUND_RETURNED:  <Check className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
   ADMIN_WARNING:        <TriangleAlert className="w-3.5 h-3.5" style={{ color: '#D97706' }} />,
+  REPORT_ACTION_TAKEN:  <ShieldCheck className="w-3.5 h-3.5" style={{ color: '#1DB874' }} />,
+  POST_REMOVED_BY_ADMIN: <Trash2 className="w-3.5 h-3.5" style={{ color: '#DC3545' }} />,
 };
 
 export default function Navbar() {
