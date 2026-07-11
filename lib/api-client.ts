@@ -4,6 +4,10 @@ import type { MockComment } from '@/lib/mock/comments';
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
+    // Explicit even though same-origin requests already send cookies by
+    // default — makes the admin_session/NextAuth cookie requirement immune
+    // to any future cross-origin/subdomain deployment change.
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
   });
   if (!res.ok) {

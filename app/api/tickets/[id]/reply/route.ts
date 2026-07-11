@@ -26,6 +26,22 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const isTicketOwner = session?.user?.id === ticket.userId;
     const sendingAsAdmin = isAdmin && !isTicketOwner;
 
+    // TEMPORARY — remove once the admin-reply-not-saving report is confirmed
+    // fixed. Every prior hypothesis (senderId, senderRole casing, ticketId)
+    // has checked out fine against direct testing of this exact code path;
+    // this line exists to see, from real request logs, whether `isAdmin`
+    // itself is ever coming back false for a request that should be admin —
+    // that's the one thing that can't be reproduced without a real browser
+    // session and the real admin password.
+    console.log('[ticket-reply]', {
+      ticketId: params.id,
+      isAdmin,
+      hasNextAuthSession: !!session?.user?.id,
+      isTicketOwner,
+      sendingAsAdmin,
+      hasAdminCookieHeader: req.headers.get('cookie')?.includes('admin_session=') ?? false,
+    });
+
     if (!sendingAsAdmin && !isTicketOwner) {
       throw new ApiError('You can only reply to your own tickets', 403);
     }
