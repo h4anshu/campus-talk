@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { getSessionOrThrow, handleApiError } from '@/lib/api-helpers';
+import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
 import { isAdminSession } from '@/lib/admin-auth';
 import { createTicketSchema } from '@/lib/validations/ticket';
 import { serializeTicket, type TicketForSerialization } from '@/lib/ticket-serializers';
@@ -12,12 +13,17 @@ const TICKET_INCLUDE = {
 
 export async function GET() {
   try {
-    const admin = await isAdminSession();
+    const [isAdmin, session] = await Promise.all([isAdminSession(), auth()]);
+    // A real student session always wins over the admin_session cookie (the
+    // admin panel's shared-password cookie, independent of NextAuth) — a
+    // browser that has ever logged into /admin keeps carrying it, and it
+    // must not leak every ticket on the system into that student's own list.
+    const viewerIsAdmin = isAdmin && !session?.user?.id;
 
-    const tickets = admin
+    const tickets = viewerIsAdmin
       ? await prisma.ticket.findMany({ orderBy: { createdAt: 'desc' }, include: TICKET_INCLUDE })
       : await (async () => {
-          const session = await getSessionOrThrow();
+          if (!session?.user?.id) throw new ApiError('Unauthorized', 401);
           return prisma.ticket.findMany({
             where: { userId: session.user.id },
             orderBy: { createdAt: 'desc' },
@@ -26,7 +32,7 @@ export async function GET() {
         })();
 
     return NextResponse.json({
-      tickets: tickets.map((t) => serializeTicket(t as TicketForSerialization, admin)),
+      tickets: tickets.map((t) => serializeTicket(t as TicketForSerialization, viewerIsAdmin)),
     });
   } catch (error) {
     return handleApiError(error);
