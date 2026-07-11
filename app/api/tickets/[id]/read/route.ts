@@ -24,13 +24,13 @@ export async function POST(_req: Request, { params }: RouteParams) {
       await prisma.$transaction([
         prisma.ticket.update({ where: { id: params.id }, data: { openedByAdmin: true } }),
         prisma.ticketMessage.updateMany({
-          where: { ticketId: params.id, fromAdmin: false, isRead: false },
+          where: { ticketId: params.id, senderRole: 'USER', isRead: false },
           data: { isRead: true },
         }),
       ]);
     } else if (isTicketOwner) {
       await prisma.ticketMessage.updateMany({
-        where: { ticketId: params.id, fromAdmin: true, isRead: false },
+        where: { ticketId: params.id, senderRole: 'ADMIN', isRead: false },
         data: { isRead: true },
       });
     } else {

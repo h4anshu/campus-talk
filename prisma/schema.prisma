@@ -58,6 +58,11 @@ enum TicketStatus {
   RESOLVED
 }
 
+enum SenderRole {
+  USER
+  ADMIN
+}
+
 enum UserStatus {
   ACTIVE
   WARNED
@@ -322,9 +327,15 @@ model Ticket {
 }
 
 model TicketMessage {
-  id        String   @id @default(cuid())
-  body      String   @db.Text
-  fromAdmin Boolean  @default(false)
+  id        String     @id @default(cuid())
+  body      String     @db.Text
+  // Sender identity is captured at write time and never re-derived from
+  // message order/index. senderId/senderName are a point-in-time snapshot
+  // (a renamed user's older messages keep showing the name they had then);
+  // senderRole is the source of truth read-side code uses for alignment.
+  senderId   String
+  senderName String
+  senderRole SenderRole
   // Whether the *recipient* (the side that didn't send this message) has
   // seen it yet — flips to true when they open the ticket detail view.
   isRead    Boolean  @default(false)

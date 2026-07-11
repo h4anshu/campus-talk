@@ -87,7 +87,7 @@ export default function MyTicketsPage() {
                 </div>
                 {lastMessage && (
                   <p className="mt-1.5 line-clamp-1 break-words text-[11px] text-[var(--text-secondary)]">
-                    {lastMessage.fromAdmin ? 'Admin: ' : 'You: '}
+                    {lastMessage.senderRole === 'admin' ? 'Admin: ' : 'You: '}
                     {lastMessage.body}
                   </p>
                 )}

@@ -14,13 +14,15 @@ export type TicketForSerialization = Ticket & {
 // The existing mock-data UI contract (built in Phase 6) instead models a
 // ticket as a subject + a flat `messages[]` thread with no separate `body`.
 // Rather than changing either the schema or the UI, this synthesizes that
-// opening message from `ticket.body` so both sides stay compatible.
+// opening message from `ticket.body` so both sides stay compatible. Its
+// sender is always the ticket owner — there's no separate TicketMessage row
+// for it, so senderId/senderName are read straight off `ticket.user`.
 export function serializeTicket(ticket: TicketForSerialization, viewerIsAdmin: boolean): MockTicket {
   // The opening message is authored by the student, so it's never "unread"
   // for them — only admin needs `openedByAdmin` to know if they've seen it.
   const unread = viewerIsAdmin
-    ? !ticket.openedByAdmin || ticket.messages.some((m) => !m.fromAdmin && !m.isRead)
-    : ticket.messages.some((m) => m.fromAdmin && !m.isRead);
+    ? !ticket.openedByAdmin || ticket.messages.some((m) => m.senderRole === 'USER' && !m.isRead)
+    : ticket.messages.some((m) => m.senderRole === 'ADMIN' && !m.isRead);
 
   return {
     id: ticket.id,
@@ -36,11 +38,20 @@ export function serializeTicket(ticket: TicketForSerialization, viewerIsAdmin: b
     },
     createdAt: ticket.createdAt,
     messages: [
-      { id: `${ticket.id}-opening`, body: ticket.body, fromAdmin: false, createdAt: ticket.createdAt },
+      {
+        id: `${ticket.id}-opening`,
+        body: ticket.body,
+        senderId: ticket.user.id,
+        senderName: ticket.user.name,
+        senderRole: 'user',
+        createdAt: ticket.createdAt,
+      },
       ...ticket.messages.map((m) => ({
         id: m.id,
         body: m.body,
-        fromAdmin: m.fromAdmin,
+        senderId: m.senderId,
+        senderName: m.senderName,
+        senderRole: (m.senderRole === 'ADMIN' ? 'admin' : 'user') as 'user' | 'admin',
         createdAt: m.createdAt,
       })),
     ],

@@ -101,8 +101,12 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
       <div ref={scrollRef} className="mt-4 flex-1 overflow-y-auto rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-page)] p-4">
         <div className="flex flex-col gap-3">
           {ticket.messages.map((msg) => {
-            // "Mine" (right-aligned) means whichever side the current viewer is on.
-            const isMine = viewerIsAdmin ? msg.fromAdmin : !msg.fromAdmin;
+            // Alignment is read straight off the message's own stored
+            // senderRole/senderId — never derived from position in the
+            // array or which side rendered it first.
+            const isMine = viewerIsAdmin
+              ? msg.senderRole === 'admin'
+              : msg.senderRole === 'user' && msg.senderId === session?.user?.id;
             return (
               <div key={msg.id} className={`flex max-w-[75%] flex-col ${isMine ? 'ml-auto items-end' : 'items-start'}`}>
                 <div
@@ -118,7 +122,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
                   className="mt-1 px-1 text-[11px] text-[var(--text-muted)]"
                   title={format(msg.createdAt, 'PPpp')}
                 >
-                  {msg.fromAdmin ? 'Admin' : ticket.user.name} ·{' '}
+                  {msg.senderRole === 'admin' ? 'Admin' : msg.senderName} ·{' '}
                   {formatDistanceToNowStrict(msg.createdAt, { addSuffix: true })}
                 </span>
               </div>

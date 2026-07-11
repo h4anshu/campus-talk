@@ -15,7 +15,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const [isAdmin, session] = await Promise.all([isAdminSession(), auth()]);
     const { body } = replyTicketSchema.parse(await req.json());
 
-    const ticket = await prisma.ticket.findUnique({ where: { id: params.id } });
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: params.id },
+      include: { user: { select: { id: true, name: true } } },
+    });
     if (!ticket) throw new ApiError('Ticket not found', 404);
 
     // The admin panel's cookie is a single shared-password session, entirely
@@ -24,20 +27,30 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     // win over that cookie, or a student's own reply gets mislabeled as
     // coming from Admin.
     const isTicketOwner = session?.user?.id === ticket.userId;
-    const fromAdmin = isAdmin && !isTicketOwner;
+    const sendingAsAdmin = isAdmin && !isTicketOwner;
 
-    if (!fromAdmin && !isTicketOwner) {
+    if (!sendingAsAdmin && !isTicketOwner) {
       throw new ApiError('You can only reply to your own tickets', 403);
     }
 
+    // Sender identity is resolved once, here, and stored on the row — every
+    // other read of this message (thread view, ticket list preview, unread
+    // counts) trusts senderRole/senderId instead of re-deriving who sent it.
+    const adminOfficeUser = sendingAsAdmin ? await getOrCreateAdminOfficeUser() : null;
+    const senderId = sendingAsAdmin ? adminOfficeUser!.id : ticket.user.id;
+    const senderName = sendingAsAdmin ? 'Admin' : ticket.user.name;
+
     const message = await prisma.ticketMessage.create({
-      data: { body, fromAdmin, ticketId: params.id },
+      data: {
+        body,
+        ticketId: params.id,
+        senderId,
+        senderName,
+        senderRole: sendingAsAdmin ? 'ADMIN' : 'USER',
+      },
     });
 
-    const adminOfficeUser = await getOrCreateAdminOfficeUser();
-    const recipientId = fromAdmin ? ticket.userId : adminOfficeUser.id;
-
-    if (fromAdmin) {
+    if (sendingAsAdmin) {
       await createNotificationSafe({
         userId: ticket.userId,
         type: 'TICKET_REPLY',
@@ -47,6 +60,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         refId: ticket.id,
       });
     } else {
+      const recipientId = (await getOrCreateAdminOfficeUser()).id;
       await createNotificationSafe({
         userId: recipientId,
         type: 'TICKET_REPLY',
@@ -62,7 +76,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         message: {
           id: message.id,
           body: message.body,
-          fromAdmin: message.fromAdmin,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          senderRole: sendingAsAdmin ? 'admin' : 'user',
           createdAt: message.createdAt,
         },
       },
