@@ -71,6 +71,17 @@ export async function POST(req: NextRequest) {
     const json = await req.json();
     const data = createPostSchema.parse(json);
 
+    // Announcements and Events are admin-only per CLAUDE.md §5 — admin posts
+    // to these spaces go through app/api/admin/posts/route.ts instead, so
+    // this student-facing route rejects them unconditionally.
+    const ADMIN_ONLY_SPACES = ['announcements', 'events'];
+    if (data.space && ADMIN_ONLY_SPACES.includes(data.space)) {
+      return NextResponse.json(
+        { error: 'This space is admin-only. Students cannot post here.' },
+        { status: 403 }
+      );
+    }
+
     const sanitizedBody = sanitizeBody(data.body);
     const isAdmin = session.user.role === 'ADMIN';
     const status = data.type === 'DISCUSSION' || isAdmin ? 'APPROVED' : 'PENDING';

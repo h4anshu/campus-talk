@@ -31,17 +31,29 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     switch (data.action) {
       case 'REMOVE_POST': {
-        await prisma.$transaction(async (tx) => {
-          await tx.post.update({ where: { id: post.id }, data: { status: 'REMOVED' } });
-          await tx.report.updateMany({
-            where: { postId: post.id },
+        // Gate on status: 'PENDING' so a retry/double-click/second-admin
+        // after this report group is already resolved matches zero rows —
+        // updateMany's row-level UPDATE serializes this correctly even
+        // under concurrent requests, so only the first ever proceeds past
+        // this point to award reputation or send notifications.
+        const { count } = await prisma.$transaction(async (tx) => {
+          const updateResult = await tx.report.updateMany({
+            where: { postId: post.id, status: 'PENDING' },
             data: { status: 'ACTION_TAKEN', resolvedAt: new Date() },
           });
+          if (updateResult.count === 0) return updateResult;
+
+          await tx.post.update({ where: { id: post.id }, data: { status: 'REMOVED' } });
           await updateReputation(tx, post.authorId, 'POST_REMOVED_BY_REPORT', post.id);
           for (const reporterId of reporterIds) {
             await updateReputation(tx, reporterId, 'REPORT_VERIFIED', post.id);
           }
+          return updateResult;
         });
+
+        if (count === 0) {
+          return NextResponse.json({ success: true, alreadyResolved: true });
+        }
 
         await createNotificationSafe({
           userId: post.authorId,
@@ -63,19 +75,26 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       case 'WARN_AUTHOR': {
         if (!data.warningMessage?.trim()) throw new ApiError('Warning message is required', 400);
 
-        await prisma.$transaction(async (tx) => {
+        const { count } = await prisma.$transaction(async (tx) => {
+          const updateResult = await tx.report.updateMany({
+            where: { postId: post.id, status: 'PENDING' },
+            data: { status: 'ACTION_TAKEN', resolvedAt: new Date() },
+          });
+          if (updateResult.count === 0) return updateResult;
+
           await tx.user.update({
             where: { id: post.authorId },
             data: { warningCount: { increment: 1 }, status: 'WARNED' },
           });
-          await tx.report.updateMany({
-            where: { postId: post.id },
-            data: { status: 'ACTION_TAKEN', resolvedAt: new Date() },
-          });
           for (const reporterId of reporterIds) {
             await updateReputation(tx, reporterId, 'REPORT_VERIFIED', post.id);
           }
+          return updateResult;
         });
+
+        if (count === 0) {
+          return NextResponse.json({ success: true, alreadyResolved: true });
+        }
 
         await createNotificationSafe({
           userId: post.authorId,
@@ -97,19 +116,26 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       case 'BAN_AUTHOR': {
         if (!data.warningMessage?.trim()) throw new ApiError('Ban reason is required', 400);
 
-        await prisma.$transaction(async (tx) => {
+        const { count } = await prisma.$transaction(async (tx) => {
+          const updateResult = await tx.report.updateMany({
+            where: { postId: post.id, status: 'PENDING' },
+            data: { status: 'ACTION_TAKEN', resolvedAt: new Date() },
+          });
+          if (updateResult.count === 0) return updateResult;
+
           await tx.user.update({
             where: { id: post.authorId },
             data: { status: 'BANNED', bannedAt: new Date(), bannedReason: data.warningMessage },
           });
-          await tx.report.updateMany({
-            where: { postId: post.id },
-            data: { status: 'ACTION_TAKEN', resolvedAt: new Date() },
-          });
           for (const reporterId of reporterIds) {
             await updateReputation(tx, reporterId, 'REPORT_VERIFIED', post.id);
           }
+          return updateResult;
         });
+
+        if (count === 0) {
+          return NextResponse.json({ success: true, alreadyResolved: true });
+        }
 
         await prisma.session.deleteMany({ where: { userId: post.authorId } });
 
@@ -131,10 +157,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       }
 
       case 'MARK_REVIEWED': {
-        await prisma.report.updateMany({
-          where: { postId: post.id },
+        const { count } = await prisma.report.updateMany({
+          where: { postId: post.id, status: 'PENDING' },
           data: { status: 'REVIEWED', resolvedAt: new Date() },
         });
+
+        if (count === 0) {
+          return NextResponse.json({ success: true, alreadyResolved: true });
+        }
+
         for (const reporterId of reporterIds) {
           await createNotificationSafe({
             userId: reporterId,
@@ -147,15 +178,22 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       }
 
       case 'DISMISS': {
-        await prisma.$transaction(async (tx) => {
-          await tx.report.updateMany({
-            where: { postId: post.id },
+        const { count } = await prisma.$transaction(async (tx) => {
+          const updateResult = await tx.report.updateMany({
+            where: { postId: post.id, status: 'PENDING' },
             data: { status: 'DISMISSED', resolvedAt: new Date() },
           });
+          if (updateResult.count === 0) return updateResult;
+
           for (const reporterId of reporterIds) {
             await updateReputation(tx, reporterId, 'REPORT_FALSE', post.id);
           }
+          return updateResult;
         });
+
+        if (count === 0) {
+          return NextResponse.json({ success: true, alreadyResolved: true });
+        }
         break;
       }
     }

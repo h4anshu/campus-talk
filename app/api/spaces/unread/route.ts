@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
 
       const count = await prisma.post.count({
         where: {
-          collegeId,
+          // Admin-authored posts (announcements/events) have collegeId: null
+          // — platform-wide — matching the main feed's OR-scoping pattern
+          // (app/api/posts/route.ts) so those unread counts can ever fire.
+          OR: [{ collegeId }, { collegeId: null }],
           status: 'APPROVED',
           space: prismaSpaceType,
           createdAt: {

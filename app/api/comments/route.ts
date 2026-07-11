@@ -14,9 +14,19 @@ export async function POST(req: NextRequest) {
 
     const post = await prisma.post.findUnique({
       where: { id: data.postId },
-      select: { id: true, authorId: true }
+      select: { id: true, authorId: true, locked: true, collabIsClosed: true, status: true }
     });
     if (!post) throw new ApiError('Post not found', 404);
+
+    if (post.locked) {
+      throw new ApiError('This post is locked. Comments are disabled.', 403);
+    }
+    if (post.collabIsClosed) {
+      throw new ApiError('This collaboration is closed. Comments are disabled.', 403);
+    }
+    if (post.status !== 'APPROVED') {
+      throw new ApiError('Cannot comment on this post.', 403);
+    }
 
     if (data.parentId) {
       const parent = await prisma.comment.findUnique({

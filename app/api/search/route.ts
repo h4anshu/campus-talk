@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
     // 2. Case-insensitive search for users/people matching the query
     const matchingUsers = await prisma.user.findMany({
       where: {
+        collegeId: session.user.collegeId,
         name: {
           contains: q,
           mode: 'insensitive',
