@@ -11,7 +11,9 @@ export interface MockTicketMessage {
   content: string;
   senderId: string;
   senderName: string;
-  senderRole: 'user' | 'admin';
+  // Matches the Prisma SenderRole enum exactly — no case translation
+  // anywhere between the DB and the client.
+  senderRole: 'USER' | 'ADMIN';
   createdAt: Date;
 }
 
@@ -44,7 +46,7 @@ export const MOCK_TICKETS: MockTicket[] = [
         content: "Block C wifi has been down for 4 days now. I already posted about it in Hostel & Mess but no one from admin has responded. Can someone look into this?",
         senderId: 'user-rahul-tiwari',
         senderName: 'Rahul Tiwari',
-        senderRole: 'user',
+        senderRole: 'USER',
         createdAt: daysAgo(1),
       },
     ],
@@ -61,7 +63,7 @@ export const MOCK_TICKETS: MockTicket[] = [
         content: "The mid-term datesheet announcement is still pinned at the top of Announcements even though exams ended last week. Can it be un-pinned so newer notices are visible?",
         senderId: 'user-priya-sharma',
         senderName: 'Priya Sharma',
-        senderRole: 'user',
+        senderRole: 'USER',
         createdAt: daysAgo(3),
       },
       {
@@ -69,7 +71,7 @@ export const MOCK_TICKETS: MockTicket[] = [
         content: "Thanks for flagging this — checking with the exam cell and will update the pin by tomorrow.",
         senderId: 'admin',
         senderName: 'Admin',
-        senderRole: 'admin',
+        senderRole: 'ADMIN',
         createdAt: daysAgo(2),
       },
     ],
@@ -86,7 +88,7 @@ export const MOCK_TICKETS: MockTicket[] = [
         content: "There's a confession post that's just an ad for an external tuition service, not an actual confession. Reporting it for removal.",
         senderId: 'user-kavya-reddy',
         senderName: 'Kavya Reddy',
-        senderRole: 'user',
+        senderRole: 'USER',
         createdAt: daysAgo(6),
       },
       {
@@ -94,7 +96,7 @@ export const MOCK_TICKETS: MockTicket[] = [
         content: "Reviewed and removed the post, thanks for the report. We've also warned the account.",
         senderId: 'admin',
         senderName: 'Admin',
-        senderRole: 'admin',
+        senderRole: 'ADMIN',
         createdAt: daysAgo(5),
       },
       {
@@ -102,7 +104,7 @@ export const MOCK_TICKETS: MockTicket[] = [
         content: 'Appreciate the quick action!',
         senderId: 'user-kavya-reddy',
         senderName: 'Kavya Reddy',
-        senderRole: 'user',
+        senderRole: 'USER',
         createdAt: daysAgo(5),
       },
     ],

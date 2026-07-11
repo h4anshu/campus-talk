@@ -43,7 +43,7 @@ export function serializeTicket(ticket: TicketForSerialization, viewerIsAdmin: b
         content: ticket.body,
         senderId: ticket.user.id,
         senderName: ticket.user.name,
-        senderRole: 'user',
+        senderRole: 'USER',
         createdAt: ticket.createdAt,
       },
       ...ticket.messages.map((m) => ({
@@ -51,7 +51,7 @@ export function serializeTicket(ticket: TicketForSerialization, viewerIsAdmin: b
         content: m.content,
         senderId: m.senderId,
         senderName: m.senderName,
-        senderRole: (m.senderRole === 'ADMIN' ? 'admin' : 'user') as 'user' | 'admin',
+        senderRole: m.senderRole,
         createdAt: m.createdAt,
       })),
     ],

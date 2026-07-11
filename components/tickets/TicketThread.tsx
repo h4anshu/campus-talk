@@ -101,11 +101,14 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
       <div ref={scrollRef} className="mt-4 flex-1 overflow-y-auto rounded-card border-[0.5px] border-[var(--border)] bg-[var(--bg-page)] p-4">
         <div className="flex flex-col gap-3">
           {ticket.messages.map((msg) => {
-            // Alignment is read straight off the message's own stored
-            // senderRole — never derived from position in the array, which
-            // side rendered it first, or a comparison against the current
-            // viewer's session id.
-            const isMine = viewerIsAdmin ? msg.senderRole === 'admin' : msg.senderRole === 'user';
+            // Explicit two-step check, matching the DB enum verbatim:
+            // 1. isAdminMsg — who actually sent it, straight off the stored
+            //    senderRole (never inferred from array position/order).
+            // 2. isMine — whether *this* viewer's own messages should land
+            //    on the right. Same isAdminMsg value, opposite alignment
+            //    depending on which side is looking at the thread.
+            const isAdminMsg = msg.senderRole === 'ADMIN';
+            const isMine = viewerIsAdmin ? isAdminMsg : !isAdminMsg;
             return (
               <div key={msg.id} className={`flex max-w-[75%] flex-col ${isMine ? 'ml-auto items-end' : 'items-start'}`}>
                 <div
@@ -121,7 +124,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
                   className="mt-1 px-1 text-[11px] text-[var(--text-muted)]"
                   title={format(msg.createdAt, 'PPpp')}
                 >
-                  {msg.senderRole === 'admin' ? 'Admin' : msg.senderName} ·{' '}
+                  {isAdminMsg ? 'Admin' : msg.senderName} ·{' '}
                   {formatDistanceToNowStrict(msg.createdAt, { addSuffix: true })}
                 </span>
               </div>
