@@ -4,12 +4,20 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import type { User as PrismaUser } from '@prisma/client';
 
+// Enforces anchoring regardless of how domainPattern was entered in the
+// College table — an unanchored pattern like `bbdu\.ac\.in` would otherwise
+// match a lookalike domain such as `bbdu.ac.in.evil-domain.com`.
+function buildAnchoredDomainRegex(pattern: string): RegExp {
+  const anchored = pattern.startsWith('^') && pattern.endsWith('$') ? pattern : `^${pattern}$`;
+  return new RegExp(anchored, 'i');
+}
+
 async function findMatchingCollege(email: string | null | undefined) {
   const domain = email?.split('@')[1]?.toLowerCase();
   if (!domain) return null;
 
   const colleges = await prisma.college.findMany({ where: { isActive: true } });
-  return colleges.find((college) => new RegExp(college.domainPattern, 'i').test(domain)) ?? null;
+  return colleges.find((college) => buildAnchoredDomainRegex(college.domainPattern).test(domain)) ?? null;
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

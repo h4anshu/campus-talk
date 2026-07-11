@@ -194,6 +194,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         if (count === 0) {
           return NextResponse.json({ success: true, alreadyResolved: true });
         }
+
+        for (const reporterId of reporterIds) {
+          await createNotificationSafe({
+            userId: reporterId,
+            type: 'REPORT_ACTION_TAKEN',
+            title: 'Report reviewed',
+            body: 'Your report has been reviewed. No violation was found.',
+          });
+        }
         break;
       }
     }

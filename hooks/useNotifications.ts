@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@supabase/supabase-js';
+import { fetchJson } from '@/lib/api-client';
 
 export type AppNotification = {
   id: string;
@@ -21,7 +22,7 @@ const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supa
 export function useNotifications() {
   return useQuery<AppNotification[]>({
     queryKey: ['notifications'],
-    queryFn: () => fetch('/api/notifications').then((r) => r.json()),
+    queryFn: () => fetchJson<AppNotification[]>('/api/notifications'),
     refetchInterval: 30_000, // poll every 30s
     staleTime: 15_000,
   });
@@ -30,7 +31,7 @@ export function useNotifications() {
 export function useMarkAllRead() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => fetch('/api/notifications/read', { method: 'PATCH' }),
+    mutationFn: () => fetchJson('/api/notifications/read', { method: 'PATCH' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   });
 }
@@ -38,13 +39,17 @@ export function useMarkAllRead() {
 export function useMarkOneRead() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/notifications/${id}/read`, { method: 'PATCH' }),
-    onMutate: async (id) => {
+    mutationFn: (id: string) => fetchJson(`/api/notifications/${id}/read`, { method: 'PATCH' }),
+    onMutate: async (id: string) => {
       await qc.cancelQueries({ queryKey: ['notifications'] });
+      const previous = qc.getQueryData<AppNotification[]>(['notifications']);
       qc.setQueryData<AppNotification[]>(['notifications'], (old) =>
         old?.map((n) => (n.id === id ? { ...n, read: true } : n)) ?? []
       );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) qc.setQueryData(['notifications'], context.previous);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   });

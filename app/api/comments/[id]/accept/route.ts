@@ -26,6 +26,9 @@ export async function PATCH(_req: NextRequest, { params }: RouteParams) {
     if (comment.post.authorId !== session.user.id) {
       throw new ApiError('Only the post author can accept an answer', 403);
     }
+    if (comment.accepted) {
+      return NextResponse.json({ success: true, alreadyAccepted: true });
+    }
 
     await prisma.$transaction(async (tx) => {
       await tx.comment.updateMany({
