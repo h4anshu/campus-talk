@@ -13,6 +13,7 @@ interface RouteParams {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const [isAdmin, session] = await Promise.all([isAdminSession(), auth()]);
+    const { searchParams } = new URL(req.url);
     const { content } = replyTicketSchema.parse(await req.json());
 
     const ticket = await prisma.ticket.findUnique({ where: { id: params.id } });
@@ -20,11 +21,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     // The admin panel's cookie is a single shared-password session, entirely
     // independent of NextAuth — a browser that ever logged into /admin keeps
-    // carrying it alongside a student's own session. Ticket ownership must
-    // win over that cookie, or a student's own reply gets mislabeled as
-    // coming from Admin.
+    // carrying it alongside a student's own session (the common case when
+    // testing both sides). Admin intent must be explicit (`?as=admin`, sent
+    // by the admin UI), never inferred from ticket ownership — inferring it
+    // meant an admin replying to their OWN ticket (as a student, elsewhere)
+    // silently got attributed to the student instead. Ownership is still
+    // checked separately below, purely to authorize a non-admin request.
     const isTicketOwner = session?.user?.id === ticket.userId;
-    const sendingAsAdmin = isAdmin && !isTicketOwner;
+    const sendingAsAdmin = isAdmin && (searchParams.get('as') === 'admin' || !session?.user?.id);
 
     if (!sendingAsAdmin && !isTicketOwner) {
       throw new ApiError('You can only reply to your own tickets', 403);

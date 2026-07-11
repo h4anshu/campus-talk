@@ -19,12 +19,19 @@ function hydrateTicket(ticket: MockTicket): MockTicket {
  * Server scopes this to the caller's own tickets, or every ticket if the
  * caller is admin. Polls every 15s so both sides notice new messages without
  * Supabase Realtime (that's a later phase) — cheap enough at this scale.
+ *
+ * `viewerIsAdmin` must be passed explicitly by the admin UI (`?as=admin`) —
+ * the server never infers admin intent from session state alone, since a
+ * browser can hold both the admin cookie and a student NextAuth session at
+ * once.
  */
-export function useTickets() {
+export function useTickets(viewerIsAdmin = false) {
   return useQuery({
-    queryKey: TICKETS_KEY,
+    queryKey: [...TICKETS_KEY, viewerIsAdmin] as const,
     queryFn: async () => {
-      const data = await fetchJson<{ tickets: MockTicket[] }>('/api/tickets');
+      const data = await fetchJson<{ tickets: MockTicket[] }>(
+        `/api/tickets${viewerIsAdmin ? '?as=admin' : ''}`
+      );
       return data.tickets.map(hydrateTicket);
     },
     refetchInterval: 15_000,
@@ -45,24 +52,25 @@ export function useCreateTicket() {
   });
 }
 
-export function useReplyTicket(ticketId: string) {
+export function useReplyTicket(ticketId: string, viewerIsAdmin = false) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (content: string) => {
-      const data = await fetchJson<{ message: MockTicketMessage }>(`/api/tickets/${ticketId}/reply`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      });
+      const data = await fetchJson<{ message: MockTicketMessage }>(
+        `/api/tickets/${ticketId}/reply${viewerIsAdmin ? '?as=admin' : ''}`,
+        { method: 'POST', body: JSON.stringify({ content }) }
+      );
       return data.message;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: TICKETS_KEY }),
   });
 }
 
-export function useMarkTicketRead(ticketId: string) {
+export function useMarkTicketRead(ticketId: string, viewerIsAdmin = false) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => fetchJson(`/api/tickets/${ticketId}/read`, { method: 'POST' }),
+    mutationFn: () =>
+      fetchJson(`/api/tickets/${ticketId}/read${viewerIsAdmin ? '?as=admin' : ''}`, { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: TICKETS_KEY }),
   });
 }

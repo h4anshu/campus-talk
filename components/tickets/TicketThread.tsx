@@ -32,9 +32,9 @@ interface TicketThreadProps {
 export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketThreadProps) {
   const { data: session } = useSession();
   const [reply, setReply] = useState('');
-  const { mutate: sendReply, isPending } = useReplyTicket(ticket.id);
+  const { mutate: sendReply, isPending } = useReplyTicket(ticket.id, viewerIsAdmin);
   const { mutate: setStatus } = useTicketStatus(ticket.id);
-  const { mutate: markRead } = useMarkTicketRead(ticket.id);
+  const { mutate: markRead } = useMarkTicketRead(ticket.id, viewerIsAdmin);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Opening this thread is what clears the unread badge for whichever side

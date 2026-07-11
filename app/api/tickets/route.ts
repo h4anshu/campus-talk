@@ -11,14 +11,17 @@ const TICKET_INCLUDE = {
   messages: { orderBy: { createdAt: 'asc' as const } },
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const [isAdmin, session] = await Promise.all([isAdminSession(), auth()]);
-    // A real student session always wins over the admin_session cookie (the
-    // admin panel's shared-password cookie, independent of NextAuth) — a
-    // browser that has ever logged into /admin keeps carrying it, and it
-    // must not leak every ticket on the system into that student's own list.
-    const viewerIsAdmin = isAdmin && !session?.user?.id;
+    // Admin intent must be explicit, not inferred from session state: a
+    // browser holding both the admin_session cookie and a NextAuth student
+    // session (the common case when testing both sides) is ambiguous on
+    // its own. The admin UI declares itself via `?as=admin`; without a
+    // student session there's nothing to be ambiguous with, so a bare
+    // admin cookie still defaults to admin (unchanged from before).
+    const { searchParams } = new URL(req.url);
+    const viewerIsAdmin = isAdmin && (!session?.user?.id || searchParams.get('as') === 'admin');
 
     const tickets = viewerIsAdmin
       ? await prisma.ticket.findMany({ orderBy: { createdAt: 'desc' }, include: TICKET_INCLUDE })

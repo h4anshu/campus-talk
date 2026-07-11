@@ -22,7 +22,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function AdminTicketsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data: tickets, isLoading, isError } = useTickets();
+  const { data: tickets, isLoading, isError } = useTickets(true);
   const selected = tickets?.find((t) => t.id === selectedId);
 
   if (selected) {

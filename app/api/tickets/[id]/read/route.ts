@@ -9,18 +9,22 @@ interface RouteParams {
 }
 
 /** Marks the other side's messages as read — called when a ticket detail view opens. */
-export async function POST(_req: Request, { params }: RouteParams) {
+export async function POST(req: Request, { params }: RouteParams) {
   try {
     const [isAdmin, session] = await Promise.all([isAdminSession(), auth()]);
+    const { searchParams } = new URL(req.url);
     const ticket = await prisma.ticket.findUnique({ where: { id: params.id } });
     if (!ticket) throw new ApiError('Ticket not found', 404);
 
-    // Ticket ownership wins over the admin cookie for the same reason as the
-    // reply route: a browser holding both sessions must still be treated as
-    // the student when it's their own ticket.
+    // Admin intent must be explicit (`?as=admin`), not inferred from ticket
+    // ownership — same reason as the reply route: a browser holding both the
+    // admin cookie and a NextAuth student session must not have the
+    // student's own ticket silently treated as a "student" read just
+    // because the two sessions happen to coexist.
     const isTicketOwner = session?.user?.id === ticket.userId;
+    const actingAsAdmin = isAdmin && (searchParams.get('as') === 'admin' || !session?.user?.id);
 
-    if (isAdmin && !isTicketOwner) {
+    if (actingAsAdmin) {
       await prisma.$transaction([
         prisma.ticket.update({ where: { id: params.id }, data: { openedByAdmin: true } }),
         prisma.ticketMessage.updateMany({
