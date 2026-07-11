@@ -13,12 +13,9 @@ interface RouteParams {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const [isAdmin, session] = await Promise.all([isAdminSession(), auth()]);
-    const { body } = replyTicketSchema.parse(await req.json());
+    const { content } = replyTicketSchema.parse(await req.json());
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: params.id },
-      include: { user: { select: { id: true, name: true } } },
-    });
+    const ticket = await prisma.ticket.findUnique({ where: { id: params.id } });
     if (!ticket) throw new ApiError('Ticket not found', 404);
 
     // The admin panel's cookie is a single shared-password session, entirely
@@ -35,14 +32,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     // Sender identity is resolved once, here, and stored on the row — every
     // other read of this message (thread view, ticket list preview, unread
-    // counts) trusts senderRole/senderId instead of re-deriving who sent it.
-    const adminOfficeUser = sendingAsAdmin ? await getOrCreateAdminOfficeUser() : null;
-    const senderId = sendingAsAdmin ? adminOfficeUser!.id : ticket.user.id;
-    const senderName = sendingAsAdmin ? 'Admin' : ticket.user.name;
+    // counts) trusts senderRole alone, never re-deriving who sent it from
+    // session state or message position. Admin has no individual NextAuth
+    // identity (shared-password cookie), so it's a fixed sentinel.
+    const senderId = sendingAsAdmin ? 'admin' : session!.user.id;
+    const senderName = sendingAsAdmin ? 'Admin' : (session!.user.name ?? 'Student');
 
     const message = await prisma.ticketMessage.create({
       data: {
-        body,
+        content,
         ticketId: params.id,
         senderId,
         senderName,
@@ -60,6 +58,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         refId: ticket.id,
       });
     } else {
+      // Notification.userId is a real FK, so the recipient still needs an
+      // actual User row — that's orthogonal to the message's senderId sentinel.
       const recipientId = (await getOrCreateAdminOfficeUser()).id;
       await createNotificationSafe({
         userId: recipientId,
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       {
         message: {
           id: message.id,
-          body: message.body,
+          content: message.content,
           senderId: message.senderId,
           senderName: message.senderName,
           senderRole: sendingAsAdmin ? 'admin' : 'user',

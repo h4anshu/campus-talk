@@ -8,7 +8,7 @@ export const createTicketSchema = z.object({
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 
 export const replyTicketSchema = z.object({
-  body: z.string().trim().min(1, 'Reply cannot be empty').max(5000),
+  content: z.string().trim().min(1, 'Reply cannot be empty').max(5000),
 });
 
 export const ticketStatusSchema = z.object({

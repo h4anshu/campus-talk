@@ -102,11 +102,10 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
         <div className="flex flex-col gap-3">
           {ticket.messages.map((msg) => {
             // Alignment is read straight off the message's own stored
-            // senderRole/senderId — never derived from position in the
-            // array or which side rendered it first.
-            const isMine = viewerIsAdmin
-              ? msg.senderRole === 'admin'
-              : msg.senderRole === 'user' && msg.senderId === session?.user?.id;
+            // senderRole — never derived from position in the array, which
+            // side rendered it first, or a comparison against the current
+            // viewer's session id.
+            const isMine = viewerIsAdmin ? msg.senderRole === 'admin' : msg.senderRole === 'user';
             return (
               <div key={msg.id} className={`flex max-w-[75%] flex-col ${isMine ? 'ml-auto items-end' : 'items-start'}`}>
                 <div
@@ -116,7 +115,7 @@ export default function TicketThread({ ticket, onBack, viewerIsAdmin }: TicketTh
                       : 'border-[var(--border)] bg-[var(--bg-surface)]'
                   }`}
                 >
-                  <p className="break-words text-[12px] leading-relaxed text-[var(--text-primary)]">{msg.body}</p>
+                  <p className="break-words text-[12px] leading-relaxed text-[var(--text-primary)]">{msg.content}</p>
                 </div>
                 <span
                   className="mt-1 px-1 text-[11px] text-[var(--text-muted)]"

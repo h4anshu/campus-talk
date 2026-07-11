@@ -8,7 +8,7 @@ export interface MockTicketUser {
 
 export interface MockTicketMessage {
   id: string;
-  body: string;
+  content: string;
   senderId: string;
   senderName: string;
   senderRole: 'user' | 'admin';
@@ -41,7 +41,7 @@ export const MOCK_TICKETS: MockTicket[] = [
     messages: [
       {
         id: 'ticket-1-msg-1',
-        body: "Block C wifi has been down for 4 days now. I already posted about it in Hostel & Mess but no one from admin has responded. Can someone look into this?",
+        content: "Block C wifi has been down for 4 days now. I already posted about it in Hostel & Mess but no one from admin has responded. Can someone look into this?",
         senderId: 'user-rahul-tiwari',
         senderName: 'Rahul Tiwari',
         senderRole: 'user',
@@ -58,7 +58,7 @@ export const MOCK_TICKETS: MockTicket[] = [
     messages: [
       {
         id: 'ticket-2-msg-1',
-        body: "The mid-term datesheet announcement is still pinned at the top of Announcements even though exams ended last week. Can it be un-pinned so newer notices are visible?",
+        content: "The mid-term datesheet announcement is still pinned at the top of Announcements even though exams ended last week. Can it be un-pinned so newer notices are visible?",
         senderId: 'user-priya-sharma',
         senderName: 'Priya Sharma',
         senderRole: 'user',
@@ -66,8 +66,8 @@ export const MOCK_TICKETS: MockTicket[] = [
       },
       {
         id: 'ticket-2-msg-2',
-        body: "Thanks for flagging this — checking with the exam cell and will update the pin by tomorrow.",
-        senderId: 'admin-office',
+        content: "Thanks for flagging this — checking with the exam cell and will update the pin by tomorrow.",
+        senderId: 'admin',
         senderName: 'Admin',
         senderRole: 'admin',
         createdAt: daysAgo(2),
@@ -83,7 +83,7 @@ export const MOCK_TICKETS: MockTicket[] = [
     messages: [
       {
         id: 'ticket-3-msg-1',
-        body: "There's a confession post that's just an ad for an external tuition service, not an actual confession. Reporting it for removal.",
+        content: "There's a confession post that's just an ad for an external tuition service, not an actual confession. Reporting it for removal.",
         senderId: 'user-kavya-reddy',
         senderName: 'Kavya Reddy',
         senderRole: 'user',
@@ -91,15 +91,15 @@ export const MOCK_TICKETS: MockTicket[] = [
       },
       {
         id: 'ticket-3-msg-2',
-        body: "Reviewed and removed the post, thanks for the report. We've also warned the account.",
-        senderId: 'admin-office',
+        content: "Reviewed and removed the post, thanks for the report. We've also warned the account.",
+        senderId: 'admin',
         senderName: 'Admin',
         senderRole: 'admin',
         createdAt: daysAgo(5),
       },
       {
         id: 'ticket-3-msg-3',
-        body: 'Appreciate the quick action!',
+        content: 'Appreciate the quick action!',
         senderId: 'user-kavya-reddy',
         senderName: 'Kavya Reddy',
         senderRole: 'user',

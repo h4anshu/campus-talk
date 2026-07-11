@@ -328,11 +328,12 @@ model Ticket {
 
 model TicketMessage {
   id        String     @id @default(cuid())
-  body      String     @db.Text
+  content   String     @db.Text
   // Sender identity is captured at write time and never re-derived from
   // message order/index. senderId/senderName are a point-in-time snapshot
   // (a renamed user's older messages keep showing the name they had then);
-  // senderRole is the source of truth read-side code uses for alignment.
+  // senderRole is the sole source of truth read-side code uses for
+  // alignment — never compared against the viewer's own session id.
   senderId   String
   senderName String
   senderRole SenderRole

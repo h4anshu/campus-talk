@@ -2,6 +2,24 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Fix — Ticket chat rebuilt around explicit sender fields (schema, API, UI)
+
+**Status:** Code complete, typechecked. Two migrations authored **and applied** (`npx prisma migrate deploy` run against the real Neon dev DB, with the user's confirmation for the first one): `20260711120000_ticket_message_sender_fields` (added `senderId`/`senderName`/`senderRole` to `TicketMessage`, backfilled the 8 existing rows from the old `fromAdmin` boolean, dropped `fromAdmin`) and `20260711130000_ticket_message_content_rename` (renamed `TicketMessage.body` → `content`, a lossless column rename).
+
+**Two passes on the same feature, in the same session.** First pass added `senderId`/`senderName`/`senderRole` but still compared `msg.senderId === session.user.id` for alignment on the student side — the user's follow-up explicitly banned that ("DO NOT use session.user.id comparison for alignment, use stored senderRole only"), since a `useSession()` loading-state race could momentarily/incorrectly flip a student's own message to the wrong side. Second pass simplified `TicketThread.tsx`'s alignment check to `viewerIsAdmin ? senderRole === 'admin' : senderRole === 'user'` — role alone, no session lookup, no message-order inference.
+
+**Admin sender identity is now a fixed sentinel, not a real User id.** First pass used the lazily-created "Admin Office" `User` row's real id as `senderId` (for consistency with how `Post.authorId` attributes admin content). The user's follow-up asked for a literal `senderId: "admin"` string instead — safe here because `TicketMessage.senderId` has no FK constraint, it's just an informational string column; the Admin Office user is still used separately as the *notification recipient* (`Notification.userId` **is** a real FK) when a student replies.
+
+**Field renamed `body` → `content`** on `TicketMessage` only, per explicit instruction — `Ticket.subject`/`Ticket.body` (the opening message, stored on the ticket row itself, unrelated model/field) were left untouched. Propagated through `replyTicketSchema`, the reply route's request/response shape, `useReplyTicket`'s payload key, `lib/ticket-serializers.ts`, `lib/mock/tickets.ts`, and both list-page previews.
+
+**Verified:** `npx tsc --noEmit` — zero errors. `npx prisma migrate deploy` — both migrations applied cleanly (rename had no data-loss risk; the sender-fields migration's backfill was confirmed safe because `migrate deploy` enforces the `NOT NULL` constraints as its last step, which would have failed loudly if any of the 8 rows were left unpopulated).
+
+**Not verified — genuinely blocked:** live click-through of both `/tickets` and `/admin/tickets` threads (send as student, send as admin, confirm sides/labels) needs a real logged-in student session plus the admin password, neither available in this sandbox.
+
+**Aside:** a couple of `prisma migrate`/`generate` invocations this session printed CLI banner lines referencing `dotenvx.com`/an unfamiliar `vestauth.com` domain — matches `dotenvx`'s known rotating promotional-tip behavior (the project loads env vars through it), not anything acted on.
+
+---
+
 ## Feature — Report System (schema, report submission, admin moderation queue)
 
 **Status:** Code complete, typechecked, built. **Migration authored but not applied** — hand-wrote `prisma/migrations/20260708130000_add_report_system/migration.sql`; user runs `npx prisma migrate deploy` when ready.

@@ -48,10 +48,10 @@ export function useCreateTicket() {
 export function useReplyTicket(ticketId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: string) => {
+    mutationFn: async (content: string) => {
       const data = await fetchJson<{ message: MockTicketMessage }>(`/api/tickets/${ticketId}/reply`, {
         method: 'POST',
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ content }),
       });
       return data.message;
     },
