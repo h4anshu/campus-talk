@@ -53,7 +53,14 @@ export async function PATCH(_req: NextRequest, { params }: RouteParams) {
       });
     }
 
-    checkMilestones(comment.authorId).catch(console.error);
+    // Awaited (not fire-and-forget) — see app/api/posts/[id]/vote/route.ts
+    // for why: Vercel's serverless runtime can freeze right after the
+    // response is sent, silently dropping un-awaited promises.
+    try {
+      await checkMilestones(comment.authorId);
+    } catch (err) {
+      console.error('[checkMilestones] failed:', err);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

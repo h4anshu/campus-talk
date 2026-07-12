@@ -81,8 +81,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const mine = votes.find((v) => v.userId === userId);
     const userVote = mine ? (mine.type === 'UP' ? 'up' : 'down') : null;
 
-    // Fire-and-forget: never blocks the vote response on milestone bookkeeping.
-    checkMilestones(post.authorId).catch(console.error);
+    // Awaited (not fire-and-forget) — on Vercel's serverless runtime the
+    // function can freeze the instant the response is sent, so an
+    // un-awaited promise here may simply never run. Still wrapped in
+    // try/catch so a milestone-check failure never fails the vote itself.
+    try {
+      await checkMilestones(post.authorId);
+    } catch (err) {
+      console.error('[checkMilestones] failed:', err);
+    }
 
     return NextResponse.json({ voteCount, userVote });
   } catch (error) {

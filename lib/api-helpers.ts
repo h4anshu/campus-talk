@@ -24,11 +24,18 @@ export async function getSessionOrThrow(): Promise<Session & { user: NonNullable
     throw new ApiError('Unauthorized', 401);
   }
 
-  // Asynchronously update last active timestamp without blocking the request
-  prisma.user.update({
-    where: { id: session.user.id },
-    data: { lastActiveAt: new Date() },
-  }).catch((err) => console.error('Failed to update lastActiveAt:', err));
+  // Awaited (not fire-and-forget) — on Vercel's serverless runtime the
+  // function can freeze the instant the response is sent, so an un-awaited
+  // promise here may simply never run. Still wrapped in try/catch so a
+  // failure here never fails the session check itself.
+  try {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { lastActiveAt: new Date() },
+    });
+  } catch (err) {
+    console.error('Failed to update lastActiveAt:', err);
+  }
 
   return session as Session & { user: NonNullable<Session['user']> };
 }

@@ -50,7 +50,7 @@ export default function CollabSlotBar({ post, isOP = false }: CollabSlotBarProps
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (filledSlots > 0) updateCollab({ filledSlots: filledSlots - 1 });
+                  if (filledSlots > 0) updateCollab({ action: 'decrement' });
                 }}
                 disabled={filledSlots <= 0 || isPending || isClosed}
                 className="flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border-med)] bg-[var(--bg-panel)] text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -61,7 +61,7 @@ export default function CollabSlotBar({ post, isOP = false }: CollabSlotBarProps
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (filledSlots < totalSlots) updateCollab({ filledSlots: filledSlots + 1 });
+                  if (filledSlots < totalSlots) updateCollab({ action: 'increment' });
                 }}
                 disabled={full || isPending || isClosed}
                 className="flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border-med)] bg-[var(--bg-panel)] text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed"

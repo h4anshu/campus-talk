@@ -74,7 +74,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const mine = votes.find((v) => v.userId === userId);
     const userVote = mine ? (mine.type === 'UP' ? 'up' : 'down') : null;
 
-    checkMilestones(comment.authorId).catch(console.error);
+    // Awaited (not fire-and-forget) — see app/api/posts/[id]/vote/route.ts
+    // for why: Vercel's serverless runtime can freeze right after the
+    // response is sent, silently dropping un-awaited promises.
+    try {
+      await checkMilestones(comment.authorId);
+    } catch (err) {
+      console.error('[checkMilestones] failed:', err);
+    }
 
     return NextResponse.json({ voteCount, userVote });
   } catch (error) {

@@ -6,10 +6,16 @@ import { postQueryKey } from '@/hooks/usePost';
 
 type PostDetailCache = { post: MockPost; comments: MockComment[] } | undefined;
 
+// The slot count is now a server-applied delta, not a client-computed
+// absolute value — the server increments/decrements atomically, so two
+// concurrent "+1"s can no longer read the same starting count and clobber
+// each other. isClosed/deadline stay a separate, direct-set action.
+type CollabUpdateInput = { action: 'increment' | 'decrement' } | { isClosed?: boolean; deadline?: string };
+
 export function useCollabUpdate(postId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { filledSlots?: number; isClosed?: boolean; deadline?: string }) =>
+    mutationFn: (data: CollabUpdateInput) =>
       fetchJson<MockPost>(`/api/posts/${postId}/collab`, { method: 'PATCH', body: JSON.stringify(data) }),
     onSuccess: (updated) => {
       // The PATCH route returns a bare serialized post, not the cache's
