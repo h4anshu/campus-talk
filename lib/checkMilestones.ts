@@ -1,23 +1,31 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { updateReputation } from './updateReputation';
+import { REPUTATION_POINTS } from './reputation';
 
 /** Checks one-time milestone bonuses for a user and awards any newly-crossed
  *  ones. Meant to be called fire-and-forget after a vote/answer-accept
  *  response, not awaited inline with the request.
  *
- *  The already-earned check now happens inside the same transaction as
- *  each award, immediately before its ReputationLog entry is created —
- *  this narrows the race window from "one check for every candidate
- *  milestone, then separate awards" down to "check-then-create per
- *  milestone, inside one transaction." It does NOT fully eliminate the
- *  race: under Postgres's default READ COMMITTED isolation, two concurrent
- *  calls can still both SELECT "not yet earned" before either commits its
- *  INSERT, since there's no unique constraint on (userId, reason) to make
- *  the second INSERT fail. A complete fix would need SERIALIZABLE
- *  isolation or a unique index scoped to just the milestone-type reasons —
- *  not applied here, since `reason` is also used for repeatable events
- *  (POST_LIKED, COMMENT_LIKED, etc.) and a blanket unique constraint on it
- *  would break those. */
+ *  True idempotency now comes from a partial unique index on
+ *  ReputationLog(userId, reason) scoped to just the milestone reasons (see
+ *  prisma/migrations/20260712120000_add_milestone_unique_index and the
+ *  comment on the ReputationLog model in schema.prisma) — not merely this
+ *  function's own check. The `findFirst` below is kept only as a fast-path
+ *  that skips the DB round-trip in the common, non-racing case; the index
+ *  is what actually guarantees correctness when two calls race.
+ *
+ *  Each candidate milestone runs in its OWN transaction (not one shared
+ *  transaction looping over all candidates). This matters: if a race is
+ *  lost, `reputationLog.create` throws a real Postgres unique-violation,
+ *  which leaves that transaction "aborted" — every later statement in the
+ *  *same* Postgres transaction would then fail too, even a caught one. One
+ *  candidate losing its race must not take down another candidate's own
+ *  chance to be checked/awarded in the same call.
+ *
+ *  This also deliberately bypasses the shared `updateReputation` helper:
+ *  it fires the log-create and the reputation-increment via `Promise.all`,
+ *  so a losing create could still leave the increment applied. Here the
+ *  create must fully succeed before the increment ever runs. */
 export async function checkMilestones(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
   if (!user) return;
@@ -32,11 +40,24 @@ export async function checkMilestones(userId: string) {
   if (totalLikes >= 50) candidateReasons.push('FIFTY_LIKES_TOTAL');
   if (candidateReasons.length === 0) return;
 
-  await prisma.$transaction(async (tx) => {
-    for (const reason of candidateReasons) {
+  for (const reason of candidateReasons) {
+    await prisma.$transaction(async (tx) => {
       const alreadyEarned = await tx.reputationLog.findFirst({ where: { userId, reason } });
-      if (alreadyEarned) continue; // already awarded — even by a concurrent call that just committed
-      await updateReputation(tx, userId, reason);
-    }
-  });
+      if (alreadyEarned) return; // fast-path — skips the DB round-trip in the common case
+
+      const points = REPUTATION_POINTS[reason];
+      try {
+        await tx.reputationLog.create({ data: { userId, reason, points } });
+        await tx.user.update({ where: { id: userId }, data: { reputation: { increment: points } } });
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          // Lost the race to a concurrent call that committed this exact
+          // milestone microseconds earlier — the partial unique index
+          // caught it. Not an error: a no-op.
+          return;
+        }
+        throw err;
+      }
+    });
+  }
 }

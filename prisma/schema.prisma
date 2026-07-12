@@ -346,6 +346,17 @@ model TicketMessage {
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
+// A partial unique index exists on this table in the database, applied via
+// prisma/migrations/20260712120000_add_milestone_unique_index (hand-written
+// SQL, not expressible in Prisma's schema DSL — there is no `@@unique` +
+// `WHERE` clause syntax): a filtered UNIQUE INDEX on (userId, reason) that
+// only applies WHERE reason IN ('FIRST_POST', 'TEN_HELPFUL_ANSWERS',
+// 'FIFTY_LIKES_TOTAL') — the one-time milestone reasons from
+// lib/reputation.ts's "Milestones (one-time)" section. It does NOT apply to
+// repeatable reasons (POST_LIKED, COMMENT_LIKED, etc.), which legitimately
+// get many rows per user. Because this index isn't representable here, a
+// future `prisma migrate dev`/`db pull` will not see it — do not let either
+// generate a migration that drops it as "drift."
 model ReputationLog {
   id        String   @id @default(cuid())
   userId    String
