@@ -17,11 +17,12 @@ export async function GET(req: NextRequest) {
 
     const countPromises = spaces.map(async (spaceKey) => {
       const lastVisitedParam = searchParams.get(spaceKey);
-      
-      // Default to 24 hours ago if no visit record exists in client
-      const lastVisitedAt = lastVisitedParam 
-        ? new Date(lastVisitedParam) 
-        : new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const fallback = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      // Default to 24 hours ago if no visit record exists in client, or if
+      // the client sent a garbage/unparseable date string.
+      const parsed = lastVisitedParam ? new Date(lastVisitedParam) : null;
+      const lastVisitedAt = parsed && !isNaN(parsed.getTime()) ? parsed : fallback;
 
       const prismaSpaceType = spaceKey.replace(/-/g, '_').toUpperCase() as SpaceType;
 

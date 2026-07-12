@@ -57,7 +57,9 @@ export default function PostPage({ params }: PostPageProps) {
         <CommentComposer
           placeholder={post.type === 'DISCUSSION' ? 'Write an answer...' : 'Write a comment...'}
           submitLabel={post.type === 'DISCUSSION' ? 'Post answer' : 'Post comment'}
-          onSubmit={(body) => createComment({ postId: post.id, body })}
+          onSubmit={(body) =>
+            createComment({ postId: post.id, body, anonymous: post.space === 'confession' })
+          }
           locked={post.collabIsClosed}
         />
 

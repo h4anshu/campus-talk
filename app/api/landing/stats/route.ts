@@ -20,15 +20,19 @@ export async function GET() {
       discussions,
       colleges,
       dailyPosts,
+      degraded: false,
     });
   } catch (error) {
     console.error('Failed to fetch landing stats:', error);
-    // Fallback to baseline figures if DB fails
+    // Static baseline only — no live count folded in, and `degraded: true`
+    // says so honestly instead of presenting this identically to a normal
+    // response during an actual DB outage.
     return NextResponse.json({
       students: 12450,
       discussions: 35680,
       colleges: 153,
       dailyPosts: 2840,
+      degraded: true,
     });
   }
 }

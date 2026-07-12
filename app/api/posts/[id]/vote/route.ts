@@ -40,7 +40,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       });
 
       if (!existing) {
-        await tx.vote.create({ data: { userId, postId, type: voteType } });
+        try {
+          await tx.vote.create({ data: { userId, postId, type: voteType } });
+        } catch (err: any) {
+          if (err.code === 'P2002') throw new ApiError('You have already voted on this post', 409);
+          throw err;
+        }
         await updateReputation(tx, post.authorId, voteType === 'UP' ? 'POST_LIKED' : 'POST_DISLIKED', post.id);
       } else if (existing.type === voteType) {
         await tx.vote.delete({ where: { id: existing.id } });
@@ -66,6 +71,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (isNewUpvote && post.authorId !== session.user.id) {
       await createNotificationSafe({
         userId: post.authorId,
+        actorId: session.user.id,
         type: 'POST_LIKED',
         title: 'Someone liked your post',
         body: `Your post "${post.title.slice(0, 60)}" received a like`,

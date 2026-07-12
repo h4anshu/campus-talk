@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
 import { createCommentSchema } from '@/lib/validations/comment';
 import { sanitizePlainText } from '@/lib/sanitize';
-import { serializeAuthor } from '@/lib/serializers';
+import { serializeAuthor, ANONYMOUS_AUTHOR } from '@/lib/serializers';
 import type { MockComment } from '@/lib/mock/comments';
 import { createNotificationSafe } from '@/lib/createNotification';
 
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     const post = await prisma.post.findUnique({
       where: { id: data.postId },
-      select: { id: true, authorId: true, locked: true, collabIsClosed: true, status: true }
+      select: { id: true, authorId: true, locked: true, collabIsClosed: true, status: true, space: true }
     });
     if (!post) throw new ApiError('Post not found', 404);
 
@@ -38,6 +38,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Trust the client's `anonymous` flag only on Confession-space posts —
+    // otherwise a direct API call could let anyone post anonymously
+    // anywhere, undermining accountability everywhere else in the app.
+    const anonymous = data.anonymous && post.space === 'CONFESSION';
+
     const comment = await prisma.comment.create({
       data: {
         body: sanitizePlainText(data.body),
@@ -45,6 +50,7 @@ export async function POST(req: NextRequest) {
         parentId: data.parentId ?? null,
         authorId: session.user.id,
         collegeId: session.user.collegeId,
+        anonymous,
       },
       include: {
         author: { select: { id: true, name: true, image: true, year: true, dept: true } },
@@ -56,6 +62,7 @@ export async function POST(req: NextRequest) {
       if (post.authorId !== session.user.id) {
         await createNotificationSafe({
           userId: post.authorId,
+          actorId: session.user.id,
           type: 'POST_COMMENTED',
           title: `${session.user.name} commented on your post`,
           body: `"${comment.body.slice(0, 80)}"`,
@@ -73,6 +80,7 @@ export async function POST(req: NextRequest) {
       if (parent && parent.authorId !== session.user.id) {
         await createNotificationSafe({
           userId: parent.authorId,
+          actorId: session.user.id,
           type: 'COMMENT_REPLIED',
           title: `${session.user.name} replied to your comment`,
           body: `"${comment.body.slice(0, 80)}"`,
@@ -87,7 +95,7 @@ export async function POST(req: NextRequest) {
     const serialized: MockComment = {
       id: comment.id,
       body: comment.body,
-      author: serializeAuthor(comment.author),
+      author: comment.anonymous ? ANONYMOUS_AUTHOR : serializeAuthor(comment.author),
       voteCount: 0,
       createdAt: comment.createdAt,
       parentId: comment.parentId,

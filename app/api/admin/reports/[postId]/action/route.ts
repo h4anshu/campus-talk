@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const post = await prisma.post.findUnique({
       where: { id: params.postId },
-      select: { id: true, title: true, authorId: true },
+      select: { id: true, title: true, authorId: true, author: { select: { role: true } } },
     });
     if (!post) throw new ApiError('Post not found', 404);
 
@@ -60,6 +60,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           type: 'POST_REMOVED_BY_ADMIN',
           title: 'Your post was removed',
           body: 'Your post was removed for violating community guidelines.',
+          linkUrl: `/post/${post.id}`,
+          refId: post.id,
         });
         for (const reporterId of reporterIds) {
           await createNotificationSafe({
@@ -73,6 +75,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       }
 
       case 'WARN_AUTHOR': {
+        if (post.author.role === 'ADMIN') throw new ApiError('Cannot warn an admin account', 403);
         if (!data.warningMessage?.trim()) throw new ApiError('Warning message is required', 400);
 
         const { count } = await prisma.$transaction(async (tx) => {
@@ -114,6 +117,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       }
 
       case 'BAN_AUTHOR': {
+        if (post.author.role === 'ADMIN') throw new ApiError('Cannot ban an admin account', 403);
         if (!data.warningMessage?.trim()) throw new ApiError('Ban reason is required', 400);
 
         const { count } = await prisma.$transaction(async (tx) => {

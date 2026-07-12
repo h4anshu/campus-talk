@@ -59,6 +59,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (isNewUpvote && comment.authorId !== session.user.id) {
       await createNotificationSafe({
         userId: comment.authorId,
+        actorId: session.user.id,
         type: 'COMMENT_LIKED',
         title: 'Someone liked your comment',
         body: 'Your comment received a like',

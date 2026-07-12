@@ -21,9 +21,10 @@ export async function GET(req: NextRequest) {
 
     // 1. Full-text search for posts matching the query
     const searchWords = q.trim().split(/\s+/).filter(Boolean);
-    const formattedQuery = searchWords
-      .map((word) => `${word.replace(/['"&|!():*]/g, '')}:*`)
-      .join(' & ');
+    const cleanedTokens = searchWords
+      .map((word) => word.replace(/['"&|!():*]/g, ''))
+      .filter((token) => token.length > 0);
+    const formattedQuery = cleanedTokens.map((token) => `${token}:*`).join(' & ');
 
     let postsResult: any[] = [];
     if (formattedQuery) {

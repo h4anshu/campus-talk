@@ -20,7 +20,7 @@ export const POST_INCLUDE = {
   _count: { select: { comments: true } },
 } satisfies Prisma.PostInclude;
 
-const ANONYMOUS_AUTHOR: MockAuthor = {
+export const ANONYMOUS_AUTHOR: MockAuthor = {
   name: 'Anonymous',
   initials: '?',
   year: null,

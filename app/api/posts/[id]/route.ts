@@ -32,6 +32,17 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       throw new ApiError('Post not found', 404);
     }
 
+    const viewerIsAuthor = post.authorId === session.user.id;
+    const viewerIsAdmin = session.user.role === 'ADMIN';
+    if (!viewerIsAuthor && !viewerIsAdmin) {
+      const visibleToOthers =
+        post.status === 'APPROVED' &&
+        (post.collegeId === null || post.collegeId === session.user.collegeId);
+      if (!visibleToOthers) {
+        throw new ApiError('Post not found', 404);
+      }
+    }
+
     const flatComments = await prisma.comment.findMany({
       where: { postId: params.id },
       orderBy: { createdAt: 'asc' },
@@ -62,6 +73,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (!existing) throw new ApiError('Post not found', 404);
     if (existing.authorId !== session.user.id) {
       throw new ApiError('You can only edit your own posts', 403);
+    }
+    if (existing.status === 'REMOVED' || existing.locked) {
+      throw new ApiError('This post can no longer be edited', 403);
     }
 
     const post = await prisma.post.update({

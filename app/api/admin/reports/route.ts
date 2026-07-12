@@ -56,6 +56,8 @@ export async function GET(req: NextRequest) {
             topic: true,
             createdAt: true,
             status: true,
+            pinned: true,
+            locked: true,
             author: {
               select: {
                 id: true,
@@ -96,6 +98,8 @@ export async function GET(req: NextRequest) {
         postTopic: post.topic,
         postCreatedAt: post.createdAt.toISOString(),
         postStatus: post.status,
+        postPinned: post.pinned,
+        postLocked: post.locked,
         author: {
           id: post.author.id,
           name: post.author.name,
@@ -107,7 +111,10 @@ export async function GET(req: NextRequest) {
         },
         reportCount: reports.length,
         topReason: mostCommonReason(reports.map((r) => r.reason)),
-        status: latest.status,
+        // Precedence, not recency: any unresolved report in the group means
+        // the group as a whole still needs attention, regardless of
+        // whether an older report in it was already resolved.
+        status: reports.some((r) => r.status === 'PENDING') ? 'PENDING' : latest.status,
         latestReportAt: latest.createdAt.toISOString(),
         reporters: sortedByDate.slice(0, 10).map((r) => ({
           id: r.reporter.id,

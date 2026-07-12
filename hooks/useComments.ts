@@ -9,6 +9,7 @@ interface CreateCommentInput {
   postId: string;
   body: string;
   parentId?: string;
+  anonymous?: boolean;
 }
 
 /** Creates a comment/reply, then refetches the post's comment tree. */

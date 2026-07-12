@@ -24,7 +24,15 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ isSaved: false });
     }
 
-    await prisma.savedPost.create({ data: { userId, postId } });
+    try {
+      await prisma.savedPost.create({ data: { userId, postId } });
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        // Already saved by a concurrent request — treat as success, not an error.
+        return NextResponse.json({ isSaved: true });
+      }
+      throw err;
+    }
     return NextResponse.json({ isSaved: true });
   } catch (error) {
     return handleApiError(error);

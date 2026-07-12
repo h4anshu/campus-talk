@@ -23,6 +23,8 @@ export interface ReportedPostRow {
   postTopic: string | null;
   postCreatedAt: string;
   postStatus: string;
+  postPinned: boolean;
+  postLocked: boolean;
   author: {
     id: string;
     name: string;

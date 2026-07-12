@@ -19,6 +19,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     const existing = await prisma.post.findUnique({ where: { id: params.id } });
     if (!existing) throw new ApiError('Post not found', 404);
+    if (existing.status !== 'PENDING') {
+      throw new ApiError('Only pending posts can be rejected', 400);
+    }
 
     const updatedPost = await prisma.post.update({
       where: { id: params.id },

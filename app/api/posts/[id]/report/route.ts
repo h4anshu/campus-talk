@@ -20,14 +20,24 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
     if (existing) throw new ApiError('You have already reported this post', 409);
 
-    await prisma.report.create({
-      data: {
-        postId: params.id,
-        reporterId: session.user.id,
-        reason: data.reason,
-        otherText: data.reason === 'OTHER' ? data.otherText : null,
-      },
-    });
+    try {
+      await prisma.report.create({
+        data: {
+          postId: params.id,
+          reporterId: session.user.id,
+          reason: data.reason,
+          otherText: data.reason === 'OTHER' ? data.otherText : null,
+        },
+      });
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        // Same message as the existing.findUnique check above — the
+        // client's onError already matches on this exact text for the
+        // "already reported" toast.
+        throw new ApiError('You have already reported this post', 409);
+      }
+      throw err;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

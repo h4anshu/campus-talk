@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronUp, ShieldCheck } from 'lucide-react';
+import { ChevronDown, ChevronUp, ShieldCheck, Pin, PinOff, Lock, LockOpen } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/shared/EmptyState';
@@ -19,6 +19,7 @@ import {
   type ReportReason,
   type ReportStatus,
 } from '@/hooks/useAdminReports';
+import { useModeratePost } from '@/hooks/useModeratePost';
 import WarnUserDialog from '@/components/admin/WarnUserDialog';
 import BanUserDialog from '@/components/admin/BanUserDialog';
 
@@ -71,8 +72,18 @@ function ReportCard({ report }: { report: ReportedPostRow }) {
   const [removeConfirm, setRemoveConfirm] = useState(false);
 
   const { mutate: reportAction, isPending } = useReportAction();
+  const { mutate: moderatePost, isPending: moderating } = useModeratePost();
   const section = sectionLabel(report.postSpace, report.postTopic);
   const isPending_ = report.status === 'PENDING';
+
+  const runModerate = (action: 'PIN' | 'UNPIN' | 'LOCK' | 'UNLOCK') => {
+    moderatePost(
+      { postId: report.postId, action },
+      {
+        onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to update post'),
+      }
+    );
+  };
 
   const runAction = (action: 'REMOVE_POST' | 'MARK_REVIEWED' | 'DISMISS') => {
     reportAction(
@@ -203,6 +214,30 @@ function ReportCard({ report }: { report: ReportedPostRow }) {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t-[0.5px] border-[var(--border)] pt-3">
+            <button
+              onClick={() => runModerate(report.postPinned ? 'UNPIN' : 'PIN')}
+              disabled={moderating}
+              title={report.postPinned ? 'Unpin post' : 'Pin post'}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded border-[0.5px] transition-colors disabled:opacity-40 ${
+                report.postPinned
+                  ? 'border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                  : 'border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-med)]'
+              }`}
+            >
+              {report.postPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+            </button>
+            <button
+              onClick={() => runModerate(report.postLocked ? 'UNLOCK' : 'LOCK')}
+              disabled={moderating}
+              title={report.postLocked ? 'Unlock post' : 'Lock post'}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded border-[0.5px] transition-colors disabled:opacity-40 ${
+                report.postLocked
+                  ? 'border-[var(--warning-border)] bg-[var(--warning-dim)] text-[var(--warning)]'
+                  : 'border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-med)]'
+              }`}
+            >
+              {report.postLocked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+            </button>
             {removeConfirm ? (
               <>
                 <span className="text-[12px] text-[var(--text-secondary)]">

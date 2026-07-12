@@ -77,6 +77,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!wasClosed && nextIsClosed) {
       await createNotificationSafe({
         userId: session.user.id,
+        actorId: session.user.id,
         type: 'COLLAB_SLOT_FILLED',
         title: 'Team Full',
         body: `Your collaboration post "${post.title}" is now marked as complete.`,
