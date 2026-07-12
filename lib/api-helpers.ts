@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import * as Sentry from '@sentry/nextjs';
 import { auth } from '@/auth';
 import type { Session } from 'next-auth';
 
@@ -50,6 +51,9 @@ export function handleApiError(error: unknown): NextResponse {
       { status: 400 }
     );
   }
+  // Only genuinely unexpected errors reach Sentry — not auth failures
+  // (ApiError) or request validation (ZodError), both handled above.
+  Sentry.captureException(error);
   console.error(error);
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 }
