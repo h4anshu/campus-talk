@@ -5,6 +5,7 @@ import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
 import { isAdminSession } from '@/lib/admin-auth';
 import { createTicketSchema } from '@/lib/validations/ticket';
 import { serializeTicket, type TicketForSerialization } from '@/lib/ticket-serializers';
+import { strictLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 const TICKET_INCLUDE = {
   user: { select: { id: true, name: true, year: true, dept: true } },
@@ -44,6 +45,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitResponse = await applyRateLimit(strictLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Only real students can open a ticket — the admin panel has no user
     // account of its own to attribute a ticket to.
     const session = await getSessionOrThrow();

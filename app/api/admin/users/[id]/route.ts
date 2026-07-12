@@ -4,6 +4,7 @@ import { handleApiError, ApiError } from '@/lib/api-helpers';
 import { requireAdmin } from '@/lib/admin-auth';
 import { deleteUserSchema } from '@/lib/validations/admin-user';
 import { updateReputation } from '@/lib/updateReputation';
+import { strictLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 interface RouteParams {
   params: { id: string };
@@ -11,6 +12,9 @@ interface RouteParams {
 
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
+    const rateLimitResponse = await applyRateLimit(strictLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     await requireAdmin();
     const data = deleteUserSchema.parse(await req.json().catch(() => ({})));
 

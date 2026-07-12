@@ -6,9 +6,13 @@ import { sanitizePlainText } from '@/lib/sanitize';
 import { serializeAuthor, ANONYMOUS_AUTHOR } from '@/lib/serializers';
 import type { MockComment } from '@/lib/mock/comments';
 import { createNotificationSafe } from '@/lib/createNotification';
+import { standardLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitResponse = await applyRateLimit(standardLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     const session = await getSessionOrThrow();
     const data = createCommentSchema.parse(await req.json());
 

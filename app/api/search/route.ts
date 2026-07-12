@@ -3,9 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { getSessionOrThrow, handleApiError } from '@/lib/api-helpers';
 import { serializePost, serializeAuthor, POST_INCLUDE } from '@/lib/serializers';
 import { TOPICS, SPACES } from '@/lib/constants';
+import { looseLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitResponse = await applyRateLimit(looseLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     const session = await getSessionOrThrow();
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q') ?? '';

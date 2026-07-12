@@ -5,6 +5,7 @@ import { handleApiError, ApiError } from '@/lib/api-helpers';
 import { isAdminSession, getOrCreateAdminOfficeUser } from '@/lib/admin-auth';
 import { replyTicketSchema } from '@/lib/validations/ticket';
 import { createNotificationSafe } from '@/lib/createNotification';
+import { standardLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 interface RouteParams {
   params: { id: string };
@@ -12,6 +13,9 @@ interface RouteParams {
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
+    const rateLimitResponse = await applyRateLimit(standardLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     const [isAdmin, session] = await Promise.all([isAdminSession(), auth()]);
     const { searchParams } = new URL(req.url);
     const { content } = replyTicketSchema.parse(await req.json());

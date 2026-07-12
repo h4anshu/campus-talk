@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionOrThrow, handleApiError, ApiError } from '@/lib/api-helpers';
 import { submitReportSchema } from '@/lib/validations/report';
+import { strictLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 interface RouteParams {
   params: { id: string };
@@ -9,6 +10,9 @@ interface RouteParams {
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
+    const rateLimitResponse = await applyRateLimit(strictLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     const session = await getSessionOrThrow();
     const data = submitReportSchema.parse(await req.json());
 

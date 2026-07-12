@@ -6,6 +6,7 @@ import { updateReputation } from '@/lib/updateReputation';
 import { checkMilestones } from '@/lib/checkMilestones';
 
 import { createNotificationSafe } from '@/lib/createNotification';
+import { standardLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 const voteSchema = z.object({ type: z.enum(['up', 'down']) });
 
@@ -15,6 +16,9 @@ interface RouteParams {
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
+    const rateLimitResponse = await applyRateLimit(standardLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     const session = await getSessionOrThrow();
     const { type } = voteSchema.parse(await req.json());
     const voteType = type === 'up' ? 'UP' : 'DOWN';

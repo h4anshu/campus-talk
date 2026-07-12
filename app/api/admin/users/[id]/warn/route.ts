@@ -4,6 +4,7 @@ import { handleApiError, ApiError } from '@/lib/api-helpers';
 import { requireAdmin } from '@/lib/admin-auth';
 import { warnUserSchema } from '@/lib/validations/admin-user';
 import { createNotificationSafe } from '@/lib/createNotification';
+import { strictLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 interface RouteParams {
   params: { id: string };
@@ -11,6 +12,9 @@ interface RouteParams {
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
+    const rateLimitResponse = await applyRateLimit(strictLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     await requireAdmin();
     const data = warnUserSchema.parse(await req.json());
 

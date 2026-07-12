@@ -7,9 +7,13 @@ import { sanitizeBody } from '@/lib/sanitize';
 import { keyToEnum } from '@/lib/constants';
 import { serializePost, POST_INCLUDE, type PostForSerialization } from '@/lib/serializers';
 import { updateReputation } from '@/lib/updateReputation';
+import { looseLimiter, standardLimiter, getClientIp, applyRateLimit } from '@/lib/ratelimit';
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitResponse = await applyRateLimit(looseLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     const session = await getSessionOrThrow();
     const { searchParams } = new URL(req.url);
     const topicKey = searchParams.get('topic');
@@ -67,6 +71,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitResponse = await applyRateLimit(standardLimiter, getClientIp(req));
+    if (rateLimitResponse) return rateLimitResponse;
+
     const session = await getSessionOrThrow();
     const json = await req.json();
     const data = createPostSchema.parse(json);
