@@ -206,6 +206,9 @@ model Post {
   collabDeadline    DateTime?
   collabContact     String?
   collabIsClosed    Boolean    @default(false)
+  eventDate     DateTime?
+  eventLocation String?
+  eventVenue    String?
   authorId  String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt

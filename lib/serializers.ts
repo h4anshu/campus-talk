@@ -135,6 +135,9 @@ export function serializePost(post: PostForSerialization, viewerId: string): Moc
     collabDeadline: post.collabDeadline ? post.collabDeadline.toISOString() : null,
     collabContact: post.collabContact,
     collabIsClosed: post.collabIsClosed,
+    eventDate: post.eventDate?.toISOString() ?? null,
+    eventLocation: post.eventLocation ?? null,
+    eventVenue: post.eventVenue ?? null,
   };
 }
 

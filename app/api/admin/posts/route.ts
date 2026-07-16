@@ -22,7 +22,9 @@ export async function POST(req: NextRequest) {
         space: keyToEnum(data.space) as SpaceType,
         priority: data.priority ?? null,
         pinned: data.pinned ?? false,
-        status: 'APPROVED', // admin posts publish directly, no approval queue
+        status: 'APPROVED',
+        eventDate: data.eventDate ? new Date(data.eventDate) : null,
+        eventLocation: data.eventLocation ?? null,
         authorId: adminOffice.id,
         collegeId: null, // platform-wide — visible regardless of the viewer's college
         tags: {

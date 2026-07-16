@@ -7,5 +7,7 @@ export const createAdminPostSchema = z.object({
   priority: z.enum(['Critical', 'Info', 'General']).optional(),
   pinned: z.boolean().optional().default(false),
   tags: z.array(z.string().trim().min(1).max(30)).max(8).default([]),
+  eventDate: z.string().datetime({ offset: true }).optional().nullable(),
+  eventLocation: z.string().trim().max(200).optional().nullable(),
 });
 export type CreateAdminPostInput = z.infer<typeof createAdminPostSchema>;

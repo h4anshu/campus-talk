@@ -35,7 +35,9 @@ export interface MockPost {
   // True when the logged-in viewer is this post's author — used to gate
   // the "mark as accepted" answer control (only the OP may accept).
   viewerIsAuthor?: boolean;
-  eventDate?: Date;
+  eventDate?: string | null;
+  eventLocation?: string | null;
+  eventVenue?: string | null;
   venue?: string;
   slots?: { filled: number; total: number };
   skills?: string[];
@@ -249,7 +251,7 @@ export const MOCK_POSTS: MockPost[] = [
     createdAt: daysAgo(3),
     author: { name: 'Admin Office', initials: 'AO', year: 0, dept: 'Administration', avatarColor: '#1D4ED8' },
     tags: ['techfest', 'hackathon', 'event'],
-    eventDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    eventDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     venue: 'Main Auditorium',
     attendees: [
       { initials: 'RV', avatarColor: '#4D8EF5' },

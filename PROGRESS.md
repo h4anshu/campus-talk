@@ -2,6 +2,32 @@
 
 Running log of completed work. One entry per task, most recent first.
 
+## Feature — Live Right Sidebar (trending, upcoming events, community stats) + event fields
+
+**Status:** All 7 parts implemented, typechecked (zero errors), 13/13 tests green, build clean.
+
+**Part 1 — Schema.** Added `eventDate DateTime?`, `eventLocation String?`, `eventVenue String?` to the `Post` model in `prisma/schema.prisma`. Hand-wrote migration at `prisma/migrations/20260713100000_add_event_fields/migration.sql` (3 `ALTER TABLE ADD COLUMN` statements). `npx prisma generate` — succeeded. User runs `npx prisma migrate deploy` when ready.
+
+**Part 2 — Serializer.** `serializePost` in `lib/serializers.ts` now emits `eventDate` (ISO string or null), `eventLocation`, and `eventVenue`. `MockPost` type in `lib/mock/posts.ts` gained matching optional fields (`eventDate: string | null`, `eventLocation`, `eventVenue`); the one existing mock event post's `eventDate: new Date(...)` was converted to `.toISOString()` to match the new string type.
+
+**Part 3 — `GET /api/sidebar`.** New route at `app/api/sidebar/route.ts` — authenticated (`getSessionOrThrow`), college-scoped, loose rate-limited. Returns `{ trending, upcomingEvents, community }`. Trending: last 48h APPROVED posts scored by `upvotes×2 + comments×1.5`; auto-expands to 7-day window if fewer than 5 results. Vote field adapted from task's `v.value === 1` to `v.type === 'UP'` (matches real `VoteType` enum — task snippet was wrong). `viewCount` omitted from the score formula since no such column exists in the schema (task included it; the hardcoded `viewCount: 0` in the serializer confirms this). Upcoming events: future EVENTS-space APPROVED posts ordered by `eventDate asc`. Community: real `prisma.user.count` / `prisma.post.count` / `prisma.comment.count` (accepted only), all college-scoped.
+
+**Part 4 — `hooks/useSidebar.ts`.** TanStack Query hook, `staleTime: 2min`, `refetchInterval: 5min`, `refetchOnWindowFocus: false` — exactly as specified.
+
+**Part 5 — RightSidebar.** `components/layout/RightSidebar.tsx` now uses `useSidebar()` exclusively — removed `MOCK_TRENDING`, `MOCK_EVENTS`, and `useCollegeStats` imports. Trending and upcoming events sections show skeleton placeholders on load, empty-state messages when no data, and live links to real post IDs when data is present. Community stats grid unchanged in structure, now driven by `data.community`. `useCollegeStats` hook itself left untouched (other code may use it).
+
+**Part 6 — Admin compose page.** `app/admin/(protected)/announcements/page.tsx` now has a space toggle (Announcements / Events). When Events is selected, an "Event details" section appears with a `datetime-local` input (min = now) and a location text input. Both fields are included in the `createPost` payload and cleared on success. Title changed from "Compose announcement" to "Compose post"; publish button reads "Publish event" or "Publish announcement" based on selection. `lib/validations/admin-post.ts` gained `eventDate` (ISO datetime string, optional/nullable) and `eventLocation` (string max 200, optional/nullable). `app/api/admin/posts/route.ts` saves both when present.
+
+**Part 7 — PostDetail event info box.** `components/post/PostDetail.tsx` now shows an event details box (date/time via `date-fns format`, venue) when `post.space === 'events' && post.eventDate` is set. Positioned above the CollabSlotBar / ReactionButtons section, matching the collab info box pattern.
+
+**Impeccable hook findings:** 6 `broken-image` findings across `PostDetail.tsx`, `serializers.ts`, and `mock/posts.ts` — all false positives. The rule matched Tailwind `[&_img]:` CSS selector strings and a regex literal `/&lt;img[^>]+src=.../gi`; none are actual `<img>` tags with broken or missing `src` attributes.
+
+**Verified:** `npx prisma generate` — clean. `npx tsc --noEmit` — zero errors. `pnpm test` — 5 files, 13/13 green. `pnpm build` — succeeds, `/api/sidebar` present as a new dynamic route.
+
+**Not applied — by design:** `npx prisma migrate deploy` for `20260713100000_add_event_fields`. Run it when ready; it's 3 lossless `ADD COLUMN` statements and was confirmed safe by `prisma generate` passing against the updated schema.
+
+---
+
 ## Feature — Sentry monitoring, Upstash rate limiting, Vitest test suite
 
 **Status:** All 3 parts implemented, typechecked, tested, and built clean. Pushed as two commits: Sentry (`2e4beb1`, committed in an earlier round of this same task) and rate limiting + Vitest (this commit).

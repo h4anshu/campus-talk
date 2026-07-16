@@ -1,3 +1,5 @@
+import { format } from 'date-fns';
+import { CalendarDays } from 'lucide-react';
 import type { MockPost } from '@/lib/mock/posts';
 import { optimizeCloudinaryUrl } from '@/lib/utils';
 import VoteBlock from '@/components/post/VoteBlock';
@@ -18,6 +20,7 @@ export default function PostDetail({ post }: PostDetailProps) {
   const isConfession = post.space === 'confession';
   const isAnnouncement = post.space === 'announcements';
   const isCollaboration = post.space === 'collaboration';
+  const isEvent = post.space === 'events' && !!post.eventDate;
 
   const voteVariant = isConfession ? 'confession' : isAnnouncement ? 'pin' : 'vote';
 
@@ -74,6 +77,27 @@ export default function PostDetail({ post }: PostDetailProps) {
             {post.tags.map((tag) => (
               <TagPill key={tag} label={tag} />
             ))}
+          </div>
+        )}
+
+        {isEvent && (
+          <div className="mb-3 mt-4 rounded-[8px] border-[0.5px] border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-[12px]">
+            <div className="mb-2 flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5 text-[var(--accent)]" />
+              <span className="font-medium text-[var(--text-primary)]">Event details</span>
+            </div>
+            <div className="grid grid-cols-[80px_1fr] gap-1.5">
+              <span className="text-[var(--text-muted)]">Date &amp; time</span>
+              <span className="font-medium text-[var(--text-secondary)]">
+                {format(new Date(post.eventDate!), 'dd MMM yyyy · hh:mm a')}
+              </span>
+              {post.eventLocation && (
+                <>
+                  <span className="text-[var(--text-muted)]">Venue</span>
+                  <span className="font-medium text-[var(--text-secondary)]">{post.eventLocation}</span>
+                </>
+              )}
+            </div>
           </div>
         )}
 
